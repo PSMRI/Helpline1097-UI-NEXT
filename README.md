@@ -10,8 +10,13 @@ Tracking issue: [PSMRI/AMRIT#128](https://github.com/PSMRI/AMRIT/issues/128).
 git clone --recurse-submodules <repo-url>
 cd Helpline1097-UI-NEXT
 npm install
+cp src/environments/environment.dev.ts src/environments/environment.ts   # git-ignored local default
 npm start
 ```
+
+`npm start` (default `development` config) talks to the shared dev backend through the proxy
+(`proxy.conf.js`) — the backend has no CORS headers for `localhost`, so direct calls are blocked.
+Other configs: `--configuration local` (localhost backend), `dev`, `test`, `production`.
 
 Already cloned without submodules:
 

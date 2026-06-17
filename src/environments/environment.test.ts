@@ -20,17 +20,29 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-// Default (production) environment. Base URLs are injected at deploy time
-// (see the legacy environment.ci.ts.template for the CI substitution pattern).
+// Test/UAT environment. fileReplacements source for the `test` configuration.
+// NOTE: confirm the real TEST host with the backend team.
+const testHost = 'https://amritwprdev.piramalswasthya.org/';
+const sessionStorageEncKey = '';
+const commonAPI = `${testHost}commonapi-v1.0/`;
+const adminAPI = `${testHost}adminapi-v1.0/`;
+const API1097 = `${testHost}1097api-v1.0/`;
+const telephoneServer = 'https://uatcz.piramalswasthya.org/';
+const siteKey = '';
+const captchaChallengeURL = '';
+const enableCaptcha = false;
+
 export const environment = {
-  production: true,
+  production: false,
   invalidCallType: 'Invalid',
-  encKey: '',
-  commonAPI: '',
-  ip1097: '',
-  telephoneServer: '',
-  adminAPI: '',
-  siteKey: '',
-  captchaChallengeURL: '',
-  enableCaptcha: false,
+  encKey: sessionStorageEncKey,
+  commonAPI,
+  ip1097: API1097,
+  adminAPI,
+  telephoneServer,
+  siteKey,
+  captchaChallengeURL,
+  enableCaptcha,
+  useApimanKey: true,
+  sessionTimeoutMinutes: 27,
 };

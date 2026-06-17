@@ -20,22 +20,30 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-/*
- * Dev proxy for the default `development` / `dev` serve configurations.
- *
- * The dev backend (amritwprdev) sends no CORS headers for http://localhost:4200, so the
- * browser cannot call it directly. The dev environment uses origin-relative versioned
- * base paths (see environment.dev.ts), and this proxy forwards them server-side to the
- * backend, bypassing CORS. Keep these contexts in sync with the env base URLs.
- */
-const TARGET = 'https://amritwprdev.piramalswasthya.org';
+// Production environment. fileReplacements source for the `production` configuration.
+// NOTE: confirm the real PRODUCTION host with the backend team (CI normally injects
+// these via environment.ci.ts.template).
+const prodHost = 'https://amritwprdev.piramalswasthya.org/';
+const sessionStorageEncKey = '';
+const commonAPI = `${prodHost}commonapi-v1.0/`;
+const adminAPI = `${prodHost}adminapi-v1.0/`;
+const API1097 = `${prodHost}1097api-v1.0/`;
+const telephoneServer = 'https://uatcz.piramalswasthya.org/';
+const siteKey = '';
+const captchaChallengeURL = '';
+const enableCaptcha = false;
 
-module.exports = [
-  {
-    context: ['/commonapi-v1.0', '/1097api-v1.0', '/adminapi-v1.0'],
-    target: TARGET,
-    secure: true,
-    changeOrigin: true,
-    logLevel: 'debug',
-  },
-];
+export const environment = {
+  production: true,
+  invalidCallType: 'Invalid',
+  encKey: sessionStorageEncKey,
+  commonAPI,
+  ip1097: API1097,
+  adminAPI,
+  telephoneServer,
+  siteKey,
+  captchaChallengeURL,
+  enableCaptcha,
+  useApimanKey: true,
+  sessionTimeoutMinutes: 27,
+};

@@ -20,19 +20,28 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-// Development environment.
-// Base URLs are origin-relative ('/') so all API calls are same-origin and routed
-// through proxy.conf.js to the shared dev backend (https://amritwprdev.piramalswasthya.org).
-// Align these prefixes with the proxy `context` list as endpoints are wired in Phase 1/3.
+// CI template. The CI pipeline substitutes the <%= ... %> tokens and writes
+// environment.ci.ts (git-ignored) before building with `--configuration ci`.
+const sessionStorageEncKey = '<%= SESSION_STORAGE_ENC_KEY %>';
+const commonAPI = '<%= COMMON_API_BASE %>';
+const adminAPI = '<%= ADMIN_API_BASE %>';
+const API1097 = '<%= HELPLINE1097_API_BASE %>';
+const telephoneServer = '<%= TELEPHONY_SERVER %>';
+const siteKey = '<%= SITE_KEY %>';
+const captchaChallengeURL = '<%= CAPTCHA_CHALLENGE_URL %>';
+const enableCaptcha = <%= ENABLE_CAPTCHA %>;
+
 export const environment = {
-  production: false,
+  production: true,
   invalidCallType: 'Invalid',
-  encKey: 'helpline1097-dev-enc-key',
-  commonAPI: '/',
-  ip1097: '/',
-  telephoneServer: '/', // Czentrix telephony — out of scope for now (stubbed)
-  adminAPI: '/',
-  siteKey: '',
-  captchaChallengeURL: '',
-  enableCaptcha: false,
+  encKey: sessionStorageEncKey,
+  commonAPI,
+  ip1097: API1097,
+  adminAPI,
+  telephoneServer,
+  siteKey,
+  captchaChallengeURL,
+  enableCaptcha,
+  useApimanKey: true,
+  sessionTimeoutMinutes: 27,
 };
