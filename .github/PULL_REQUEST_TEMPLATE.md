@@ -1,7 +1,6 @@
 <!--
   Helpline1097-UI-NEXT — Pull Request
   Every migration PR must satisfy the Definition of Done below before review.
-  See docs/code-review-process.md for the anti-stub gate and the AI review pipeline.
 -->
 
 ## What & why
@@ -25,4 +24,4 @@ Part of PSMRI/AMRIT#128.
 - [ ] **Responsive** — verified at mobile + desktop breakpoints.
 - [ ] **Tests** — unit tests for services/stores; happy-path + one error-path per component.
 - [ ] **Build** — `ng build` (prod) clean; `ng serve` clean; lint/prettier clean.
-- [ ] **AI review passed** — the subagent review (docs/code-review-process.md) ran; all High/Medium findings resolved or explicitly waived with reason.
+- [ ] **AI review passed** — the code-review pass ran; all High/Medium findings resolved or explicitly waived with reason.
