@@ -78,7 +78,10 @@ const missing = [];
 
 for (const file of files) {
   const content = readFileSync(file, 'utf8');
-  if (content.includes(MARKER)) continue;
+  // Require the header near the TOP of the file — a stray mention of the license
+  // phrase lower down must not satisfy the gate.
+  const top = content.split('\n').slice(0, 25).join('\n');
+  if (top.includes(MARKER)) continue;
   if (check) {
     missing.push(file);
     continue;
