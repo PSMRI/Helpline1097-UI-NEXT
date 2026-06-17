@@ -26,7 +26,7 @@ git submodule update --init --recursive
 
 ## Notes
 
-- **Common-UI** (shared Zard UI kit) is a git submodule at `./Common-UI`, imported via the `Common-UI/*` path alias.
+- **Common-UI** (shared Zard UI kit) is a git submodule at `./Common-UI`, imported via the `@common-ui/*` path alias (→ `Common-UI/v2/*`), e.g. `@common-ui/ui/button`.
 - Standalone components, zoneless change detection, AMRIT `app-modules/` structure.
 - The dev server proxies API calls to the AMRIT dev backend — see `proxy.conf.js`.
 

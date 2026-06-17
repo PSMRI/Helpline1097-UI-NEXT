@@ -18,7 +18,7 @@
     "paths": {
       "@/*": ["src/app/*"],
       "@env/*": ["src/environments/*"],
-      "Common-UI/*": ["Common-UI/*"]
+      "@common-ui/*": ["Common-UI/v2/*"]
     }
   },
   "angularCompilerOptions": {
