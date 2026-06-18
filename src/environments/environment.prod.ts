@@ -33,6 +33,21 @@ const siteKey = '';
 const captchaChallengeURL = '';
 const enableCaptcha = false;
 
+// Fail fast: a production bundle must never boot with blank core config. If CI has not
+// injected real values (see environment.ci.ts.template), throw at module evaluation
+// rather than silently routing live traffic to the wrong/empty backend.
+const requiredProdConfig: Record<string, string> = {
+  sessionStorageEncKey,
+  commonAPI,
+  adminAPI,
+  API1097,
+};
+for (const [key, value] of Object.entries(requiredProdConfig)) {
+  if (!value.trim()) {
+    throw new Error(`[environment.prod] Missing required production config: ${key}`);
+  }
+}
+
 export const environment = {
   production: true,
   invalidCallType: 'Invalid',
