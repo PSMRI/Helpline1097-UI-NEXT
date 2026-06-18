@@ -1,5 +1,5 @@
 /*
- * AMRIT – Accessible Medical Records via Integrated Technology
+ * AMRIT – Accessible Medical Records via Integrated Technologies
  * Integrated EHR (Electronic Health Records) Solution
  *
  * Copyright (C) "Piramal Swasthya Management and Research Institute"
@@ -24,9 +24,9 @@
 // NOTE: confirm the real TEST host with the backend team.
 const testHost = 'https://amritwprdev.piramalswasthya.org/';
 const sessionStorageEncKey = '';
-const commonAPI = `${testHost}commonapi-v1.0/`;
-const adminAPI = `${testHost}adminapi-v1.0/`;
-const API1097 = `${testHost}1097api-v1.0/`;
+const commonAPI = `${testHost}common-api/`;
+const adminAPI = `${testHost}admin-api/`;
+const API1097 = `${testHost}1097-api/`;
 const telephoneServer = 'https://uatcz.piramalswasthya.org/';
 const siteKey = '';
 const captchaChallengeURL = '';

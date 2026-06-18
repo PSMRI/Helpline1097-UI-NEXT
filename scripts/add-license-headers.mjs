@@ -1,5 +1,5 @@
 /*
- * AMRIT – Accessible Medical Records via Integrated Technology
+ * AMRIT – Accessible Medical Records via Integrated Technologies
  * Integrated EHR (Electronic Health Records) Solution
  *
  * Copyright (C) "Piramal Swasthya Management and Research Institute"
@@ -35,7 +35,7 @@ const SKIP_DIRS = new Set(['node_modules', 'Common-UI', 'dist', '.angular', '.gi
 const MARKER = 'GNU General Public License';
 
 const BODY = [
-  'AMRIT – Accessible Medical Records via Integrated Technology',
+  'AMRIT – Accessible Medical Records via Integrated Technologies',
   'Integrated EHR (Electronic Health Records) Solution',
   '',
   'Copyright (C) "Piramal Swasthya Management and Research Institute"',

@@ -1,5 +1,5 @@
 /*
- * AMRIT – Accessible Medical Records via Integrated Technology
+ * AMRIT – Accessible Medical Records via Integrated Technologies
  * Integrated EHR (Electronic Health Records) Solution
  *
  * Copyright (C) "Piramal Swasthya Management and Research Institute"
@@ -21,14 +21,14 @@
  */
 
 // Shared AMRIT dev backend, reached through the Angular dev PROXY (proxy.conf.js).
-// Base URLs are origin-relative versioned paths so the browser stays same-origin
+// Base URLs are origin-relative paths so the browser stays same-origin
 // (localhost:4200) and the dev server forwards them to
 // https://amritwprdev.piramalswasthya.org. The backend sends no CORS headers for
 // localhost, so direct (absolute-URL) calls from a browser are blocked — hence the proxy.
 const sessionStorageEncKey = '';
-const commonAPI = '/commonapi-v1.0/';
-const adminAPI = '/adminapi-v1.0/';
-const API1097 = '/1097api-v1.0/';
+const commonAPI = '/common-api/';
+const adminAPI = '/admin-api/';
+const API1097 = '/1097-api/';
 const telephoneServer = 'https://uatcz.piramalswasthya.org/'; // Czentrix — out of scope, stubbed
 const siteKey = '';
 const captchaChallengeURL = '';

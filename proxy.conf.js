@@ -1,5 +1,5 @@
 /*
- * AMRIT – Accessible Medical Records via Integrated Technology
+ * AMRIT – Accessible Medical Records via Integrated Technologies
  * Integrated EHR (Electronic Health Records) Solution
  *
  * Copyright (C) "Piramal Swasthya Management and Research Institute"
@@ -32,7 +32,7 @@ const TARGET = 'https://amritwprdev.piramalswasthya.org';
 
 module.exports = [
   {
-    context: ['/commonapi-v1.0', '/1097api-v1.0', '/adminapi-v1.0'],
+    context: ['/common-api', '/1097-api', '/admin-api'],
     target: TARGET,
     secure: true,
     changeOrigin: true,
