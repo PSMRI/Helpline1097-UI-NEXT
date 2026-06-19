@@ -1,0 +1,47 @@
+/*
+ * AMRIT – Accessible Medical Records via Integrated Technologies
+ * Integrated EHR (Electronic Health Records) Solution
+ *
+ * Copyright (C) "Piramal Swasthya Management and Research Institute"
+ *
+ * This file is part of AMRIT.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see https://www.gnu.org/licenses/.
+ */
+
+// CI template. The CI pipeline substitutes the <%= ... %> tokens and writes
+// environment.ci.ts (git-ignored) before building with `--configuration ci`.
+const sessionStorageEncKey = '<%= SESSION_STORAGE_ENC_KEY %>';
+const commonAPI = '<%= COMMON_API_BASE %>';
+const adminAPI = '<%= ADMIN_API_BASE %>';
+const API1097 = '<%= HELPLINE1097_API_BASE %>';
+const telephoneServer = '<%= TELEPHONY_SERVER %>';
+const siteKey = '<%= SITE_KEY %>';
+const captchaChallengeURL = '<%= CAPTCHA_CHALLENGE_URL %>';
+const enableCaptcha = <%= ENABLE_CAPTCHA %>;
+
+export const environment = {
+  production: true,
+  invalidCallType: 'Invalid',
+  encKey: sessionStorageEncKey,
+  commonAPI,
+  ip1097: API1097,
+  adminAPI,
+  telephoneServer,
+  siteKey,
+  captchaChallengeURL,
+  enableCaptcha,
+  useApimanKey: true,
+  sessionTimeoutMinutes: 27,
+};
