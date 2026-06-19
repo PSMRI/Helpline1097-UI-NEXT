@@ -20,4 +20,12 @@
   along with this program.  If not, see https://www.gnu.org/licenses/.
 -->
 
+@if (ui.loading()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-background/60">
+    <z-loader />
+  </div>
+}
+
+<z-toaster />
+
 <router-outlet />

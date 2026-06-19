@@ -20,26 +20,21 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { Component, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { ZardLoaderComponent } from '@common-ui/ui/loader';
-import { ZardToastComponent } from '@common-ui/ui/toast';
-import { UiStore } from '@/app-modules/core/state/ui.store';
+import { HttpContext, HttpContextToken } from '@angular/common/http';
 
-@Component({
-  selector: 'app-root',
-  imports: [RouterOutlet, ZardLoaderComponent, ZardToastComponent],
-  templateUrl: './app.html',
-  styleUrl: './app.scss',
-})
-export class App {
-  protected readonly ui = inject(UiStore);
+/**
+ * Per-request flags. The old app expressed "don't show the loader" by routing a call through
+ * `AuthorizationWrapper` (no loader) instead of `InterceptedHttp` (loader). With functional
+ * interceptors that distinction becomes a context flag the loader interceptor respects, e.g.
+ * background/polling calls use `{ context: skipLoader() }`.
+ */
+export const SKIP_LOADER = new HttpContextToken<boolean>(() => false);
+export const SKIP_AUTH = new HttpContextToken<boolean>(() => false);
 
-  constructor() {
-    // Online/offline → UiStore (replaces the old AppComponent navigator.onLine wiring
-    // that fed the HTTP wrappers' onlineFlag).
-    this.ui.setOnline(navigator.onLine);
-    window.addEventListener('online', () => this.ui.setOnline(true));
-    window.addEventListener('offline', () => this.ui.setOnline(false));
-  }
+export function skipLoader(context: HttpContext = new HttpContext()): HttpContext {
+  return context.set(SKIP_LOADER, true);
+}
+
+export function skipAuth(context: HttpContext = new HttpContext()): HttpContext {
+  return context.set(SKIP_AUTH, true);
 }

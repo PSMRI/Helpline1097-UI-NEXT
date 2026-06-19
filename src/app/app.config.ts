@@ -20,11 +20,23 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection } from '@angular/core';
+import {
+  ApplicationConfig,
+  provideBrowserGlobalErrorListeners,
+  provideZonelessChangeDetection,
+} from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
+import {
+  apiKeyInterceptor,
+  authInterceptor,
+  loaderInterceptor,
+  offlineInterceptor,
+  responseInterceptor,
+} from '@/app-modules/core/http';
+import { CtiService, CzentrixStubService } from '@/app-modules/core/services/cti.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -33,8 +45,18 @@ export const appConfig: ApplicationConfig = {
     // MUST be a signal or rendered via the async pipe — enforced by the PR review gate.
     provideZonelessChangeDetection(),
     provideRouter(routes),
-    // Functional HTTP interceptors are added here in Phase 1
-    // (auth, apiKey, loader, error/session).
-    provideHttpClient(withInterceptors([])),
-  ]
+    // Functional HTTP interceptors. Order matters: offline short-circuit → apikey →
+    // auth header → loader → response/session handling.
+    provideHttpClient(
+      withInterceptors([
+        offlineInterceptor,
+        apiKeyInterceptor,
+        authInterceptor,
+        loaderInterceptor,
+        responseInterceptor,
+      ]),
+    ),
+    // Czentrix telephony is stubbed for now (out of scope); swap for the real REST impl later.
+    { provide: CtiService, useClass: CzentrixStubService },
+  ],
 };

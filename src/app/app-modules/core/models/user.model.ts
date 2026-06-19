@@ -20,26 +20,26 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { Component, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { ZardLoaderComponent } from '@common-ui/ui/loader';
-import { ZardToastComponent } from '@common-ui/ui/toast';
-import { UiStore } from '@/app-modules/core/state/ui.store';
-
-@Component({
-  selector: 'app-root',
-  imports: [RouterOutlet, ZardLoaderComponent, ZardToastComponent],
-  templateUrl: './app.html',
-  styleUrl: './app.scss',
-})
-export class App {
-  protected readonly ui = inject(UiStore);
-
-  constructor() {
-    // Online/offline → UiStore (replaces the old AppComponent navigator.onLine wiring
-    // that fed the HTTP wrappers' onlineFlag).
-    this.ui.setOnline(navigator.onLine);
-    window.addEventListener('online', () => this.ui.setOnline(true));
-    window.addEventListener('offline', () => this.ui.setOnline(false));
-  }
+/**
+ * Auth / privilege models. Fields are intentionally minimal for Phase 1 and will be
+ * extended when the login flow is ported (Phase 3). The backend uses the (sic) spelling
+ * `previlegeObj` with `serviceName` — the role/service filter keys on `serviceName === '1097'`.
+ */
+export interface Privilege {
+  serviceID?: number;
+  serviceName?: string;
+  roleID?: number;
+  roleName?: string;
 }
+
+export interface User {
+  userID?: number | string;
+  userName?: string;
+  previlegeObj?: Privilege[];
+}
+
+/** Roles in Helpline1097. */
+export type Role = 'CO' | 'Supervisor' | 'Admin';
+
+/** This service line's privilege filter value. */
+export const SERVICE_1097 = '1097';

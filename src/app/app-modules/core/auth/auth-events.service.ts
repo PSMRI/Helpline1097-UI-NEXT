@@ -20,26 +20,21 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { Component, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { ZardLoaderComponent } from '@common-ui/ui/loader';
-import { ZardToastComponent } from '@common-ui/ui/toast';
-import { UiStore } from '@/app-modules/core/state/ui.store';
+import { Injectable } from '@angular/core';
+import { Observable, Subject } from 'rxjs';
 
-@Component({
-  selector: 'app-root',
-  imports: [RouterOutlet, ZardLoaderComponent, ZardToastComponent],
-  templateUrl: './app.html',
-  styleUrl: './app.scss',
-})
-export class App {
-  protected readonly ui = inject(UiStore);
+/**
+ * Cross-component auth events. Replaces the `logoutUserFromPreviousSession` BehaviorSubject
+ * that used to live inside the old InterceptedHttp. The response interceptor fires
+ * `requestLogoutFromOtherDevice()` after the user confirms the 5002 "already logged in"
+ * dialog; the login flow (Phase 3) subscribes to complete the logout-from-other-device.
+ */
+@Injectable({ providedIn: 'root' })
+export class AuthEventsService {
+  private readonly logoutFromOtherDevice = new Subject<void>();
+  readonly logoutFromOtherDevice$: Observable<void> = this.logoutFromOtherDevice.asObservable();
 
-  constructor() {
-    // Online/offline → UiStore (replaces the old AppComponent navigator.onLine wiring
-    // that fed the HTTP wrappers' onlineFlag).
-    this.ui.setOnline(navigator.onLine);
-    window.addEventListener('online', () => this.ui.setOnline(true));
-    window.addEventListener('offline', () => this.ui.setOnline(false));
+  requestLogoutFromOtherDevice(): void {
+    this.logoutFromOtherDevice.next();
   }
 }
