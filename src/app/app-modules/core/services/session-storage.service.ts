@@ -59,6 +59,10 @@ export const ENCRYPTED_KEYS = {
  */
 @Injectable({ providedIn: 'root' })
 export class SessionStorageService {
+  // Threat model: this AES layer is light obfuscation, not a security boundary. `encKey` is
+  // injected at build time and ships in the client bundle, so it is not secret from a
+  // determined client; dev/test use a blank key (effectively no encryption). Do not rely on
+  // this alone to protect truly sensitive data — it preserves the old app's storage contract.
   private readonly secretKey = environment.encKey;
 
   // ---- Encrypted (AES) — for ENCRYPTED_KEYS ----

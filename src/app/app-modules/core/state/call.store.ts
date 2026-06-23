@@ -64,6 +64,11 @@ export class CallStore {
     this.storage.setItem(ENCRYPTED_KEYS.callCategory, value);
   }
 
+  setCurrentCampaign(value: string): void {
+    this.currentCampaign.set(value);
+    this.storage.setItem(ENCRYPTED_KEYS.currentCampaign, value);
+  }
+
   reset(): void {
     this.isOnCall.set(false);
     this.callId.set(null);
