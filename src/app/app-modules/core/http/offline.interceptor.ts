@@ -27,13 +27,15 @@ import { NotificationService } from '../services/notification.service';
 import { UiStore } from '../state/ui.store';
 
 /**
- * Short-circuits requests when offline, mirroring the old `networkCheck()` in both HTTP
- * wrappers (alert + `Observable.empty()`). The online flag is fed by AppComponent.
+ * Short-circuits requests when offline, mirroring the old `networkCheck()` alert behaviour.
+ * GET/POST (PUT/DELETE slipped through); this guards ALL methods so offline behaviour is
+ * consistent. No backend impact — offline means nothing reaches the backend regardless.
  */
 export const offlineInterceptor: HttpInterceptorFn = (req, next) => {
   const ui = inject(UiStore);
+  const notify = inject(NotificationService);
   if (!ui.online()) {
-    inject(NotificationService).alert('You are offline. Please check', 'error');
+    notify.alert('You are offline. Please check', 'error');
     return EMPTY;
   }
   return next(req);

@@ -21,18 +21,18 @@
  */
 
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateFn } from '@angular/router';
 import { AuthService } from './auth.service';
 import { NotificationService } from '../services/notification.service';
 import { ENCRYPTED_KEYS, SessionStorageService } from '../services/session-storage.service';
 
 /**
- * Replaces the class-based AuthGuard. Allow only when logged in AND not mid-call
- * (blocks back-navigation during an active call). Reads the persisted source of truth
- * directly (plain `authToken`, encrypted `isOnCall`) — exactly as the old guard did.
+ * Faithful port of the old class-based AuthGuard: allow only when logged in AND not mid-call
+ * (blocks back-navigation during an active call). Returns `false` (blocks, no redirect) when
+ * not logged in — exactly as the old guard did. Reads the persisted source of truth directly
+ * (plain `authToken`, encrypted `isOnCall`).
  */
 export const authGuard: CanActivateFn = () => {
-  const router = inject(Router);
   const auth = inject(AuthService);
   const storage = inject(SessionStorageService);
   const notify = inject(NotificationService);
@@ -44,12 +44,12 @@ export const authGuard: CanActivateFn = () => {
     }
     return true;
   }
-  return router.parseUrl('');
+  return false;
 };
 
 /**
- * Replaces the class-based AuthGuard2. The innerpage/call screen is reachable only during
- * an active call.
+ * Faithful port of the old AuthGuard2: the innerpage/call screen is reachable only during an
+ * active call.
  */
 export const onCallGuard: CanActivateFn = () => {
   const storage = inject(SessionStorageService);

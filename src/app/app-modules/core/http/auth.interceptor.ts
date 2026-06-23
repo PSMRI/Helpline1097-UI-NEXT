@@ -26,9 +26,11 @@ import { AuthService } from '../auth/auth.service';
 import { SKIP_AUTH } from './http-context';
 
 /**
- * Attaches the `Authorization` token (read PLAIN, as the old app did) and the JSON
- * Content-Type. Skips the header for the public platform-feedback endpoints (old
- * `skipAuth` rule) and for FormData bodies (so multipart uploads keep their boundary).
+ * Faithful port of the old wrappers' header logic: ALWAYS send `Content-Type:
+ * application/json` and an `Authorization` header on every request, so the request shape
+ * the backend receives is unchanged. The token is read PLAIN (as the old app did); the
+ * Authorization value is empty for the public platform-feedback endpoints (old `skipAuth`
+ * rule) or when not logged in.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (req.context.get(SKIP_AUTH)) {
@@ -36,14 +38,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   }
   const token = inject(AuthService).getToken();
   const isPublic = req.url.includes('platform-feedback');
-  const isFormData = req.body instanceof FormData;
+  const authValue = !isPublic && token ? token : '';
 
-  let headers = req.headers;
-  if (!isFormData && !headers.has('Content-Type')) {
-    headers = headers.set('Content-Type', 'application/json');
-  }
-  if (!isPublic && token) {
-    headers = headers.set('Authorization', token);
-  }
+  const headers = req.headers
+    .set('Content-Type', 'application/json')
+    .set('Authorization', authValue);
   return next(req.clone({ headers }));
 };

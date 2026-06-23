@@ -79,7 +79,9 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
           case ApiStatus.DOMAIN_ERROR:
             return throwError(() => body);
           default:
-            return throwError(() => event.body);
+            // Faithful to the old AuthorizationWrapper: a response carrying truthy `data`
+            // is treated as success regardless of statusCode.
+            return body.data ? of(event) : throwError(() => event.body);
         }
       }
       return of(event);

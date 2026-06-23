@@ -23,18 +23,15 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
-import { ConfigService } from '../services/config.service';
 
 /**
- * Appends the APIMAN `apikey` query param, ported from `updateUrl()` in the old wrappers
- * (which read `apiman_key` from PLAIN sessionStorage).
+ * Appends the APIMAN `apikey` query param, a faithful port of `updateUrl()` from the old
+ * wrappers: append it whenever `apiman_key` exists in (PLAIN) sessionStorage.
  */
 export const apiKeyInterceptor: HttpInterceptorFn = (req, next) => {
   const apiKey = inject(AuthService).getApiKey();
-  const config = inject(ConfigService);
-  if (config.useApimanKey && apiKey) {
-    const separator = req.url.includes('?') ? '&' : '?';
-    req = req.clone({ url: `${req.url}${separator}apikey=${apiKey}` });
+  if (apiKey) {
+    req = req.clone({ url: `${req.url}?apikey=${apiKey}` });
   }
   return next(req);
 };
