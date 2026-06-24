@@ -40,8 +40,9 @@ export class UiStore {
     this.pending.update((n) => Math.max(0, n - 1));
   }
 
-  // Online/offline — fed by the AppComponent (navigator.onLine + online/offline events).
-  readonly online = signal(true);
+  // Online/offline — initialized from the browser's current connectivity (SSR-safe guard),
+  // then kept in sync by the AppComponent (navigator.onLine + online/offline events).
+  readonly online = signal(typeof navigator !== 'undefined' ? navigator.onLine : true);
   setOnline(value: boolean): void {
     this.online.set(value);
   }
