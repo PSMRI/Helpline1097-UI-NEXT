@@ -20,26 +20,18 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { Component, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { ZardLoaderComponent } from '@common-ui/ui/loader';
-import { ZardToastComponent } from '@common-ui/ui/toast';
-import { UiStore } from '@/app-modules/core/state/ui.store';
+import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { AuthService } from '../auth/auth.service';
 
-@Component({
-  selector: 'app-root',
-  imports: [RouterOutlet, ZardLoaderComponent, ZardToastComponent],
-  templateUrl: './app.html',
-  styleUrl: './app.scss',
-})
-export class App {
-  protected readonly ui = inject(UiStore);
-
-  constructor() {
-    // Online/offline → UiStore (replaces the old AppComponent navigator.onLine wiring
-    // that fed the HTTP wrappers' onlineFlag).
-    this.ui.setOnline(navigator.onLine);
-    window.addEventListener('online', () => this.ui.setOnline(true));
-    window.addEventListener('offline', () => this.ui.setOnline(false));
+/**
+ * Appends the APIMAN `apikey` query param, a faithful port of `updateUrl()` from the old
+ * wrappers: append it whenever `apiman_key` exists in (PLAIN) sessionStorage.
+ */
+export const apiKeyInterceptor: HttpInterceptorFn = (req, next) => {
+  const apiKey = inject(AuthService).getApiKey();
+  if (apiKey) {
+    req = req.clone({ url: `${req.url}?apikey=${apiKey}` });
   }
-}
+  return next(req);
+};

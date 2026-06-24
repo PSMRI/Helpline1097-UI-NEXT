@@ -20,26 +20,21 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { Component, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { ZardLoaderComponent } from '@common-ui/ui/loader';
-import { ZardToastComponent } from '@common-ui/ui/toast';
-import { UiStore } from '@/app-modules/core/state/ui.store';
+import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { finalize } from 'rxjs/operators';
+import { UiStore } from '../state/ui.store';
+import { SKIP_LOADER } from './http-context';
 
-@Component({
-  selector: 'app-root',
-  imports: [RouterOutlet, ZardLoaderComponent, ZardToastComponent],
-  templateUrl: './app.html',
-  styleUrl: './app.scss',
-})
-export class App {
-  protected readonly ui = inject(UiStore);
-
-  constructor() {
-    // Online/offline → UiStore (replaces the old AppComponent navigator.onLine wiring
-    // that fed the HTTP wrappers' onlineFlag).
-    this.ui.setOnline(navigator.onLine);
-    window.addEventListener('online', () => this.ui.setOnline(true));
-    window.addEventListener('offline', () => this.ui.setOnline(false));
+/**
+ * Shows the global loader for the duration of a request, unless the caller opts out with
+ * `{ context: skipLoader() }` (the old `AuthorizationWrapper`-vs-`InterceptedHttp` choice).
+ */
+export const loaderInterceptor: HttpInterceptorFn = (req, next) => {
+  if (req.context.get(SKIP_LOADER)) {
+    return next(req);
   }
-}
+  const ui = inject(UiStore);
+  ui.showLoader();
+  return next(req).pipe(finalize(() => ui.hideLoader()));
+};

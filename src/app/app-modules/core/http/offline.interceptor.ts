@@ -20,26 +20,23 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { Component, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { ZardLoaderComponent } from '@common-ui/ui/loader';
-import { ZardToastComponent } from '@common-ui/ui/toast';
-import { UiStore } from '@/app-modules/core/state/ui.store';
+import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { EMPTY } from 'rxjs';
+import { NotificationService } from '../services/notification.service';
+import { UiStore } from '../state/ui.store';
 
-@Component({
-  selector: 'app-root',
-  imports: [RouterOutlet, ZardLoaderComponent, ZardToastComponent],
-  templateUrl: './app.html',
-  styleUrl: './app.scss',
-})
-export class App {
-  protected readonly ui = inject(UiStore);
-
-  constructor() {
-    // Online/offline → UiStore (replaces the old AppComponent navigator.onLine wiring
-    // that fed the HTTP wrappers' onlineFlag).
-    this.ui.setOnline(navigator.onLine);
-    window.addEventListener('online', () => this.ui.setOnline(true));
-    window.addEventListener('offline', () => this.ui.setOnline(false));
+/**
+ * Short-circuits requests when offline, mirroring the old `networkCheck()` alert behaviour.
+ * GET/POST (PUT/DELETE slipped through); this guards ALL methods so offline behaviour is
+ * consistent. No backend impact — offline means nothing reaches the backend regardless.
+ */
+export const offlineInterceptor: HttpInterceptorFn = (req, next) => {
+  const ui = inject(UiStore);
+  const notify = inject(NotificationService);
+  if (!ui.online()) {
+    notify.alert('You are offline. Please check', 'error');
+    return EMPTY;
   }
-}
+  return next(req);
+};
