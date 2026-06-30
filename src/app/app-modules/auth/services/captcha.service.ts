@@ -31,26 +31,34 @@ import { ConfigService } from '@/app-modules/core/services/config.service';
 export class CaptchaService {
   private readonly config = inject(ConfigService);
   private scriptLoaded = false;
+  /** The in-flight load, reused so concurrent callers don't append duplicate scripts. */
+  private loadPromise: Promise<void> | null = null;
 
   loadScript(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (this.scriptLoaded) {
-        resolve();
-        return;
-      }
+    if (this.scriptLoaded) {
+      return Promise.resolve();
+    }
+    if (this.loadPromise) {
+      return this.loadPromise;
+    }
+    this.loadPromise = new Promise((resolve, reject) => {
       const script = document.createElement('script');
       script.src = this.config.captchaChallengeURL;
       script.async = true;
       script.defer = true;
       script.onload = () => {
         this.scriptLoaded = true;
+        this.loadPromise = null;
         resolve();
       };
       script.onerror = () => {
         this.scriptLoaded = false;
+        this.loadPromise = null;
+        script.remove();
         reject(new Error('Failed to load the captcha challenge script.'));
       };
       document.head.appendChild(script);
     });
+    return this.loadPromise;
   }
 }

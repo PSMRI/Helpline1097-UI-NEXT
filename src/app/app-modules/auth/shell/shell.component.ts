@@ -118,6 +118,7 @@ export class ShellComponent {
     this.storage.removeItem(ENCRYPTED_KEYS.isEverwellCall);
     this.storage.removeItem(ENCRYPTED_KEYS.isGrievanceCall);
     this.storage.removeItem(PLAIN_KEYS.apimanKey);
+    this.storage.removeItem(PLAIN_KEYS.userId);
     this.storage.removeItem(ENCRYPTED_KEYS.setLanguage);
     this.ui.setLanguage('English');
     this.auth.removeToken();
