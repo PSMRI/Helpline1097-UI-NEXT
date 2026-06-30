@@ -22,7 +22,7 @@
 
 // Test/UAT environment. fileReplacements source for the `test` configuration.
 // NOTE: confirm the real TEST host with the backend team.
-const testHost = 'https://amritwprdev.piramalswasthya.org/';
+const testHost = 'https://uatamrit.piramalswasthya.org/';
 const sessionStorageEncKey = '';
 const commonAPI = `${testHost}common-api/`;
 const adminAPI = `${testHost}admin-api/`;

@@ -21,21 +21,25 @@
  */
 
 import { inject } from '@angular/core';
-import { CanActivateFn } from '@angular/router';
+import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from './auth.service';
 import { NotificationService } from '../services/notification.service';
 import { ENCRYPTED_KEYS, SessionStorageService } from '../services/session-storage.service';
 
 /**
- * Faithful port of the old class-based AuthGuard: allow only when logged in AND not mid-call
- * (blocks back-navigation during an active call). Returns `false` (blocks, no redirect) when
- * not logged in — exactly as the old guard did. Reads the persisted source of truth directly
- * (plain `authToken`, encrypted `isOnCall`).
+ * Port of the old class-based AuthGuard: allow only when logged in AND not mid-call.
+ *  - mid-call (`isOnCall === 'yes'`) → block in place (`false`) so the agent can't navigate
+ *    away during a live call — faithful to the old guard.
+ *  - not logged in → redirect to the login page. (The old guard returned `false` here, but it
+ *    paired with `skipLocationChange` so these were never real URLs; with real routes that
+ *    leaves a blank page, so we send the user to login instead — frontend-only, same security.)
+ * Reads the persisted source of truth directly (plain `authToken`, encrypted `isOnCall`).
  */
 export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const storage = inject(SessionStorageService);
   const notify = inject(NotificationService);
+  const router = inject(Router);
 
   if (auth.isLoggedIn()) {
     if (storage.getItem(ENCRYPTED_KEYS.isOnCall) === 'yes') {
@@ -44,7 +48,7 @@ export const authGuard: CanActivateFn = () => {
     }
     return true;
   }
-  return false;
+  return router.createUrlTree(['']);
 };
 
 /**

@@ -1,0 +1,190 @@
+<!--
+  AMRIT – Accessible Medical Records via Integrated Technologies
+  Integrated EHR (Electronic Health Records) Solution
+
+  Copyright (C) "Piramal Swasthya Management and Research Institute"
+
+  This file is part of AMRIT.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see https://www.gnu.org/licenses/.
+-->
+
+<div
+  class="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 p-4"
+>
+  <z-card class="w-full max-w-lg">
+    <z-card-header class="justify-items-center text-center">
+      <img src="assets/images/Swasthya.png" alt="Piramal Swasthya" class="mx-auto h-12 w-auto" />
+      <z-card-title class="mt-2 text-xl">Account Support</z-card-title>
+      <z-card-description>Follow the steps to change/reset the password</z-card-description>
+    </z-card-header>
+
+    <z-card-content>
+      <!-- Stage 1: choose 3 distinct questions + answers -->
+      @if (stage() === 'questions') {
+        <form [formGroup]="questionsForm" class="flex flex-col gap-5">
+          <!-- Question 1 -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium">Question 1 <span class="text-destructive">*</span></label>
+            <z-select formControlName="question1" zPlaceholder="Select a question" class="w-full">
+              @for (q of options1(); track q.QuestionID) {
+                <z-select-item [zValue]="q.QuestionID + ''">{{ q.Question }}</z-select-item>
+              }
+            </z-select>
+            <input
+              z-input
+              formControlName="answer1"
+              [appRestrictInput]="answerBlockPattern"
+              type="text"
+              placeholder="Answer 1"
+              autocomplete="off"
+              aria-label="Answer 1"
+            />
+          </div>
+
+          <!-- Question 2 -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium">Question 2 <span class="text-destructive">*</span></label>
+            <z-select formControlName="question2" zPlaceholder="Select a question" class="w-full">
+              @for (q of options2(); track q.QuestionID) {
+                <z-select-item [zValue]="q.QuestionID + ''">{{ q.Question }}</z-select-item>
+              }
+            </z-select>
+            <input
+              z-input
+              formControlName="answer2"
+              [appRestrictInput]="answerBlockPattern"
+              type="text"
+              placeholder="Answer 2"
+              autocomplete="off"
+              aria-label="Answer 2"
+            />
+          </div>
+
+          <!-- Question 3 -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium">Question 3 <span class="text-destructive">*</span></label>
+            <z-select formControlName="question3" zPlaceholder="Select a question" class="w-full">
+              @for (q of options3(); track q.QuestionID) {
+                <z-select-item [zValue]="q.QuestionID + ''">{{ q.Question }}</z-select-item>
+              }
+            </z-select>
+            <input
+              z-input
+              formControlName="answer3"
+              [appRestrictInput]="answerBlockPattern"
+              type="text"
+              placeholder="Answer 3"
+              autocomplete="off"
+              aria-label="Answer 3"
+            />
+          </div>
+
+          <button z-button type="button" zFull [zDisabled]="!questionsValid()" (click)="goToPassword()">
+            Next
+          </button>
+        </form>
+      }
+
+      <!-- Stage 2: set the password -->
+      @if (stage() === 'password') {
+        <form
+          [formGroup]="passwordForm"
+          (ngSubmit)="updatePassword()"
+          autocomplete="off"
+          class="flex flex-col gap-4"
+        >
+          <!-- New password -->
+          <div class="flex flex-col gap-1.5">
+            <label for="newpwd" class="text-sm font-medium">
+              New Password <span class="text-destructive">*</span>
+            </label>
+            <div class="flex items-center gap-2">
+              <div class="relative flex-1">
+                <ng-icon
+                  name="lucideLock"
+                  class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <input
+                  z-input
+                  id="newpwd"
+                  formControlName="newpwd"
+                  [type]="showPassword() ? 'text' : 'password'"
+                  class="pl-9"
+                  placeholder="New Password"
+                  autocomplete="new-password"
+                />
+              </div>
+              <button
+                type="button"
+                class="flex h-9 w-10 shrink-0 items-center justify-center rounded-lg border border-input text-muted-foreground transition-colors hover:bg-accent"
+                aria-label="Show password"
+                (mousedown)="revealPassword(true)"
+                (mouseup)="revealPassword(false)"
+                (mouseleave)="revealPassword(false)"
+              >
+                <ng-icon name="lucideEye" />
+              </button>
+            </div>
+            @if (passwordForm.controls.newpwd.touched && passwordForm.controls.newpwd.invalid) {
+              <p class="text-xs text-destructive">
+                Password is required (min:8, max:12, alphanumeric, 1 special character, 1 upper case)
+              </p>
+            }
+          </div>
+
+          <!-- Confirm password -->
+          <div class="flex flex-col gap-1.5">
+            <label for="confirmpwd" class="text-sm font-medium">
+              Confirm Password <span class="text-destructive">*</span>
+            </label>
+            <div class="flex items-center gap-2">
+              <div class="relative flex-1">
+                <ng-icon
+                  name="lucideLock"
+                  class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <input
+                  z-input
+                  id="confirmpwd"
+                  formControlName="confirmpwd"
+                  [type]="showPassword() ? 'text' : 'password'"
+                  class="pl-9"
+                  placeholder="Confirm Password"
+                  autocomplete="new-password"
+                />
+              </div>
+              <button
+                type="button"
+                class="flex h-9 w-10 shrink-0 items-center justify-center rounded-lg border border-input text-muted-foreground transition-colors hover:bg-accent"
+                aria-label="Show password"
+                (mousedown)="revealPassword(true)"
+                (mouseup)="revealPassword(false)"
+                (mouseleave)="revealPassword(false)"
+              >
+                <ng-icon name="lucideEye" />
+              </button>
+            </div>
+          </div>
+
+          <button z-button type="submit" zFull [zDisabled]="!passwordValid()">Update Password</button>
+        </form>
+      }
+    </z-card-content>
+  </z-card>
+
+  <footer class="mt-6 text-center text-xs text-muted-foreground">
+    <p>&copy; 2026 PSMRI &middot; AMRIT</p>
+  </footer>
+</div>
