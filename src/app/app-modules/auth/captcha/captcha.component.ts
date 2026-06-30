@@ -64,7 +64,13 @@ export class CaptchaComponent implements AfterViewInit, OnDestroy {
   private widgetId?: string;
 
   async ngAfterViewInit(): Promise<void> {
-    await this.captchaService.loadScript();
+    try {
+      await this.captchaService.loadScript();
+    } catch {
+      // Script failed to load — fail closed: no widget renders, so no token is emitted and
+      // the login button stays disabled. Swallow to avoid an unhandled promise rejection.
+      return;
+    }
     if (typeof turnstile === 'undefined') {
       return;
     }
