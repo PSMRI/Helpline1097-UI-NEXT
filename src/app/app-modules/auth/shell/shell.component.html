@@ -47,6 +47,64 @@
 
       <span class="hidden text-sm sm:inline">Welcome {{ userName() }}</span>
 
+      <!-- Emergency contacts (Dashboard only) -->
+      @if (showContacts()) {
+        <button
+          type="button"
+          class="flex h-8 w-8 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15"
+          aria-label="Emergency contacts"
+          title="Emergency contacts"
+          (click)="openEmergencyContacts()"
+        >
+          <ng-icon name="lucidePhone" class="text-xl" />
+        </button>
+      }
+
+      <!-- Force logout (CO only, Dashboard only) -->
+      @if (showContacts() && isCO()) {
+        <button
+          type="button"
+          class="flex h-8 w-8 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15"
+          aria-label="Force logout"
+          title="Force logout"
+          (click)="openForceLogout()"
+        >
+          <ng-icon name="lucideUserX" class="text-xl" />
+        </button>
+      }
+
+      <!-- User menu -->
+      <button
+        type="button"
+        [zMenuTriggerFor]="userMenu"
+        class="flex h-8 w-8 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15"
+        aria-label="User menu"
+        title="User"
+      >
+        <ng-icon name="lucideUser" class="text-xl" />
+      </button>
+      <z-menu #userMenu>
+        <div class="px-3 py-1.5">
+          <p class="text-sm font-medium">{{ userName() }}</p>
+          <p class="text-xs text-muted-foreground">ID: {{ idRoleService() }}</p>
+        </div>
+      </z-menu>
+
+      <!-- Help menu -->
+      <button
+        type="button"
+        [zMenuTriggerFor]="helpMenu"
+        class="flex h-8 w-8 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15"
+        aria-label="Help"
+        title="Help"
+      >
+        <ng-icon name="lucideCircleHelp" class="text-xl" />
+      </button>
+      <z-menu #helpMenu>
+        <button z-menu-item (click)="openVersion()">Version</button>
+        <button z-menu-item (click)="openLicense()">License Info</button>
+      </z-menu>
+
       <button
         type="button"
         class="flex h-8 w-8 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15"

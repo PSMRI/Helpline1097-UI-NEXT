@@ -24,12 +24,16 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucidePower } from '@ng-icons/lucide';
+import { lucideCircleHelp, lucidePhone, lucidePower, lucideUser, lucideUserX } from '@ng-icons/lucide';
 import { filter, map, startWith } from 'rxjs/operators';
 
+import { menuImports } from '@common-ui/ui/menu';
 import { ZardSelectImports } from '@common-ui/ui/select';
+import { ZardDialogService } from '@common-ui/ui/dialog';
 
+import { APP_VERSION } from '@/app-modules/core/app-version';
 import { AuthService } from '@/app-modules/core/auth/auth.service';
+import { ConfigService } from '@/app-modules/core/services/config.service';
 import { CtiService } from '@/app-modules/core/services/cti.service';
 import {
   ENCRYPTED_KEYS,
@@ -40,8 +44,9 @@ import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 import { UiStore } from '@/app-modules/core/state/ui.store';
 
-/** App version shown in the footer. TODO: source from package.json when versioning is set up. */
-const APP_VERSION = '0.0.0';
+import { EmergencyContactsDialogComponent } from './emergency-contacts-dialog.component';
+import { ForceLogoutDialogComponent } from './force-logout-dialog.component';
+import { VersionDialogComponent } from './version-dialog.component';
 
 /**
  * Authenticated shell — minimal port of the old `MultiRoleScreenComponent`: a blue header
@@ -53,16 +58,20 @@ const APP_VERSION = '0.0.0';
  */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, NgIcon, ...ZardSelectImports],
+  imports: [RouterOutlet, NgIcon, ...ZardSelectImports, ...menuImports],
   templateUrl: './shell.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ lucidePower })],
+  viewProviders: [
+    provideIcons({ lucidePower, lucideUser, lucideCircleHelp, lucidePhone, lucideUserX }),
+  ],
 })
 export class ShellComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
   private readonly cti = inject(CtiService);
+  private readonly config = inject(ConfigService);
+  private readonly dialog = inject(ZardDialogService);
   private readonly storage = inject(SessionStorageService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
@@ -75,6 +84,19 @@ export class ShellComponent {
   protected readonly languages = ['English', 'Hindi', 'Assamese'];
 
   protected readonly userName = computed(() => this.sessionStore.user()?.userName ?? '');
+
+  /** Old header's "ID: {agentId|userId}-{role}-{service}" identity line in the user menu. */
+  protected readonly idRoleService = computed(() => {
+    const id = this.sessionStore.agentId() ?? this.sessionStore.userId() ?? '';
+    const role = this.sessionStore.currentRole() ?? '';
+    const service = this.sessionStore.currentServiceName() ?? '';
+    return `${id}-${role}-${service}`;
+  });
+
+  /** Emergency-contacts + force-logout icons show only on the Dashboard (old `showContacts`). */
+  protected readonly showContacts = computed(() => this.title().includes('Dashboard'));
+  /** Force-logout is CO-only. */
+  protected readonly isCO = computed(() => this.sessionStore.currentRole() === 'CO');
 
   /** Page title from the active child route's `data.title` (e.g. "Select your role"). */
   protected readonly title = toSignal(
@@ -99,6 +121,43 @@ export class ShellComponent {
 
   protected onLanguageChange(value: string | string[]): void {
     this.ui.setLanguage(Array.isArray(value) ? (value[0] ?? '') : value);
+  }
+
+  /** Help → Version: UI vs API build info (old `viewVersionDetails`). */
+  protected openVersion(): void {
+    this.dialog.create({
+      zTitle: 'Version',
+      zContent: VersionDialogComponent,
+      zOkText: null,
+      zCancelText: 'Close',
+    });
+  }
+
+  /** Help → License Info: opens the backend-served license page (old `licenseURL`). */
+  protected openLicense(): void {
+    window.open(`${this.config.openCommonBaseURL}license.html`, '_blank', 'noopener');
+  }
+
+  /** Emergency contacts (Dashboard only). */
+  protected openEmergencyContacts(): void {
+    this.dialog.create({
+      zTitle: 'Emergency Contacts',
+      zContent: EmergencyContactsDialogComponent,
+      zOkText: null,
+      zCancelText: 'Close',
+      zWidth: '700px',
+    });
+  }
+
+  /** Force-logout another agent (CO only). */
+  protected openForceLogout(): void {
+    this.dialog.create({
+      zTitle: 'Force Logout',
+      zContent: ForceLogoutDialogComponent,
+      zOkText: null,
+      zCancelText: 'Cancel',
+      zWidth: '460px',
+    });
   }
 
   /**
