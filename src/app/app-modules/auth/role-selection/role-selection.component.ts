@@ -68,6 +68,7 @@ export class RoleSelectionComponent {
     if (service.serviceName === '1097' && roleName) {
       this.storage.setPlain(PLAIN_KEYS.apimanKey, service.apimanClientKey ?? '');
       this.sessionStore.currentRole.set(roleName);
+      this.sessionStore.currentRoleId.set(role.RoleID ?? null);
       this.sessionStore.currentServiceName.set(service.serviceName ?? null);
       this.sessionStore.currentServiceId.set(service.serviceID ?? null);
       const agentId = role.agentID ?? this.sessionStore.agentId();

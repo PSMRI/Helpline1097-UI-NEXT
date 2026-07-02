@@ -37,6 +37,7 @@ export class SessionStore {
   readonly user = signal<User | null>(null);
   readonly privileges = signal<Privilege[]>([]);
   readonly currentRole = signal<Role | null>(null);
+  readonly currentRoleId = signal<number | null>(null);
   readonly currentServiceId = signal<number | null>(null);
   readonly currentServiceName = signal<string | null>(null);
   readonly agentId = signal<number | null>(null);
@@ -58,6 +59,7 @@ export class SessionStore {
     this.user.set(null);
     this.privileges.set([]);
     this.currentRole.set(null);
+    this.currentRoleId.set(null);
     this.currentServiceId.set(null);
     this.currentServiceName.set(null);
     this.agentId.set(null);
