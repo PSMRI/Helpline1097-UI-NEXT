@@ -22,6 +22,7 @@
 
 import { Routes } from '@angular/router';
 import { authGuard } from './app-modules/core/auth/auth.guard';
+import { roleSelectedGuard, sessionHydrationGuard } from './app-modules/auth/guards/shell.guards';
 
 /**
  * Auth routes use the OLD app's path strings verbatim (e.g. `resetPassword`,
@@ -65,6 +66,8 @@ export const routes: Routes = [
     path: 'MultiRoleScreenComponent',
     loadComponent: () =>
       import('./app-modules/auth/shell/shell.component').then((m) => m.ShellComponent),
+    // Re-hydrate the session on a full reload (token present, in-memory store empty).
+    canActivate: [sessionHydrationGuard],
     canActivateChild: [authGuard],
     children: [
       {
@@ -81,6 +84,8 @@ export const routes: Routes = [
           import('./app-modules/auth/dashboard/dashboard.component').then(
             (m) => m.DashboardComponent,
           ),
+        // Dashboard needs a selected role; after a reload it's gone → back to role selection.
+        canActivate: [roleSelectedGuard],
         // `showContacts` gates the emergency-contacts / force-logout header icons,
         // read independently of the (later-localized) display title.
         data: { title: 'Dashboard', showContacts: true },
