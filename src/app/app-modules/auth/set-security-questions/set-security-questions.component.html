@@ -110,25 +110,23 @@
             <label for="newpwd" class="text-sm font-medium">
               New Password <span class="text-destructive">*</span>
             </label>
-            <div class="flex items-center gap-2">
-              <div class="relative flex-1">
-                <ng-icon
-                  name="lucideLock"
-                  class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                />
-                <input
-                  z-input
-                  id="newpwd"
-                  formControlName="newpwd"
-                  [type]="showPassword() ? 'text' : 'password'"
-                  class="pl-9"
-                  placeholder="New Password"
-                  autocomplete="new-password"
-                />
-              </div>
+            <div class="relative">
+              <ng-icon
+                name="lucideLock"
+                class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                z-input
+                id="newpwd"
+                formControlName="newpwd"
+                [type]="showPassword() ? 'text' : 'password'"
+                class="px-9"
+                placeholder="New Password"
+                autocomplete="new-password"
+              />
               <button
                 type="button"
-                class="flex h-9 w-10 shrink-0 items-center justify-center rounded-lg border border-input text-muted-foreground transition-colors hover:bg-accent"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                 aria-label="Show password"
                 (mousedown)="revealPassword(true)"
                 (mouseup)="revealPassword(false)"
@@ -149,25 +147,23 @@
             <label for="confirmpwd" class="text-sm font-medium">
               Confirm Password <span class="text-destructive">*</span>
             </label>
-            <div class="flex items-center gap-2">
-              <div class="relative flex-1">
-                <ng-icon
-                  name="lucideLock"
-                  class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                />
-                <input
-                  z-input
-                  id="confirmpwd"
-                  formControlName="confirmpwd"
-                  [type]="showPassword() ? 'text' : 'password'"
-                  class="pl-9"
-                  placeholder="Confirm Password"
-                  autocomplete="new-password"
-                />
-              </div>
+            <div class="relative">
+              <ng-icon
+                name="lucideLock"
+                class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                z-input
+                id="confirmpwd"
+                formControlName="confirmpwd"
+                [type]="showPassword() ? 'text' : 'password'"
+                class="px-9"
+                placeholder="Confirm Password"
+                autocomplete="new-password"
+              />
               <button
                 type="button"
-                class="flex h-9 w-10 shrink-0 items-center justify-center rounded-lg border border-input text-muted-foreground transition-colors hover:bg-accent"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                 aria-label="Show password"
                 (mousedown)="revealPassword(true)"
                 (mouseup)="revealPassword(false)"

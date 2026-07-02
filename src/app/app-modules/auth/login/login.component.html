@@ -60,25 +60,23 @@
           <label for="password" class="text-sm font-medium">
             Password <span class="text-destructive">*</span>
           </label>
-          <div class="flex items-center gap-2">
-            <div class="relative flex-1">
-              <ng-icon
-                name="lucideLock"
-                class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              />
-              <input
-                z-input
-                id="password"
-                formControlName="password"
-                [type]="showPassword() ? 'text' : 'password'"
-                class="pl-9"
-                placeholder="Enter password"
-                autocomplete="off"
-              />
-            </div>
+          <div class="relative">
+            <ng-icon
+              name="lucideLock"
+              class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
+            <input
+              z-input
+              id="password"
+              formControlName="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              class="px-9"
+              placeholder="Enter password"
+              autocomplete="off"
+            />
             <button
               type="button"
-              class="flex h-9 w-10 shrink-0 items-center justify-center rounded-lg border border-input text-muted-foreground transition-colors hover:bg-accent"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
               aria-label="Show password"
               (mousedown)="revealPassword(true)"
               (mouseup)="revealPassword(false)"
