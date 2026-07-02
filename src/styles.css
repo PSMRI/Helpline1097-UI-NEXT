@@ -20,10 +20,14 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-/*
- * AMRIT Helpline1097-UI-NEXT — global styles
- * Tailwind CSS v4 + Zard UI (shadcn) design tokens.
- */
+/* ============================================================
+   AMRIT ZardUI theme — blue + white, healthcare-friendly
+   Built from the colors AMRIT already uses everywhere (primary #0277bd
+   + white). Exact hex values — Tailwind v4 accepts hex in tokens, so no
+   conversion drift. This is the single shared theme that MMU / 104 / 1097
+   all import.
+   ============================================================ */
+
 @import 'tailwindcss';
 @plugin 'tailwindcss-animate';
 
@@ -32,56 +36,84 @@
 :root {
   --radius: 0.625rem;
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  /* Piramal blue/white — PROVISIONAL; confirm exact palette with Gopi + Aarti (decision D3). */
-  --primary: oklch(0.48 0.13 248);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0.01 248);
-  --secondary-foreground: oklch(0.3 0.04 248);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.95 0.03 248);
-  --accent-foreground: oklch(0.3 0.06 248);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.48 0.13 248);
+  /* surfaces — white background, near-black text */
+  --background: #ffffff;
+  --foreground: #212529;
+  --card: #ffffff;
+  --card-foreground: #212529;
+  --popover: #ffffff;
+  --popover-foreground: #212529;
+
+  /* AMRIT brand blue */
+  --primary: #0277bd;
+  --primary-foreground: #ffffff;
+
+  /* secondary / muted / accent */
+  --secondary: #f8f9fa;
+  --secondary-foreground: #212529;
+  --muted: #f8f9fa;
+  --muted-foreground: #6c757d;
+  --accent: #f0f5f5;
+  --accent-foreground: #212529;
+
+  /* destructive (delete / errors) */
+  --destructive: #dc3545;
+  --destructive-foreground: #ffffff;
+
+  /* lines & focus */
+  --border: #dee2e6;
+  --input: #dee2e6;
+  --ring: #0277bd;
+
+  /* extra AMRIT status colors (MMU uses these a lot) */
+  --success: #198754;
+  --success-foreground: #ffffff;
+  --warning: #ffc107;
+  --warning-foreground: #212529;
+  --info: #0dcaf0;
+  --info-foreground: #212529;
+
+  /* charts — AMRIT semantic colors */
+  --chart-1: #0277bd; /* blue   */
+  --chart-2: #198754; /* green  */
+  --chart-3: #0dcaf0; /* cyan   */
+  --chart-4: #ffc107; /* yellow */
+  --chart-5: #dc3545; /* red    */
 }
 
+/* Dark mode — AMRIT doesn't ship dark today; sensible defaults, tune later */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.7 0.12 248);
-  --primary-foreground: oklch(0.2 0.02 248);
-  --secondary: oklch(0.269 0.02 248);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: #1a1d20;
+  --foreground: #f8f9fa;
+  --card: #212529;
+  --card-foreground: #f8f9fa;
+  --popover: #212529;
+  --popover-foreground: #f8f9fa;
+  --primary: #4fc3f7; /* lighter blue for contrast on dark */
+  --primary-foreground: #102027;
+  --secondary: #2b3035;
+  --secondary-foreground: #f8f9fa;
+  --muted: #2b3035;
+  --muted-foreground: #adb5bd;
+  --accent: #2b3035;
+  --accent-foreground: #f8f9fa;
+  --destructive: #e4606d;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #4fc3f7;
+  --success: #2fb380;
+  --warning: #ffca2c;
+  --info: #3dd5f3;
+  --chart-1: #4fc3f7;
+  --chart-2: #2fb380;
+  --chart-3: #3dd5f3;
+  --chart-4: #ffca2c;
+  --chart-5: #e4606d;
 }
 
+/* Map tokens → Tailwind color names so bg-primary, text-muted-foreground, etc. work */
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -101,14 +133,47 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* NOTE (coexistence): this global border reset + Tailwind preflight can clash
+   with Bootstrap/Material on un-migrated screens during the transition. If
+   un-migrated pages change unexpectedly, scope or temporarily drop this layer —
+   to be validated in the pilot. */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+  }
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
     margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  /* Suppress the browser's native password-reveal control (Edge/IE) so it doesn't
+     show alongside the app's own show/hide toggle. */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
   }
 }

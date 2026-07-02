@@ -21,20 +21,44 @@
  */
 
 /**
- * Auth / privilege models. Fields are intentionally minimal for Phase 1 and will be
- * extended when the login flow is ported (Phase 3). The backend uses the (sic) spelling
- * `previlegeObj` with `serviceName` — the role/service filter keys on `serviceName === '1097'`.
+ * Auth / privilege models. The backend uses the (sic) spelling `previlegeObj` with
+ * `serviceName` — the role/service filter keys on `serviceName === '1097'`. The nested
+ * shape (service → roles → screen mappings) is what `userAuthenticate` returns and what
+ * role-selection walks; everything is optional because deployments populate it unevenly.
  */
+export interface ServiceRoleScreenMapping {
+  screen?: { screenName?: string };
+  providerServiceMapping?: {
+    ctiCampaignName?: string;
+    m_ServiceMaster?: { serviceID?: number };
+  };
+}
+
+/** A role the user holds under a service (CO, Supervisor, …). */
+export interface RolePrivilege {
+  RoleID?: number;
+  RoleName?: string;
+  workingLocationID?: number;
+  agentID?: number | string;
+  serviceRoleScreenMappings?: ServiceRoleScreenMapping[];
+}
+
+/** A service the user is privileged for (filtered by `serviceName === '1097'`). */
 export interface Privilege {
   serviceID?: number;
   serviceName?: string;
   roleID?: number;
   roleName?: string;
+  apimanClientKey?: string;
+  agentID?: number | string;
+  roles?: RolePrivilege[];
 }
 
 export interface User {
   userID?: number | string;
   userName?: string;
+  agentID?: number | string;
+  loginIPAddress?: string;
   previlegeObj?: Privilege[];
 }
 
