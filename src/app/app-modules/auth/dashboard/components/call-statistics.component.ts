@@ -21,6 +21,8 @@
  */
 
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideClock, lucideCoffee, lucidePhone, lucidePhoneCall } from '@ng-icons/lucide';
 
 import { cardImports } from '@common-ui/ui/card';
 
@@ -29,6 +31,7 @@ interface StatTile {
   label: string;
   value: string;
   time: boolean;
+  icon: string;
 }
 
 /**
@@ -38,18 +41,24 @@ interface StatTile {
  */
 @Component({
   selector: 'app-call-statistics',
-  imports: [...cardImports],
+  imports: [...cardImports, NgIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  viewProviders: [provideIcons({ lucidePhone, lucideCoffee, lucideClock, lucidePhoneCall })],
   template: `
     <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
       @for (tile of tiles; track tile.label) {
-        <z-card class="text-center">
-          <z-card-content class="flex flex-col gap-1 py-4">
-            <span class="text-2xl font-semibold text-primary">{{ blank() ? '—' : tile.value }}</span>
-            <span class="text-xs text-muted-foreground">{{ tile.label }}</span>
-            @if (tile.time) {
-              <span class="text-[10px] uppercase tracking-wide text-muted-foreground">Hrs : Mins : Secs</span>
-            }
+        <z-card class="border-l-4 border-primary/70 shadow-sm transition-shadow hover:shadow-md">
+          <z-card-content class="flex items-center gap-3 py-4">
+            <ng-icon [name]="tile.icon" class="text-2xl text-primary/70" />
+            <div class="flex min-w-0 flex-col">
+              <span class="text-2xl font-semibold text-foreground">
+                {{ blank() ? '—' : tile.value }}
+              </span>
+              <span class="text-xs text-muted-foreground">{{ tile.label }}</span>
+              @if (tile.time) {
+                <span class="text-[11px] tracking-wider text-muted-foreground/80">Hrs : Mins : Secs</span>
+              }
+            </div>
           </z-card-content>
         </z-card>
       }
@@ -62,9 +71,9 @@ export class CallStatisticsComponent {
 
   // Placeholder values until Phase 4d wires CTI getAgentCallStats.
   protected readonly tiles: StatTile[] = [
-    { label: 'Call Duration', value: '00:00:00', time: true },
-    { label: 'Break Time', value: '00:00:00', time: true },
-    { label: 'Free Time', value: '00:00:00', time: true },
-    { label: 'Total Calls', value: '0', time: false },
+    { label: 'Call Duration', value: '00:00:00', time: true, icon: 'lucidePhone' },
+    { label: 'Break Time', value: '00:00:00', time: true, icon: 'lucideCoffee' },
+    { label: 'Free Time', value: '00:00:00', time: true, icon: 'lucideClock' },
+    { label: 'Total Calls', value: '0', time: false, icon: 'lucidePhoneCall' },
   ];
 }

@@ -51,7 +51,7 @@
       @if (showContacts()) {
         <button
           type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15"
+          class="flex h-9 w-9 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/60"
           aria-label="Emergency contacts"
           title="Emergency contacts"
           (click)="openEmergencyContacts()"
@@ -64,7 +64,7 @@
       @if (showContacts() && isCO()) {
         <button
           type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15"
+          class="flex h-9 w-9 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/60"
           aria-label="Force logout"
           title="Force logout"
           (click)="openForceLogout()"
@@ -77,7 +77,7 @@
       <button
         type="button"
         [zMenuTriggerFor]="userMenu"
-        class="flex h-8 w-8 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15"
+        class="flex h-9 w-9 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/60"
         aria-label="User menu"
         title="User"
       >
@@ -94,7 +94,7 @@
       <button
         type="button"
         [zMenuTriggerFor]="helpMenu"
-        class="flex h-8 w-8 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15"
+        class="flex h-9 w-9 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/60"
         aria-label="Help"
         title="Help"
       >
@@ -107,7 +107,7 @@
 
       <button
         type="button"
-        class="flex h-8 w-8 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15"
+        class="flex h-9 w-9 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/60"
         aria-label="Logout"
         title="Logout"
         (click)="logout()"

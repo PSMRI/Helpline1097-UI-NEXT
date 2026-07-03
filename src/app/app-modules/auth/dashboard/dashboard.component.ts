@@ -53,8 +53,8 @@ import { RatingPanelComponent } from './components/rating-panel.component';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="mx-auto flex max-w-6xl flex-col gap-4 p-4">
-      <div class="flex items-start justify-between gap-3">
+    <div class="mx-auto flex max-w-7xl flex-col gap-6 p-4 md:p-6">
+      <div class="flex items-center justify-between gap-3">
         <app-dashboard-sidebar />
         @if (!isSupervisor()) {
           <app-agent-id />
@@ -64,7 +64,7 @@ import { RatingPanelComponent } from './components/rating-panel.component';
 
       <app-call-statistics [blank]="isSupervisor()" />
 
-      <div class="grid gap-4 lg:grid-cols-2">
+      <div class="grid gap-6 md:grid-cols-2">
         <app-alerts-panel />
         <app-reports-panel />
         <app-activity-panel />

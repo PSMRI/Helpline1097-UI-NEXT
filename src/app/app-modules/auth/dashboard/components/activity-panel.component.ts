@@ -21,6 +21,8 @@
  */
 
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideGraduationCap } from '@ng-icons/lucide';
 import { switchMap } from 'rxjs/operators';
 
 import { cardImports } from '@common-ui/ui/card';
@@ -37,20 +39,29 @@ const KM_TYPE = 'KM';
  */
 @Component({
   selector: 'app-activity-panel',
-  imports: [...cardImports],
+  imports: [...cardImports, NgIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  viewProviders: [provideIcons({ lucideGraduationCap })],
   template: `
-    <z-card class="h-full">
-      <z-card-header>
-        <z-card-title class="text-lg">Activity for this week</z-card-title>
+    <z-card class="h-full shadow-sm transition-shadow hover:shadow-md">
+      <z-card-header class="border-b pb-3">
+        <z-card-title class="flex items-center gap-2 text-base font-semibold">
+          <ng-icon name="lucideGraduationCap" class="text-lg text-primary" />
+          Activity for this week
+        </z-card-title>
       </z-card-header>
-      <z-card-content>
-        <div class="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-accent">
+      <z-card-content class="pt-4">
+        @let c = trainingCount();
+        <div class="flex items-center justify-between rounded-md px-2 py-2 hover:bg-accent">
           <span class="text-sm">Training Resources</span>
           <span
-            class="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-2 text-xs font-medium text-primary-foreground"
+            class="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-medium"
+            [class.bg-primary]="c > 0"
+            [class.text-primary-foreground]="c > 0"
+            [class.bg-muted]="c === 0"
+            [class.text-muted-foreground]="c === 0"
           >
-            {{ trainingCount() }}
+            {{ c }}
           </span>
         </div>
       </z-card-content>

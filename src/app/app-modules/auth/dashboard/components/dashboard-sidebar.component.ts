@@ -55,7 +55,7 @@ import {
   template: `
     <button
       type="button"
-      class="flex h-9 w-9 items-center justify-center rounded-md border border-input text-muted-foreground transition-colors hover:bg-accent"
+      class="flex h-9 w-9 items-center justify-center rounded-md border border-input text-muted-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       aria-label="Menu"
       (click)="toggle()"
     >
@@ -63,11 +63,13 @@ import {
     </button>
 
     @if (open()) {
-      <nav class="mt-2 w-52 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+      <nav
+        class="mt-2 w-52 rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in slide-in-from-top-1 duration-150"
+      >
         @for (item of items; track item.label) {
           <button
             type="button"
-            class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent disabled:opacity-50"
+            class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
             [disabled]="item.stub"
             [title]="item.stub ? 'Available in a later phase' : item.label"
             (click)="onItem(item)"

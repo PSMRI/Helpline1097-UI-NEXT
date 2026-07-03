@@ -21,6 +21,8 @@
  */
 
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideStar } from '@ng-icons/lucide';
 
 import { cardImports } from '@common-ui/ui/card';
 
@@ -30,14 +32,18 @@ import { cardImports } from '@common-ui/ui/card';
  */
 @Component({
   selector: 'app-rating-panel',
-  imports: [...cardImports],
+  imports: [...cardImports, NgIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  viewProviders: [provideIcons({ lucideStar })],
   template: `
-    <z-card class="h-full">
-      <z-card-header>
-        <z-card-title class="text-lg">Rating</z-card-title>
+    <z-card class="h-full shadow-sm transition-shadow hover:shadow-md">
+      <z-card-header class="border-b pb-3">
+        <z-card-title class="flex items-center gap-2 text-base font-semibold">
+          <ng-icon name="lucideStar" class="text-lg text-primary" />
+          Rating
+        </z-card-title>
       </z-card-header>
-      <z-card-content>
+      <z-card-content class="pt-4">
         <p class="py-6 text-center text-sm text-muted-foreground">No ratings to display.</p>
       </z-card-content>
     </z-card>

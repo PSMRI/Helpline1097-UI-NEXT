@@ -21,6 +21,8 @@
  */
 
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideBell } from '@ng-icons/lucide';
 
 import { cardImports } from '@common-ui/ui/card';
 
@@ -41,21 +43,30 @@ const ROWS = [
  */
 @Component({
   selector: 'app-alerts-panel',
-  imports: [...cardImports],
+  imports: [...cardImports, NgIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  viewProviders: [provideIcons({ lucideBell })],
   template: `
-    <z-card class="h-full">
-      <z-card-header>
-        <z-card-title class="text-lg">Alerts &amp; Notifications</z-card-title>
+    <z-card class="h-full shadow-sm transition-shadow hover:shadow-md">
+      <z-card-header class="border-b pb-3">
+        <z-card-title class="flex items-center gap-2 text-base font-semibold">
+          <ng-icon name="lucideBell" class="text-lg text-primary" />
+          Alerts &amp; Notifications
+        </z-card-title>
       </z-card-header>
-      <z-card-content class="flex flex-col gap-2">
+      <z-card-content class="flex flex-col gap-1 pt-4">
         @for (row of rows; track row.key) {
-          <div class="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-accent">
+          @let c = countFor(row.key);
+          <div class="flex items-center justify-between rounded-md px-2 py-2 hover:bg-accent">
             <span class="text-sm">{{ row.label }}</span>
             <span
-              class="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-2 text-xs font-medium text-primary-foreground"
+              class="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-medium"
+              [class.bg-primary]="c > 0"
+              [class.text-primary-foreground]="c > 0"
+              [class.bg-muted]="c === 0"
+              [class.text-muted-foreground]="c === 0"
             >
-              {{ countFor(row.key) }}
+              {{ c }}
             </span>
           </div>
         }

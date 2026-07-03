@@ -21,6 +21,8 @@
  */
 
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideFileText } from '@ng-icons/lucide';
 
 import { cardImports } from '@common-ui/ui/card';
 
@@ -31,28 +33,32 @@ import { cardImports } from '@common-ui/ui/card';
  */
 @Component({
   selector: 'app-reports-panel',
-  imports: [...cardImports],
+  imports: [...cardImports, NgIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  viewProviders: [provideIcons({ lucideFileText })],
   template: `
-    <z-card class="h-full">
-      <z-card-header>
-        <z-card-title class="text-lg">Reports</z-card-title>
+    <z-card class="h-full shadow-sm transition-shadow hover:shadow-md">
+      <z-card-header class="border-b pb-3">
+        <z-card-title class="flex items-center gap-2 text-base font-semibold">
+          <ng-icon name="lucideFileText" class="text-lg text-primary" />
+          Reports
+        </z-card-title>
       </z-card-header>
-      <z-card-content>
+      <z-card-content class="pt-4">
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b text-left text-muted-foreground">
-              <th class="py-1.5 pr-4 font-medium">S.No</th>
-              <th class="py-1.5 pr-4 font-medium">Report Name</th>
-              <th class="py-1.5 font-medium">Date</th>
+              <th class="py-2 pr-4 font-medium">S.No</th>
+              <th class="py-2 pr-4 font-medium">Report Name</th>
+              <th class="py-2 text-right font-medium">Date</th>
             </tr>
           </thead>
           <tbody>
             @for (r of rows; track r.sno) {
-              <tr class="border-b last:border-0">
-                <td class="py-1.5 pr-4">{{ r.sno }}</td>
-                <td class="py-1.5 pr-4">{{ r.name }}</td>
-                <td class="py-1.5">{{ r.date }}</td>
+              <tr class="border-b last:border-0 hover:bg-accent/50">
+                <td class="py-2.5 pr-4 tabular-nums text-muted-foreground">{{ r.sno }}</td>
+                <td class="py-2.5 pr-4">{{ r.name }}</td>
+                <td class="py-2.5 text-right tabular-nums">{{ r.date }}</td>
               </tr>
             }
           </tbody>
