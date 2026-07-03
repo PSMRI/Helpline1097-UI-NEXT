@@ -62,6 +62,7 @@ export class CaptchaComponent implements AfterViewInit, OnDestroy {
   readonly tokenResolved = output<string>();
 
   private widgetId?: string;
+  private destroyed = false;
 
   async ngAfterViewInit(): Promise<void> {
     try {
@@ -71,7 +72,9 @@ export class CaptchaComponent implements AfterViewInit, OnDestroy {
       // the login button stays disabled. Swallow to avoid an unhandled promise rejection.
       return;
     }
-    if (typeof turnstile === 'undefined') {
+    // Guard against the component being torn down while the script was loading — rendering
+    // into a detached view would leak a widget that ngOnDestroy() can no longer clean up.
+    if (this.destroyed || typeof turnstile === 'undefined') {
       return;
     }
     this.widgetId = turnstile.render(this.container().nativeElement, {
@@ -88,6 +91,7 @@ export class CaptchaComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     if (this.widgetId && typeof turnstile !== 'undefined') {
       turnstile.remove(this.widgetId);
     }

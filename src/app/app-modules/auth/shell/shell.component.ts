@@ -93,31 +93,36 @@ export class ShellComponent {
     return `${id}-${role}-${service}`;
   });
 
-  /** Emergency-contacts + force-logout icons show only on the Dashboard (old `showContacts`). */
-  protected readonly showContacts = computed(() => this.title().includes('Dashboard'));
-  /** Force-logout is CO-only. */
-  protected readonly isCO = computed(() => this.sessionStore.currentRole() === 'CO');
-
-  /** Page title from the active child route's `data.title` (e.g. "Select your role"). */
-  protected readonly title = toSignal(
+  /** Merged `data` of the active child-route chain (title + flags like `showContacts`). */
+  private readonly routeData = toSignal(
     this.router.events.pipe(
       filter((e) => e instanceof NavigationEnd),
       startWith(null),
       map(() => {
         let r = this.route.firstChild;
-        let title = '';
+        let data: Record<string, unknown> = {};
         while (r) {
-          const t = r.snapshot?.data?.['title'];
-          if (t) {
-            title = t as string;
+          if (r.snapshot?.data) {
+            data = { ...data, ...r.snapshot.data };
           }
           r = r.firstChild;
         }
-        return title;
+        return data;
       }),
     ),
-    { initialValue: '' },
+    { initialValue: {} as Record<string, unknown> },
   );
+
+  /** Page title from the active child route's `data.title` (e.g. "Select your role"). */
+  protected readonly title = computed(() => (this.routeData()['title'] as string) ?? '');
+
+  /**
+   * Emergency-contacts + force-logout icons show only where the route opts in via
+   * `data.showContacts` (old `showContacts`) — kept off the display title so it survives i18n.
+   */
+  protected readonly showContacts = computed(() => this.routeData()['showContacts'] === true);
+  /** Force-logout is CO-only. */
+  protected readonly isCO = computed(() => this.sessionStore.currentRole() === 'CO');
 
   protected onLanguageChange(value: string | string[]): void {
     this.ui.setLanguage(Array.isArray(value) ? (value[0] ?? '') : value);
