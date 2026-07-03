@@ -28,7 +28,7 @@
  * base paths (see environment.dev.ts), and this proxy forwards them server-side to the
  * backend, bypassing CORS. Keep these contexts in sync with the env base URLs.
  */
-const TARGET = 'https://amritwprdev.piramalswasthya.org';
+const TARGET = 'https://uatamrit.piramalswasthya.org';
 
 module.exports = [
   {
@@ -37,5 +37,14 @@ module.exports = [
     secure: true,
     changeOrigin: true,
     logLevel: 'debug',
+    // The UAT backend enforces CORS and rejects the browser's `Origin: http://localhost:4200`
+    // with 403 "Invalid CORS request". Since the proxy forwards the call server-side, strip
+    // the Origin/Referer so the backend treats it as a non-CORS request (dev-only).
+    configure: (proxy) => {
+      proxy.on('proxyReq', (proxyReq) => {
+        proxyReq.removeHeader('origin');
+        proxyReq.removeHeader('referer');
+      });
+    },
   },
 ];

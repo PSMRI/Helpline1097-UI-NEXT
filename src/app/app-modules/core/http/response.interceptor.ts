@@ -25,7 +25,12 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { EMPTY, of, throwError } from 'rxjs';
 import { catchError, mergeMap } from 'rxjs/operators';
-import { ApiResponse, ApiStatus, SESSION_CONFLICT_CONFIRM_MESSAGES } from '../models';
+import {
+  ApiResponse,
+  ApiStatus,
+  CAPTCHA_FAILED_MESSAGE,
+  SESSION_CONFLICT_CONFIRM_MESSAGES,
+} from '../models';
 import { AuthService } from '../auth/auth.service';
 import { AuthEventsService } from '../auth/auth-events.service';
 import { NotificationService } from '../services/notification.service';
@@ -60,12 +65,23 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
             return of(event);
           case ApiStatus.SESSION_CONFLICT: {
             const message = body.errorMessage ?? '';
+            if (message === CAPTCHA_FAILED_MESSAGE) {
+              // Captcha failure → let the login component show it inline + reset the captcha.
+              return throwError(() => body);
+            }
             if (SESSION_CONFLICT_CONFIRM_MESSAGES.includes(message)) {
-              notify.confirm(message).subscribe((confirmed) => {
-                if (confirmed) {
-                  authEvents.requestLogoutFromOtherDevice();
-                }
-              });
+              // 104-style dialog chrome (title + "Yes, logout"/"Cancel"); body keeps the exact
+              // 1097 backend message. On confirm, re-auth with doLogout=true (old behaviour).
+              notify
+                .confirm(message, 'Already logged in', {
+                  okText: 'Yes, logout',
+                  cancelText: 'Cancel',
+                })
+                .subscribe((confirmed) => {
+                  if (confirmed) {
+                    authEvents.requestLogoutFromOtherDevice();
+                  }
+                });
             } else {
               router.navigate(['']);
               const data = body.data as { response?: string } | undefined;

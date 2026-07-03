@@ -46,3 +46,10 @@ export const SESSION_CONFLICT_CONFIRM_MESSAGES = [
   'You are already logged in,please confirm to logout from other device and login again',
   'Invalid username or password',
 ];
+
+/**
+ * A 5002 carrying this message is a captcha failure, not a session conflict. The old app
+ * surfaced it inline on the login form (and reset the captcha) rather than treating it as
+ * "session expired", so the interceptor re-throws it to the caller instead of swallowing.
+ */
+export const CAPTCHA_FAILED_MESSAGE = 'captcha validation failed';

@@ -1,0 +1,74 @@
+<!--
+  AMRIT – Accessible Medical Records via Integrated Technologies
+  Integrated EHR (Electronic Health Records) Solution
+
+  Copyright (C) "Piramal Swasthya Management and Research Institute"
+
+  This file is part of AMRIT.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see https://www.gnu.org/licenses/.
+-->
+
+<div class="flex min-h-screen flex-col bg-muted/30">
+  <!-- Header -->
+  <header class="flex items-center gap-3 bg-primary px-4 py-2 text-primary-foreground">
+    <!-- Brand -->
+    <div class="flex shrink-0 items-center gap-2">
+      <img src="assets/images/smLogo.png" alt="Piramal Swasthya" class="h-7 w-auto" />
+      <span class="text-lg font-semibold tracking-wide">AMRIT</span>
+    </div>
+
+    <!-- Title (centered) -->
+    <h1 class="flex-1 truncate text-center text-base font-semibold sm:text-lg">{{ title() }}</h1>
+
+    <!-- Controls -->
+    <div class="flex shrink-0 items-center gap-2 sm:gap-3">
+      <z-select
+        class="w-28"
+        [zValue]="ui.language()"
+        (zValueChange)="onLanguageChange($event)"
+        aria-label="Select language"
+      >
+        @for (lang of languages; track lang) {
+          <z-select-item [zValue]="lang">{{ lang }}</z-select-item>
+        }
+      </z-select>
+
+      <span class="hidden text-sm sm:inline">Welcome {{ userName() }}</span>
+
+      <button
+        type="button"
+        class="flex h-8 w-8 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15"
+        aria-label="Logout"
+        title="Logout"
+        (click)="logout()"
+      >
+        <ng-icon name="lucidePower" class="text-xl" />
+      </button>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="flex-1">
+    <router-outlet />
+  </main>
+
+  <!-- Footer -->
+  <footer
+    class="flex items-center justify-between bg-neutral-900 px-4 py-2 text-xs text-neutral-300"
+  >
+    <span>&copy; 2026 PSMRI</span>
+    <span>Version {{ appVersion }}</span>
+  </footer>
+</div>

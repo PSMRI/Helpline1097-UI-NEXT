@@ -27,6 +27,12 @@ import { ZardDialogService } from '@common-ui/ui/dialog';
 
 export type AlertType = 'info' | 'success' | 'error' | 'warning';
 
+/** Optional overrides for the confirm dialog's button labels. */
+export interface ConfirmOptions {
+  okText?: string;
+  cancelText?: string;
+}
+
 /**
  * Replaces the old `ConfirmationDialogsService` / `message.service`.
  * `alert()` → ngx-sonner toast (requires <z-toaster> in the app shell).
@@ -53,13 +59,13 @@ export class NotificationService {
     }
   }
 
-  confirm(message: string, title = 'Confirm'): Observable<boolean> {
+  confirm(message: string, title = 'Confirm', options?: ConfirmOptions): Observable<boolean> {
     return new Observable<boolean>((observer) => {
       this.dialog.create<unknown, unknown>({
         zTitle: title,
         zContent: message,
-        zOkText: 'Yes',
-        zCancelText: 'No',
+        zOkText: options?.okText ?? 'Yes',
+        zCancelText: options?.cancelText ?? 'No',
         zMaskClosable: false,
         zOnOk: () => {
           observer.next(true);
