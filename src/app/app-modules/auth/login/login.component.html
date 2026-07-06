@@ -89,7 +89,11 @@
         <!-- Captcha (optional) -->
         @if (enableCaptcha) {
           <div role="group" aria-label="Security check" class="flex justify-center">
-            <app-captcha #captchaCmp (tokenResolved)="onCaptchaResolved($event)" />
+            <app-captcha
+              #captchaCmp
+              (tokenResolved)="onCaptchaResolved($event)"
+              (loadFailed)="onCaptchaLoadFailed()"
+            />
           </div>
         }
 

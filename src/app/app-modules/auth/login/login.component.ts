@@ -167,6 +167,13 @@ export class LoginComponent implements OnInit {
     this.loginResult.set('');
   }
 
+  /** Turnstile script couldn't load — the login button would stay disabled, so warn the user. */
+  protected onCaptchaLoadFailed(): void {
+    this.loginResult.set(
+      'Security check could not load. Disable any ad blocker or check your connection, then reload the page.',
+    );
+  }
+
   /** Force-logout the previous session, then re-authenticate (doLogout=true). */
   private loginUser(): void {
     this.authApi.logOutFromConcurrentSession(this.form.controls.userID.value).subscribe({
@@ -212,6 +219,10 @@ export class LoginComponent implements OnInit {
     } else if (data.isAuthenticated === true && data.Status === 'New') {
       this.storage.setPlain(PLAIN_KEYS.authToken, data.key ?? '');
       this.router.navigate(['/setQuestions']);
+    } else {
+      // Authenticated but an unexpected status (neither Active nor New) — surface feedback
+      // instead of leaving the user on an unresponsive form.
+      this.loginResult.set('Unable to sign in.');
     }
   }
 
