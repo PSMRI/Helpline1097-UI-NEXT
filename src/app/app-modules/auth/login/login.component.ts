@@ -34,7 +34,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideEye, lucideLock, lucideUser } from '@ng-icons/lucide';
+import { lucideEye, lucideEyeOff, lucideLock, lucideUser } from '@ng-icons/lucide';
 import { finalize } from 'rxjs/operators';
 
 import { ZardButtonComponent } from '@common-ui/ui/button';
@@ -81,7 +81,7 @@ import { USERNAME_BLOCK_PATTERN } from '../utils/auth-validators';
   ],
   templateUrl: './login.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ lucideUser, lucideLock, lucideEye })],
+  viewProviders: [provideIcons({ lucideUser, lucideLock, lucideEye, lucideEyeOff })],
 })
 export class LoginComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -165,10 +165,6 @@ export class LoginComponent implements OnInit {
   protected onCaptchaResolved(token: string): void {
     this.captchaToken.set(token);
     this.loginResult.set('');
-  }
-
-  protected revealPassword(reveal: boolean): void {
-    this.showPassword.set(reveal);
   }
 
   /** Force-logout the previous session, then re-authenticate (doLogout=true). */

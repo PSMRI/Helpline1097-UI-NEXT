@@ -79,11 +79,9 @@
               class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
               [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
               [attr.aria-pressed]="showPassword()"
-              (mousedown)="revealPassword(true)"
-              (mouseup)="revealPassword(false)"
-              (mouseleave)="revealPassword(false)"
+              (click)="showPassword.set(!showPassword())"
             >
-              <ng-icon name="lucideEye" />
+              <ng-icon [name]="showPassword() ? 'lucideEyeOff' : 'lucideEye'" />
             </button>
           </div>
         </div>

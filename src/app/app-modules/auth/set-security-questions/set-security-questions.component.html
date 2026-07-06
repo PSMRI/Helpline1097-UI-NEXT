@@ -127,12 +127,11 @@
               <button
                 type="button"
                 class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="Show password"
-                (mousedown)="revealPassword(true)"
-                (mouseup)="revealPassword(false)"
-                (mouseleave)="revealPassword(false)"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+                [attr.aria-pressed]="showPassword()"
+                (click)="showPassword.set(!showPassword())"
               >
-                <ng-icon name="lucideEye" />
+                <ng-icon [name]="showPassword() ? 'lucideEyeOff' : 'lucideEye'" />
               </button>
             </div>
             @if (passwordForm.controls.newpwd.touched && passwordForm.controls.newpwd.invalid) {
@@ -164,12 +163,11 @@
               <button
                 type="button"
                 class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="Show password"
-                (mousedown)="revealPassword(true)"
-                (mouseup)="revealPassword(false)"
-                (mouseleave)="revealPassword(false)"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+                [attr.aria-pressed]="showPassword()"
+                (click)="showPassword.set(!showPassword())"
               >
-                <ng-icon name="lucideEye" />
+                <ng-icon [name]="showPassword() ? 'lucideEyeOff' : 'lucideEye'" />
               </button>
             </div>
           </div>

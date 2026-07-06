@@ -29,7 +29,7 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideEye, lucideKeyRound, lucideUser } from '@ng-icons/lucide';
+import { lucideEye, lucideEyeOff, lucideKeyRound, lucideUser } from '@ng-icons/lucide';
 import { Subscription } from 'rxjs';
 
 import { ZardButtonComponent } from '@common-ui/ui/button';
@@ -69,7 +69,7 @@ import { ANSWER_BLOCK_PATTERN, USERNAME_BLOCK_PATTERN } from '../utils/auth-vali
   ],
   templateUrl: './reset-password.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ lucideUser, lucideKeyRound, lucideEye })],
+  viewProviders: [provideIcons({ lucideUser, lucideKeyRound, lucideEye, lucideEyeOff })],
 })
 export class ResetPasswordComponent {
   private readonly router = inject(Router);
@@ -169,9 +169,5 @@ export class ResetPasswordComponent {
     this.answersSub = arr.statusChanges.subscribe(() => this.answersValid.set(arr.valid));
     this.answers.set(arr);
     this.showAnswers.set(false);
-  }
-
-  protected revealAnswers(reveal: boolean): void {
-    this.showAnswers.set(reveal);
   }
 }
