@@ -37,7 +37,12 @@
           <!-- Question 1 -->
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium">Question 1 <span class="text-destructive">*</span></label>
-            <z-select formControlName="question1" zPlaceholder="Select a question" class="w-full">
+            <z-select
+              formControlName="question1"
+              zPlaceholder="Select a question"
+              class="w-full"
+              aria-label="Question 1"
+            >
               @for (q of options1(); track q.QuestionID) {
                 <z-select-item [zValue]="q.QuestionID + ''">{{ q.Question }}</z-select-item>
               }
@@ -56,7 +61,12 @@
           <!-- Question 2 -->
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium">Question 2 <span class="text-destructive">*</span></label>
-            <z-select formControlName="question2" zPlaceholder="Select a question" class="w-full">
+            <z-select
+              formControlName="question2"
+              zPlaceholder="Select a question"
+              class="w-full"
+              aria-label="Question 2"
+            >
               @for (q of options2(); track q.QuestionID) {
                 <z-select-item [zValue]="q.QuestionID + ''">{{ q.Question }}</z-select-item>
               }
@@ -75,7 +85,12 @@
           <!-- Question 3 -->
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium">Question 3 <span class="text-destructive">*</span></label>
-            <z-select formControlName="question3" zPlaceholder="Select a question" class="w-full">
+            <z-select
+              formControlName="question3"
+              zPlaceholder="Select a question"
+              class="w-full"
+              aria-label="Question 3"
+            >
               @for (q of options3(); track q.QuestionID) {
                 <z-select-item [zValue]="q.QuestionID + ''">{{ q.Question }}</z-select-item>
               }
