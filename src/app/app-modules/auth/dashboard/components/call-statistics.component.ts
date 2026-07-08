@@ -20,11 +20,21 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideClock, lucideCoffee, lucidePhone, lucidePhoneCall } from '@ng-icons/lucide';
 
 import { cardImports } from '@common-ui/ui/card';
+
+import { CtiService } from '@/app-modules/core/services/cti.service';
 
 /** One call-statistics metric tile. */
 interface StatTile {
@@ -36,8 +46,9 @@ interface StatTile {
 
 /**
  * Call-statistics — 4 flat tiles (Call Duration / Break Time / Free Time / Total Calls),
- * old `call-statistics`. This is the layout only; the values come from the CTI
- * `getAgentCallStats` call wired in Phase 4d. `blank` mode is used for Supervisor.
+ * old `call-statistics`. Values come from one `cti/getAgentCallStats` call on load (the old
+ * app fetched once in ngOnInit, no polling) and are displayed verbatim, as the old app did.
+ * `blank` mode is used for Supervisor (no per-agent stats, no fetch).
  */
 @Component({
   selector: 'app-call-statistics',
@@ -46,7 +57,7 @@ interface StatTile {
   viewProviders: [provideIcons({ lucidePhone, lucideCoffee, lucideClock, lucidePhoneCall })],
   template: `
     <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-      @for (tile of tiles; track tile.label) {
+      @for (tile of tiles(); track tile.label) {
         <z-card class="border-l-4 border-primary/70 shadow-sm transition-shadow hover:shadow-md">
           <z-card-content class="flex items-center gap-3 py-4">
             <ng-icon [name]="tile.icon" class="text-2xl text-primary/70" />
@@ -65,15 +76,52 @@ interface StatTile {
     </div>
   `,
 })
-export class CallStatisticsComponent {
+export class CallStatisticsComponent implements OnInit {
+  private readonly cti = inject(CtiService);
+
   /** Supervisor sees the tiles blanked (no per-agent call stats). */
   readonly blank = input(false);
 
-  // Placeholder values until Phase 4d wires CTI getAgentCallStats.
-  protected readonly tiles: StatTile[] = [
-    { label: 'Call Duration', value: '00:00:00', time: true, icon: 'lucidePhone' },
-    { label: 'Break Time', value: '00:00:00', time: true, icon: 'lucideCoffee' },
-    { label: 'Free Time', value: '00:00:00', time: true, icon: 'lucideClock' },
-    { label: 'Total Calls', value: '0', time: false, icon: 'lucidePhoneCall' },
-  ];
+  // Placeholders until getAgentCallStats responds (old app showed empty until then).
+  private readonly totalCallDuration = signal('00:00:00');
+  private readonly totalBreakTime = signal('00:00:00');
+  private readonly totalFreeTime = signal('00:00:00');
+  private readonly totalCalls = signal('0');
+
+  protected readonly tiles = computed<StatTile[]>(() => [
+    { label: 'Call Duration', value: this.totalCallDuration(), time: true, icon: 'lucidePhone' },
+    { label: 'Break Time', value: this.totalBreakTime(), time: true, icon: 'lucideCoffee' },
+    { label: 'Free Time', value: this.totalFreeTime(), time: true, icon: 'lucideClock' },
+    { label: 'Total Calls', value: this.totalCalls(), time: false, icon: 'lucidePhoneCall' },
+  ]);
+
+  ngOnInit(): void {
+    if (this.blank()) {
+      return;
+    }
+    // Old `todayCallLists()` — one fetch on load, values rendered verbatim.
+    this.cti.getCallDetails().subscribe({
+      next: (res) => {
+        const data = res?.data;
+        if (!data) {
+          return;
+        }
+        if (data.total_call_duration != null) {
+          this.totalCallDuration.set(String(data.total_call_duration));
+        }
+        if (data.total_break_time != null) {
+          this.totalBreakTime.set(String(data.total_break_time));
+        }
+        if (data.total_free_time != null) {
+          this.totalFreeTime.set(String(data.total_free_time));
+        }
+        if (data.total_calls != null) {
+          this.totalCalls.set(String(data.total_calls));
+        }
+      },
+      error: () => {
+        // Old app only logged this; tiles keep their zero placeholders.
+      },
+    });
+  }
 }

@@ -91,24 +91,40 @@ export class CampaignToggleComponent implements OnInit {
     if (role.inbound === true && role.outbound === true) {
       this.showInbound.set(true);
       this.showOutbound.set(true);
+      this.callStore.onlyOutboundAvailable.set(false);
       if (this.callStore.currentCampaign() === 'OUTBOUND') {
+        this.callStore.isOutBoundSelected.set(true);
         this.setControl('0');
       } else {
         this.callStore.setCurrentCampaign('INBOUND');
+        this.callStore.isOutBoundSelected.set(false);
         this.setControl('1');
       }
     } else if (role.inbound === true) {
       this.showInbound.set(true);
+      this.callStore.onlyOutboundAvailable.set(false);
+      this.callStore.isOutBoundSelected.set(false);
       this.callStore.setCurrentCampaign('INBOUND');
       this.setControl('1');
     } else if (role.outbound === true) {
-      // Only-outbound role: the old app auto-switched the agent to OUTBOUND on load and
-      // persisted the campaign even when the switch call failed (agent already in MANUAL).
+      // Only-outbound role: the old app auto-switched the agent to OUTBOUND on load,
+      // persisted the campaign even when the switch call failed (agent already in MANUAL
+      // mode), and armed the agent-status retry poll (old `callService.onlyOutbound`).
       this.showOutbound.set(true);
       this.setControl('0');
+      this.callStore.onlyOutboundAvailable.set(true);
+      this.callStore.outboundRetryPending.set(true);
       this.cti.switchToOutbound().subscribe({
-        next: () => this.callStore.setCurrentCampaign('OUTBOUND'),
-        error: () => this.callStore.setCurrentCampaign('OUTBOUND'),
+        next: () => {
+          this.callStore.setCurrentCampaign('OUTBOUND');
+          this.callStore.isOutBoundSelected.set(true);
+        },
+        error: (err: { errorMessage?: string }) => {
+          if (err?.errorMessage?.includes('already in MANUAL mode')) {
+            this.callStore.isOutBoundSelected.set(true);
+          }
+          this.callStore.setCurrentCampaign('OUTBOUND');
+        },
       });
     }
   }
@@ -127,6 +143,7 @@ export class CampaignToggleComponent implements OnInit {
           next: () => {
             this.applied = value;
             this.callStore.setCurrentCampaign(inbound ? 'INBOUND' : 'OUTBOUND');
+            this.callStore.isOutBoundSelected.set(!inbound);
           },
           error: (err: { errorMessage?: string }) => {
             this.notify.alert(err?.errorMessage ?? 'Failed to switch campaign', 'error');

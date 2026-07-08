@@ -44,6 +44,17 @@ export class CallStore {
   readonly isOutbound = signal<boolean>(false);
   readonly beneficiary = signal<Record<string, unknown>>({});
 
+  // Campaign flags for the only-outbound auto-switch flow (memory-only, like the old
+  // dataService/callservice fields they replace).
+  /** Old `dataService.onlyOutboundAvailable` — current role has outbound but no inbound. */
+  readonly onlyOutboundAvailable = signal<boolean>(false);
+  /** Old `dataService.isOutBoundSelected` — the agent is on the OUTBOUND campaign. */
+  readonly isOutBoundSelected = signal<boolean>(false);
+  /** Old `callService.onlyOutbound` — the only-outbound retry poll should run. */
+  readonly outboundRetryPending = signal<boolean>(false);
+  /** Old `callService.onceOutbound` — the auto-switch to OUTBOUND already succeeded. */
+  readonly outboundSwitchDone = signal<boolean>(false);
+
   setOnCall(value: boolean): void {
     this.isOnCall.set(value);
     this.storage.setItem(ENCRYPTED_KEYS.isOnCall, value ? 'yes' : 'no');
@@ -78,5 +89,9 @@ export class CallStore {
     this.currentCampaign.set(null);
     this.isOutbound.set(false);
     this.beneficiary.set({});
+    this.onlyOutboundAvailable.set(false);
+    this.isOutBoundSelected.set(false);
+    this.outboundRetryPending.set(false);
+    this.outboundSwitchDone.set(false);
   }
 }

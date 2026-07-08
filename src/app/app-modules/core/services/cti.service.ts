@@ -38,6 +38,9 @@ import { SessionStore } from '../state/session.store';
 export interface AgentStateData {
   stateObj?: { stateName?: string; stateType?: string };
   dialer_type?: string;
+  /** Present when the agent is INCALL/CLOSURE — used by the dashboard's call recovery. */
+  cust_ph_no?: string;
+  session_id?: string;
 }
 
 /** Call-stats shape returned by `cti/getAgentCallStats` (old call-statistics reader). */
