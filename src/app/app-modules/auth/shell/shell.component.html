@@ -122,11 +122,34 @@
     <router-outlet />
   </main>
 
+  <!-- CZentrix softphone bar (CO only) — old multi-role-screen iframe, minimized by default -->
+  @if (showCtiBar()) {
+    <iframe
+      [src]="ctiHandlerUrl()"
+      width="230"
+      height="380"
+      class="fixed bottom-9 right-0 z-40 border border-border bg-background shadow-lg"
+      [class.hidden]="barMinimized()"
+      title="Czentrix Bar"
+    ></iframe>
+  }
+
   <!-- Footer -->
   <footer
     class="flex items-center justify-between bg-neutral-900 px-4 py-2 text-xs text-neutral-300"
   >
     <span>&copy; 2026 PSMRI</span>
-    <span>Version {{ appVersion }}</span>
+    <div class="flex items-center gap-3">
+      <span>Version {{ appVersion }}</span>
+      @if (showCtiBar()) {
+        <button
+          type="button"
+          class="rounded bg-primary px-3 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          (click)="toggleBar()"
+        >
+          CZentrix
+        </button>
+      }
+    </div>
   </footer>
 </div>

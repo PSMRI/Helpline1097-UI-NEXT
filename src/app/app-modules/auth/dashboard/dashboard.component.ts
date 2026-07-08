@@ -28,6 +28,7 @@ import { ActivityPanelComponent } from './components/activity-panel.component';
 import { AgentIdComponent } from './components/agent-id.component';
 import { AlertsPanelComponent } from './components/alerts-panel.component';
 import { CallStatisticsComponent } from './components/call-statistics.component';
+import { CampaignToggleComponent } from './components/campaign-toggle.component';
 import { DashboardSidebarComponent } from './components/dashboard-sidebar.component';
 import { ReportsPanelComponent } from './components/reports-panel.component';
 import { RatingPanelComponent } from './components/rating-panel.component';
@@ -47,6 +48,7 @@ import { RatingPanelComponent } from './components/rating-panel.component';
     AgentIdComponent,
     AlertsPanelComponent,
     CallStatisticsComponent,
+    CampaignToggleComponent,
     DashboardSidebarComponent,
     ReportsPanelComponent,
     RatingPanelComponent,
@@ -65,8 +67,8 @@ import { RatingPanelComponent } from './components/rating-panel.component';
           <div class="flex items-center justify-between gap-3">
             @if (!isSupervisor()) {
               <app-agent-id />
+              <app-campaign-toggle />
             }
-            <!-- Inbound/Outbound campaign toggle → Phase 4d (CTI) -->
           </div>
 
           <app-call-statistics [blank]="isSupervisor()" />
