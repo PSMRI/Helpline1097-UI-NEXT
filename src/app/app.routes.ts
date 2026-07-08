@@ -21,17 +21,17 @@
  */
 
 import { Routes } from '@angular/router';
-import { authGuard } from './app-modules/core/auth/auth.guard';
+import { authGuard, onCallGuard } from './app-modules/core/auth/auth.guard';
 import { roleSelectedGuard, sessionHydrationGuard } from './app-modules/auth/guards/shell.guards';
 
 /**
  * Auth routes use the OLD app's path strings verbatim (e.g. `resetPassword`,
  * `MultiRoleScreenComponent`) to stay behaviour-faithful.
  *
- * Guards mirror the old route table: in the old app the `MultiRoleScreenComponent` parent
- * was unguarded and its children (role-selection, dashboard) carried AuthGuard. We replicate
- * that with `canActivateChild: [authGuard]` on the shell. `onCallGuard` (old AuthGuard2)
- * guards the call/innerpage screens, which are migrated in a later phase — nothing uses it yet.
+ * Guards mirror the old route table PER CHILD (as the old app did): role-selection/dashboard
+ * carry AuthGuard, while the innerpage carries ONLY `onCallGuard` (old AuthGuard2) — AuthGuard
+ * blocks navigation mid-call, so putting it on the shell's `canActivateChild` would break the
+ * dashboard → innerpage jump when a call arrives.
  */
 export const routes: Routes = [
   {
@@ -68,7 +68,6 @@ export const routes: Routes = [
       import('./app-modules/auth/shell/shell.component').then((m) => m.ShellComponent),
     // Re-hydrate the session on a full reload (token present, in-memory store empty).
     canActivate: [sessionHydrationGuard],
-    canActivateChild: [authGuard],
     children: [
       {
         path: '',
@@ -76,6 +75,7 @@ export const routes: Routes = [
           import('./app-modules/auth/role-selection/role-selection.component').then(
             (m) => m.RoleSelectionComponent,
           ),
+        canActivate: [authGuard],
         data: { title: 'Select your role' },
       },
       {
@@ -85,10 +85,21 @@ export const routes: Routes = [
             (m) => m.DashboardComponent,
           ),
         // Dashboard needs a selected role; after a reload it's gone → back to role selection.
-        canActivate: [roleSelectedGuard],
+        canActivate: [authGuard, roleSelectedGuard],
         // `showContacts` gates the emergency-contacts / force-logout header icons,
         // read independently of the (later-localized) display title.
         data: { title: 'Dashboard', showContacts: true },
+      },
+      {
+        // Old `RedirectToInnerpageComponent` — reachable only mid-call (old AuthGuard2).
+        // Phase 4d ships a stub; the real call screen is Phase 5.
+        path: 'RedirectToInnerpageComponent',
+        loadComponent: () =>
+          import('./app-modules/call/innerpage/innerpage-stub.component').then(
+            (m) => m.InnerpageStubComponent,
+          ),
+        canActivate: [onCallGuard],
+        data: { title: 'Call' },
       },
     ],
   },
