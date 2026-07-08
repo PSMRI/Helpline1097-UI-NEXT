@@ -20,13 +20,25 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 import { ZardRadioComponent } from '@common-ui/ui/radio';
 
 import { CtiService } from '@/app-modules/core/services/cti.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import {
+  ENCRYPTED_KEYS,
+  SessionStorageService,
+} from '@/app-modules/core/services/session-storage.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
@@ -58,7 +70,9 @@ export class CampaignToggleComponent implements OnInit {
   private readonly cti = inject(CtiService);
   private readonly callStore = inject(CallStore);
   private readonly sessionStore = inject(SessionStore);
+  private readonly storage = inject(SessionStorageService);
   private readonly notify = inject(NotificationService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly showInbound = signal(false);
   protected readonly showOutbound = signal(false);
@@ -66,12 +80,12 @@ export class CampaignToggleComponent implements OnInit {
   protected readonly control = new FormControl<CampaignValue>('1', { nonNullable: true });
 
   /** Last applied value, to revert the radio when the user cancels or the switch fails. */
-  private applied: CampaignValue = '1';
+  private readonly applied = signal<CampaignValue>('1');
 
   ngOnInit(): void {
     this.setCampaign();
-    this.control.valueChanges.subscribe((value) => {
-      if (value !== this.applied) {
+    this.control.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      if (value !== this.applied()) {
         this.onToggle(value);
       }
     });
@@ -79,6 +93,9 @@ export class CampaignToggleComponent implements OnInit {
 
   /** Old `setCampaign()`: initial campaign from the current role's inbound/outbound flags. */
   private setCampaign(): void {
+    // Old app cleared the persisted campaign on every dashboard load, then compared the
+    // in-memory value — so a full reload always starts from INBOUND for inbound+outbound roles.
+    this.storage.removeItem(ENCRYPTED_KEYS.currentCampaign);
     const roleId = this.sessionStore.currentRoleId();
     const role = this.sessionStore
       .privileges()
@@ -132,34 +149,37 @@ export class CampaignToggleComponent implements OnInit {
   /** Old `campaign(value)`: confirm, call the switch endpoint, persist or revert. */
   private onToggle(value: CampaignValue): void {
     const inbound = value === '1';
-    this.notify.confirm(inbound ? 'Switch to Inbound?' : 'Switch to Outbound?').subscribe({
-      next: (confirmed) => {
-        if (!confirmed) {
-          this.revert();
-          return;
-        }
-        const switchCall = inbound ? this.cti.switchToInbound() : this.cti.switchToOutbound();
-        switchCall.subscribe({
-          next: () => {
-            this.applied = value;
-            this.callStore.setCurrentCampaign(inbound ? 'INBOUND' : 'OUTBOUND');
-            this.callStore.isOutBoundSelected.set(!inbound);
-          },
-          error: (err: { errorMessage?: string }) => {
-            this.notify.alert(err?.errorMessage ?? 'Failed to switch campaign', 'error');
+    this.notify
+      .confirm(inbound ? 'Switch to Inbound?' : 'Switch to Outbound?')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (confirmed) => {
+          if (!confirmed) {
             this.revert();
-          },
-        });
-      },
-    });
+            return;
+          }
+          const switchCall = inbound ? this.cti.switchToInbound() : this.cti.switchToOutbound();
+          switchCall.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: () => {
+              this.applied.set(value);
+              this.callStore.setCurrentCampaign(inbound ? 'INBOUND' : 'OUTBOUND');
+              this.callStore.isOutBoundSelected.set(!inbound);
+            },
+            error: (err: { errorMessage?: string }) => {
+              this.notify.alert(err?.errorMessage ?? 'Failed to switch campaign', 'error');
+              this.revert();
+            },
+          });
+        },
+      });
   }
 
   private setControl(value: CampaignValue): void {
-    this.applied = value;
+    this.applied.set(value);
     this.control.setValue(value, { emitEvent: false });
   }
 
   private revert(): void {
-    this.control.setValue(this.applied, { emitEvent: false });
+    this.control.setValue(this.applied(), { emitEvent: false });
   }
 }

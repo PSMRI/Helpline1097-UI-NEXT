@@ -24,7 +24,7 @@ import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject } from
 import { Router } from '@angular/router';
 
 import { NotificationService } from '@/app-modules/core/services/notification.service';
-import { CallStore } from '@/app-modules/core/state/call.store';
+import { CALL_SCREEN_ROUTE, CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 import { ActivityPanelComponent } from './components/activity-panel.component';
@@ -96,8 +96,6 @@ export class DashboardComponent {
 
   protected readonly isSupervisor = computed(() => this.sessionStore.currentRole() === 'Supervisor');
 
-  private eventSplitData: string[] = [];
-
   constructor() {
     // The CZentrix iframe announces calls via window.postMessage — old dashboard `listener`.
     const listener = (event: Event) => this.onCtiMessage(event);
@@ -118,41 +116,35 @@ export class DashboardComponent {
       // Browsers/devtools post non-CZentrix objects on window too; only pipe strings matter.
       return;
     }
-    this.eventSplitData = raw.split('|');
-    const sessionId = this.eventSplitData[2];
+    const parts = raw.split('|');
+    const sessionId = parts[2];
     if (sessionId === undefined || sessionId === 'undefined' || sessionId === null || sessionId === '') {
       return;
     }
     const known = this.callStore.sessionId();
     if (!known || known !== sessionId) {
-      this.handleCtiEvent();
+      this.handleCtiEvent(parts);
     }
-    if (this.eventSplitData[0]?.toLowerCase() === 'accept') {
-      this.handleCtiEvent();
+    if (parts[0]?.toLowerCase() === 'accept') {
+      this.handleCtiEvent(parts);
     }
   }
 
   /** Old `handleEvent()`: validate, persist the call flags, open the call screen. */
-  private handleCtiEvent(): void {
-    if (this.eventSplitData.length <= 2) {
+  private handleCtiEvent(parts: string[]): void {
+    if (parts.length <= 2) {
       return;
     }
     // Old app set isOnCall before validating (kept faithful).
     this.callStore.setOnCall(true);
-    const mobileNumber = (this.eventSplitData[1] ?? '').replace(/\D/g, '');
+    const mobileNumber = (parts[1] ?? '').replace(/\D/g, '');
     const checkNumber = /^\d+$/;
     const sessionVar = /^\d{10}\.\d{10}$/;
     const checkCallType = /^(INBOUND)|(OUTBOUND)$/i;
 
-    if (
-      checkNumber.test(mobileNumber) &&
-      sessionVar.test(this.eventSplitData[2]) &&
-      checkCallType.test(this.eventSplitData[3])
-    ) {
-      this.callStore.setCli(this.eventSplitData[1]);
-      this.callStore.setSessionId(this.eventSplitData[2]);
-      this.callStore.setCallCategory(this.eventSplitData[3]);
-      this.router.navigate(['/MultiRoleScreenComponent/RedirectToInnerpageComponent']);
+    if (checkNumber.test(mobileNumber) && sessionVar.test(parts[2]) && checkCallType.test(parts[3])) {
+      this.callStore.startCall(parts[1], parts[2], parts[3]);
+      this.router.navigate([CALL_SCREEN_ROUTE]);
     } else {
       this.notify.alert('Invalid call. Please check.', 'error');
     }

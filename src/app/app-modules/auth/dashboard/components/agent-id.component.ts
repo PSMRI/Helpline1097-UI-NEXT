@@ -36,7 +36,11 @@ import { interval, Subscription } from 'rxjs';
 
 import { AgentStateData, CtiService } from '@/app-modules/core/services/cti.service';
 import { ApiResponse } from '@/app-modules/core/models';
-import { CallStore } from '@/app-modules/core/state/call.store';
+import {
+  ENCRYPTED_KEYS,
+  SessionStorageService,
+} from '@/app-modules/core/services/session-storage.service';
+import { CALL_SCREEN_ROUTE, CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /**
@@ -68,6 +72,7 @@ export class AgentIdComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
+  private readonly storage = inject(SessionStorageService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly agentId = this.sessionStore.agentId;
@@ -109,6 +114,14 @@ export class AgentIdComponent implements OnInit {
     }
     const state = stateName.toUpperCase();
 
+    // Old app lazily re-hydrated the in-memory campaign from storage here.
+    if (!this.callStore.currentCampaign()) {
+      const persisted = this.storage.getItem(ENCRYPTED_KEYS.currentCampaign);
+      if (persisted) {
+        this.callStore.currentCampaign.set(persisted);
+      }
+    }
+
     // Only-outbound retry: once the agent is FREE, land the pending OUTBOUND switch.
     if (state === 'FREE' && this.callStore.onlyOutboundAvailable()) {
       if (this.callStore.isOutBoundSelected()) {
@@ -131,9 +144,13 @@ export class AgentIdComponent implements OnInit {
     }
 
     // Call recovery — the agent is already on a call the app doesn't know about.
+    // Faithful to the old app: it compared the stored id against the ENVELOPE-level
+    // `res.session_id` (which the backend never sets), so with a stored session id the
+    // comparison always mismatched and recovery ran on every INCALL/CLOSURE state.
     if (state === 'INCALL' || state === 'CLOSURE') {
       const knownSessionId = this.callStore.sessionId();
-      if (!knownSessionId || knownSessionId !== res?.data?.session_id) {
+      const envelopeSessionId = (res as { session_id?: string } | null)?.session_id;
+      if (!knownSessionId || knownSessionId !== envelopeSessionId) {
         this.routeToInnerPage(res?.data);
       }
     }
@@ -148,10 +165,9 @@ export class AgentIdComponent implements OnInit {
     if (!sessionId) {
       return;
     }
-    this.callStore.setOnCall(true);
-    this.callStore.setCli(data?.cust_ph_no ?? '');
-    this.callStore.setSessionId(sessionId);
-    this.router.navigate(['/MultiRoleScreenComponent/RedirectToInnerpageComponent']);
+    // No callCategory here — the old recovery path didn't set it either.
+    this.callStore.startCall(data?.cust_ph_no ?? '', sessionId);
+    this.router.navigate([CALL_SCREEN_ROUTE]);
   }
 
   private stopTimer(): void {

@@ -83,11 +83,16 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
                   }
                 });
             } else {
-              router.navigate(['']);
               const data = body.data as { response?: string } | undefined;
-              if (!(data && data.response === 'User successfully logged out')) {
-                notify.alert('Session expired, please login again', 'error');
+              if (data && data.response === 'User successfully logged out') {
+                // Logout success rides a 5002 envelope. The old interceptor still emitted to
+                // subscribers, letting the caller run its cleanup (finishLogout) — swallowing
+                // it here would leave stores/keys (e.g. isOnCall) behind after logout.
+                auth.removeToken();
+                return of(event);
               }
+              router.navigate(['']);
+              notify.alert('Session expired, please login again', 'error');
               auth.removeToken();
             }
             return EMPTY;

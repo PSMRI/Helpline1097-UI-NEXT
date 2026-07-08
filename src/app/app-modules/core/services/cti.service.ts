@@ -23,7 +23,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { tap } from 'rxjs/operators';
 
 import { ApiResponse } from '../models';
 import { skipAuth, skipLoader } from '../http/http-context';
@@ -142,19 +141,15 @@ export class CzentrixHttpService extends CtiService {
   }
 
   /**
-   * POST user/userLogout — app-level logout. The old czentrix service also cleared
-   * `privilege_flag` / `session_id` / `callTransferred` here; kept faithful.
+   * POST user/userLogout — app-level logout. The old czentrix service cleared
+   * `privilege_flag` / `session_id` / `callTransferred` synchronously BEFORE issuing the
+   * request (so they are wiped even if the call fails); kept faithful.
    */
   userLogout(): Observable<ApiResponse> {
-    return this.http
-      .post<ApiResponse>(`${this.config.openCommonBaseURL}user/userLogout`, {})
-      .pipe(
-        tap(() => {
-          this.storage.removeItem(ENCRYPTED_KEYS.privilegeFlag);
-          this.storage.removeItem(ENCRYPTED_KEYS.sessionId);
-          this.storage.removeItem(ENCRYPTED_KEYS.callTransferred);
-        }),
-      );
+    this.storage.removeItem(ENCRYPTED_KEYS.privilegeFlag);
+    this.storage.removeItem(ENCRYPTED_KEYS.sessionId);
+    this.storage.removeItem(ENCRYPTED_KEYS.callTransferred);
+    return this.http.post<ApiResponse>(`${this.config.openCommonBaseURL}user/userLogout`, {});
   }
 
   /** POST cti/getAgentIPAddress (`data.agent_ip`). */

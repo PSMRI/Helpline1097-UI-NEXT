@@ -34,7 +34,7 @@ import { lucideClock, lucideCoffee, lucidePhone, lucidePhoneCall } from '@ng-ico
 
 import { cardImports } from '@common-ui/ui/card';
 
-import { CtiService } from '@/app-modules/core/services/cti.service';
+import { AgentCallStatsData, CtiService } from '@/app-modules/core/services/cti.service';
 
 /** One call-statistics metric tile. */
 interface StatTile {
@@ -82,18 +82,41 @@ export class CallStatisticsComponent implements OnInit {
   /** Supervisor sees the tiles blanked (no per-agent call stats). */
   readonly blank = input(false);
 
-  // Placeholders until getAgentCallStats responds (old app showed empty until then).
-  private readonly totalCallDuration = signal('00:00:00');
-  private readonly totalBreakTime = signal('00:00:00');
-  private readonly totalFreeTime = signal('00:00:00');
-  private readonly totalCalls = signal('0');
+  // Raw getAgentCallStats payload; placeholders render per-field until it arrives
+  // (old app showed empty until then).
+  private readonly stats = signal<AgentCallStatsData | null>(null);
 
-  protected readonly tiles = computed<StatTile[]>(() => [
-    { label: 'Call Duration', value: this.totalCallDuration(), time: true, icon: 'lucidePhone' },
-    { label: 'Break Time', value: this.totalBreakTime(), time: true, icon: 'lucideCoffee' },
-    { label: 'Free Time', value: this.totalFreeTime(), time: true, icon: 'lucideClock' },
-    { label: 'Total Calls', value: this.totalCalls(), time: false, icon: 'lucidePhoneCall' },
-  ]);
+  protected readonly tiles = computed<StatTile[]>(() => {
+    const stats = this.stats();
+    const value = (field: number | string | undefined, placeholder: string): string =>
+      field != null ? String(field) : placeholder;
+    return [
+      {
+        label: 'Call Duration',
+        value: value(stats?.total_call_duration, '00:00:00'),
+        time: true,
+        icon: 'lucidePhone',
+      },
+      {
+        label: 'Break Time',
+        value: value(stats?.total_break_time, '00:00:00'),
+        time: true,
+        icon: 'lucideCoffee',
+      },
+      {
+        label: 'Free Time',
+        value: value(stats?.total_free_time, '00:00:00'),
+        time: true,
+        icon: 'lucideClock',
+      },
+      {
+        label: 'Total Calls',
+        value: value(stats?.total_calls, '0'),
+        time: false,
+        icon: 'lucidePhoneCall',
+      },
+    ];
+  });
 
   ngOnInit(): void {
     if (this.blank()) {
@@ -101,24 +124,7 @@ export class CallStatisticsComponent implements OnInit {
     }
     // Old `todayCallLists()` — one fetch on load, values rendered verbatim.
     this.cti.getCallDetails().subscribe({
-      next: (res) => {
-        const data = res?.data;
-        if (!data) {
-          return;
-        }
-        if (data.total_call_duration != null) {
-          this.totalCallDuration.set(String(data.total_call_duration));
-        }
-        if (data.total_break_time != null) {
-          this.totalBreakTime.set(String(data.total_break_time));
-        }
-        if (data.total_free_time != null) {
-          this.totalFreeTime.set(String(data.total_free_time));
-        }
-        if (data.total_calls != null) {
-          this.totalCalls.set(String(data.total_calls));
-        }
-      },
+      next: (res) => this.stats.set(res?.data ?? null),
       error: () => {
         // Old app only logged this; tiles keep their zero placeholders.
       },

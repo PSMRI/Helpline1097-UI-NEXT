@@ -23,6 +23,9 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { ENCRYPTED_KEYS, SessionStorageService } from '../services/session-storage.service';
 
+/** The mid-call screen route (old `RedirectToInnerpageComponent`). */
+export const CALL_SCREEN_ROUTE = '/MultiRoleScreenComponent/RedirectToInnerpageComponent';
+
 /**
  * Active-call state (signals). Replaces the call slice of the old `dataService`.
  * The persisted keys are AES-encrypted (the guards read `isOnCall` decrypted), so the
@@ -38,9 +41,11 @@ export class CallStore {
   readonly cli = signal<string | null>(this.storage.getItem(ENCRYPTED_KEYS.cli));
   readonly sessionId = signal<string | null>(this.storage.getItem(ENCRYPTED_KEYS.sessionId));
   readonly callCategory = signal<string | null>(this.storage.getItem(ENCRYPTED_KEYS.callCategory));
-  readonly currentCampaign = signal<string | null>(
-    this.storage.getItem(ENCRYPTED_KEYS.currentCampaign),
-  );
+  // Memory-only at construction (old `dataService.current_campaign` was in-memory; the old
+  // dashboard reset the campaign on every reload, so hydrating here would resurrect a stale
+  // OUTBOUND across F5). `setCurrentCampaign` still persists; the agent-status handler
+  // lazily re-hydrates like the old `dashboardUserId` did.
+  readonly currentCampaign = signal<string | null>(null);
   readonly isOutbound = signal<boolean>(false);
   readonly beneficiary = signal<Record<string, unknown>>({});
 
@@ -78,6 +83,20 @@ export class CallStore {
   setCurrentCampaign(value: string): void {
     this.currentCampaign.set(value);
     this.storage.setItem(ENCRYPTED_KEYS.currentCampaign, value);
+  }
+
+  /**
+   * Persist an active call's flags in one step (shared by the dashboard's CTI-event
+   * handler and the agent-status call recovery). `callCategory` is only written when the
+   * source provides it — the old status-recovery path didn't set it.
+   */
+  startCall(cli: string, sessionId: string, callCategory?: string): void {
+    this.setOnCall(true);
+    this.setCli(cli);
+    this.setSessionId(sessionId);
+    if (callCategory !== undefined) {
+      this.setCallCategory(callCategory);
+    }
   }
 
   reset(): void {
