@@ -77,12 +77,11 @@
             <button
               type="button"
               class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-              aria-label="Show password"
-              (mousedown)="revealPassword(true)"
-              (mouseup)="revealPassword(false)"
-              (mouseleave)="revealPassword(false)"
+              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              [attr.aria-pressed]="showPassword()"
+              (click)="showPassword.set(!showPassword())"
             >
-              <ng-icon name="lucideEye" />
+              <ng-icon [name]="showPassword() ? 'lucideEyeOff' : 'lucideEye'" />
             </button>
           </div>
         </div>
@@ -90,7 +89,11 @@
         <!-- Captcha (optional) -->
         @if (enableCaptcha) {
           <div role="group" aria-label="Security check" class="flex justify-center">
-            <app-captcha #captchaCmp (tokenResolved)="onCaptchaResolved($event)" />
+            <app-captcha
+              #captchaCmp
+              (tokenResolved)="onCaptchaResolved($event)"
+              (loadFailed)="onCaptchaLoadFailed()"
+            />
           </div>
         }
 

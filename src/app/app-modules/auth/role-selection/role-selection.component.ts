@@ -55,8 +55,6 @@ export class RoleSelectionComponent {
   protected readonly privileges = this.sessionStore.privileges;
 
   protected selectRole(role: RolePrivilege, service: Privilege): void {
-    this.storage.setPlain(PLAIN_KEYS.apimanKey, service.apimanClientKey ?? '');
-
     const screen = role.serviceRoleScreenMappings?.[0]?.screen?.screenName?.trim().toLowerCase();
     let roleName: Role | null = null;
     if (screen === 'registration_counselling') {
@@ -65,8 +63,10 @@ export class RoleSelectionComponent {
       roleName = 'Supervisor';
     }
 
-    // Faithful to the old guard: only 1097 CO/Supervisor roles proceed.
+    // Faithful to the old guard: only 1097 CO/Supervisor roles proceed. Persist the apiman key
+    // only on success so a rejected role never leaves stale session state behind.
     if (service.serviceName === '1097' && roleName) {
+      this.storage.setPlain(PLAIN_KEYS.apimanKey, service.apimanClientKey ?? '');
       this.sessionStore.currentRole.set(roleName);
       this.sessionStore.currentServiceName.set(service.serviceName ?? null);
       this.sessionStore.currentServiceId.set(service.serviceID ?? null);

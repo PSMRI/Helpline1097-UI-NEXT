@@ -81,7 +81,9 @@ export const routes: Routes = [
           import('./app-modules/auth/dashboard/dashboard.component').then(
             (m) => m.DashboardComponent,
           ),
-        data: { title: 'Dashboard' },
+        // `showContacts` gates the emergency-contacts / force-logout header icons,
+        // read independently of the (later-localized) display title.
+        data: { title: 'Dashboard', showContacts: true },
       },
     ],
   },

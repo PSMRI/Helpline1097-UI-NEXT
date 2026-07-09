@@ -34,7 +34,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideEye, lucideLock, lucideUser } from '@ng-icons/lucide';
+import { lucideEye, lucideEyeOff, lucideLock, lucideUser } from '@ng-icons/lucide';
 import { finalize } from 'rxjs/operators';
 
 import { ZardButtonComponent } from '@common-ui/ui/button';
@@ -81,7 +81,7 @@ import { USERNAME_BLOCK_PATTERN } from '../utils/auth-validators';
   ],
   templateUrl: './login.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ lucideUser, lucideLock, lucideEye })],
+  viewProviders: [provideIcons({ lucideUser, lucideLock, lucideEye, lucideEyeOff })],
 })
 export class LoginComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -167,8 +167,11 @@ export class LoginComponent implements OnInit {
     this.loginResult.set('');
   }
 
-  protected revealPassword(reveal: boolean): void {
-    this.showPassword.set(reveal);
+  /** Turnstile script couldn't load — the login button would stay disabled, so warn the user. */
+  protected onCaptchaLoadFailed(): void {
+    this.loginResult.set(
+      'Security check could not load. Disable any ad blocker or check your connection, then reload the page.',
+    );
   }
 
   /** Force-logout the previous session, then re-authenticate (doLogout=true). */
@@ -216,6 +219,10 @@ export class LoginComponent implements OnInit {
     } else if (data.isAuthenticated === true && data.Status === 'New') {
       this.storage.setPlain(PLAIN_KEYS.authToken, data.key ?? '');
       this.router.navigate(['/setQuestions']);
+    } else {
+      // Authenticated but an unexpected status (neither Active nor New) — surface feedback
+      // instead of leaving the user on an unresponsive form.
+      this.loginResult.set('Unable to sign in.');
     }
   }
 

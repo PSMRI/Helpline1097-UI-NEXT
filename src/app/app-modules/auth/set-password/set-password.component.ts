@@ -24,7 +24,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideEye, lucideLock } from '@ng-icons/lucide';
+import { lucideEye, lucideEyeOff, lucideLock } from '@ng-icons/lucide';
 
 import { ZardButtonComponent } from '@common-ui/ui/button';
 import { cardImports } from '@common-ui/ui/card';
@@ -55,7 +55,7 @@ import { PASSWORD_PATTERN } from '../utils/auth-validators';
   ],
   templateUrl: './set-password.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ lucideLock, lucideEye })],
+  viewProviders: [provideIcons({ lucideLock, lucideEye, lucideEyeOff })],
 })
 export class SetPasswordComponent {
   private readonly fb = inject(FormBuilder);
@@ -116,9 +116,5 @@ export class SetPasswordComponent {
         this.router.navigate(['/resetPassword']);
       },
     });
-  }
-
-  protected revealPassword(reveal: boolean): void {
-    this.showPassword.set(reveal);
   }
 }

@@ -25,7 +25,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideEye, lucideLock } from '@ng-icons/lucide';
+import { lucideEye, lucideEyeOff, lucideLock } from '@ng-icons/lucide';
 
 import { ZardButtonComponent } from '@common-ui/ui/button';
 import { cardImports } from '@common-ui/ui/card';
@@ -68,7 +68,7 @@ import { ANSWER_BLOCK_PATTERN, PASSWORD_PATTERN } from '../utils/auth-validators
   ],
   templateUrl: './set-security-questions.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ lucideLock, lucideEye })],
+  viewProviders: [provideIcons({ lucideLock, lucideEye, lucideEyeOff })],
 })
 export class SetSecurityQuestionsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -218,9 +218,5 @@ export class SetSecurityQuestionsComponent implements OnInit {
       mobileNumber: '1234567890',
       createdBy,
     }));
-  }
-
-  protected revealPassword(reveal: boolean): void {
-    this.showPassword.set(reveal);
   }
 }

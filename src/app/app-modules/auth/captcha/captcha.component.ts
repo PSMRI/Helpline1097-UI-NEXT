@@ -60,18 +60,30 @@ export class CaptchaComponent implements AfterViewInit, OnDestroy {
 
   private readonly container = viewChild.required<ElementRef<HTMLDivElement>>('captchaContainer');
   readonly tokenResolved = output<string>();
+  /** Emitted when the challenge can't load (ad-blocker/firewall/network) so the parent can warn. */
+  readonly loadFailed = output<void>();
 
   private widgetId?: string;
+  private destroyed = false;
 
   async ngAfterViewInit(): Promise<void> {
     try {
       await this.captchaService.loadScript();
     } catch {
-      // Script failed to load — fail closed: no widget renders, so no token is emitted and
-      // the login button stays disabled. Swallow to avoid an unhandled promise rejection.
+      // Script failed to load (ad-blocker, corporate firewall, network) — tell the parent so it
+      // can surface an error instead of leaving the login button silently disabled forever.
+      if (!this.destroyed) {
+        this.loadFailed.emit();
+      }
+      return;
+    }
+    // Guard against the component being torn down while the script was loading — rendering
+    // into a detached view would leak a widget that ngOnDestroy() can no longer clean up.
+    if (this.destroyed) {
       return;
     }
     if (typeof turnstile === 'undefined') {
+      this.loadFailed.emit();
       return;
     }
     this.widgetId = turnstile.render(this.container().nativeElement, {
@@ -88,6 +100,7 @@ export class CaptchaComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     if (this.widgetId && typeof turnstile !== 'undefined') {
       turnstile.remove(this.widgetId);
     }
