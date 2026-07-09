@@ -42,6 +42,11 @@ export interface AgentStateData {
   session_id?: string;
 }
 
+/** IVRS routing info returned by `cti/getIVRSPathDetails` (old innerpage reads `zoneName`). */
+export interface IvrsPathData {
+  zoneName?: string;
+}
+
 /** Call-stats shape returned by `cti/getAgentCallStats` (old call-statistics reader). */
 export interface AgentCallStatsData {
   total_calls?: number | string;
@@ -60,7 +65,7 @@ export interface AgentCallStatsData {
 export abstract class CtiService {
   abstract getLoginKey(username: string, password: string): Observable<ApiResponse>;
   abstract getAgentStatus(): Observable<ApiResponse<AgentStateData>>;
-  abstract getIvrsPathDetails(): Observable<ApiResponse>;
+  abstract getIvrsPathDetails(): Observable<ApiResponse<IvrsPathData>>;
   abstract getCallDetails(): Observable<ApiResponse<AgentCallStatsData>>;
   abstract dialBeneficiary(phoneNumber: string): Observable<ApiResponse>;
   abstract agentLogout(): Observable<ApiResponse>;
@@ -109,8 +114,8 @@ export class CzentrixHttpService extends CtiService {
   }
 
   /** POST cti/getIVRSPathDetails — IVRS routing info (`data.zoneName`). */
-  getIvrsPathDetails(): Observable<ApiResponse> {
-    return this.http.post<ApiResponse>(
+  getIvrsPathDetails(): Observable<ApiResponse<IvrsPathData>> {
+    return this.http.post<ApiResponse<IvrsPathData>>(
       `${this.config.commonBaseURL}cti/getIVRSPathDetails`,
       this.agentPayload(),
     );
@@ -197,8 +202,8 @@ export class CzentrixStubService extends CtiService {
   getAgentStatus(): Observable<ApiResponse<AgentStateData>> {
     return this.ok<AgentStateData>();
   }
-  getIvrsPathDetails(): Observable<ApiResponse> {
-    return this.ok();
+  getIvrsPathDetails(): Observable<ApiResponse<IvrsPathData>> {
+    return this.ok<IvrsPathData>();
   }
   getCallDetails(): Observable<ApiResponse<AgentCallStatsData>> {
     return this.ok<AgentCallStatsData>();

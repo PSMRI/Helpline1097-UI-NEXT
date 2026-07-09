@@ -1,0 +1,83 @@
+<!--
+  AMRIT – Accessible Medical Records via Integrated Technologies
+  Integrated EHR (Electronic Health Records) Solution
+
+  Copyright (C) "Piramal Swasthya Management and Research Institute"
+
+  This file is part of AMRIT.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see https://www.gnu.org/licenses/.
+-->
+
+<div class="flex min-h-full flex-col">
+  <!-- Call info strip (old innerpage header: caller, zone, status, duration, totals) -->
+  @if (isCO()) {
+    <div
+      class="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-border bg-primary/5 px-4 py-2 text-sm"
+    >
+      <span class="flex items-center gap-1.5 font-semibold text-foreground">
+        <ng-icon name="lucidePhoneCall" class="text-base text-primary" />
+        {{ callerNumber() || 'Unknown number' }}
+      </span>
+
+      @if (callCategory()) {
+        <span
+          class="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium uppercase tracking-wider text-primary"
+        >
+          {{ callCategory() }}
+        </span>
+      }
+
+      @if (zoneName()) {
+        <span class="flex items-center gap-1.5 text-muted-foreground">
+          <ng-icon name="lucideMapPin" class="text-base" />
+          {{ zoneName() }}
+        </span>
+      }
+
+      @if (callStatus()) {
+        <span class="text-muted-foreground">{{ callStatus() }}</span>
+      }
+
+      <span class="flex items-center gap-1.5 text-muted-foreground">
+        <ng-icon name="lucideClock" class="text-base" />
+        {{ callDuration() }}
+      </span>
+
+      <span class="ml-auto flex items-center gap-4 text-xs text-muted-foreground">
+        @if (totalCalls() !== null) {
+          <span>Total Calls: {{ totalCalls() }}</span>
+        }
+        @if (totalTime() !== null) {
+          <span>Total Time: {{ totalTime() }}</span>
+        }
+      </span>
+
+      <!-- Wrap-up countdown (old `timeRemaining: {{ticks}}`); timer wired in slice 5d -->
+      @if (ticks() > 0 && wrapupTime()) {
+        <span class="rounded bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
+          Time remaining: {{ ticks() }}
+        </span>
+      }
+    </div>
+  }
+
+  <!-- CO wizard (old 1097-co 4-step carousel) — arrives in slice 5c -->
+  <div class="flex flex-1 items-center justify-center p-8">
+    <p class="max-w-md text-center text-sm text-muted-foreground">
+      The call wizard (Search Beneficiary → Provide Services → Other Details → Closure)
+      arrives with slice 5c; its forms are Phase 6.
+    </p>
+  </div>
+</div>
