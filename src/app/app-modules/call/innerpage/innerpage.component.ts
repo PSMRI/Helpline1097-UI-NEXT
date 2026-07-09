@@ -29,8 +29,10 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideClock, lucideMapPin, lucidePhoneCall, lucideUser } from '@ng-icons/lucide';
+import { Subscription, timer } from 'rxjs';
 
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { CtiService } from '@/app-modules/core/services/cti.service';
@@ -41,7 +43,7 @@ import {
 } from '@/app-modules/core/services/session-storage.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
-import { CallTypeGroup } from '@/app-modules/core/models';
+import { CallTypeGroup, CloseCallRequest } from '@/app-modules/core/models';
 
 import { CallWizardComponent } from '../wizard/call-wizard.component';
 
@@ -69,6 +71,7 @@ export class InnerpageComponent implements OnInit {
   private readonly storage = inject(SessionStorageService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly callerNumber = this.callStore.cli;
@@ -105,6 +108,13 @@ export class InnerpageComponent implements OnInit {
   protected readonly isEverwell = signal<string | null>(null);
   protected readonly isGrievance = signal<string | null>(null);
 
+  /** Old `beneficiaryRegID` — set once Phase 6's registration selects a beneficiary. */
+  private readonly beneficiaryRegID = signal<number | string | null>(null);
+  /** Old `ipAddress` — populated by the closure/logout flows (Phase 6); undefined until then. */
+  private readonly ipAddress = signal<string | undefined>(undefined);
+
+  private wrapupTimerSubscription?: Subscription;
+
   constructor() {
     // Old innerpage attached its own window "message" listener (removed on destroy).
     const listener = (event: Event) => this.onCtiMessage(event);
@@ -114,7 +124,10 @@ export class InnerpageComponent implements OnInit {
     const durationInterval = setInterval(() => {
       this.elapsedSeconds.set(this.elapsedSeconds() + 1);
     }, 1000);
-    this.destroyRef.onDestroy(() => clearInterval(durationInterval));
+    this.destroyRef.onDestroy(() => {
+      clearInterval(durationInterval);
+      this.unsubscribeWrapupTime();
+    });
   }
 
   ngOnInit(): void {
@@ -242,7 +255,7 @@ export class InnerpageComponent implements OnInit {
 
     if (action === 'accept') {
       this.ticks.set(0);
-      // TODO(5d): unsubscribe the wrap-up timer (old `unsubscribeWrapupTime`).
+      this.unsubscribeWrapupTime();
     } else if (
       parts[0] === 'CustDisconnect' &&
       !this.transferInProgress() &&
@@ -253,9 +266,116 @@ export class InnerpageComponent implements OnInit {
       // Old `disconnectCall()` UI jump: the wizard reacts to this signal (slide to Closure,
       // lock nav) — the old app did it via jQuery + the custDisconnect subject.
       this.callStore.custDisconnected.set(true);
-      // TODO(5d): start the wrap-up countdown (old `startCallWraupup`).
+      this.startCallWrapup();
     } else if (parts.length > 3 && parts[3] === 'OUTBOUND') {
       this.callStore.isOutbound.set(true);
     }
   }
+
+  /**
+   * Old `startCallWraupup`: fetch the role-based wrap-up time (`user/role/{roleID}` →
+   * `data.isWrapUpTime`/`data.WrapUpTime`), fall back to the configured default (120s) on
+   * a missing config or error, then run the countdown.
+   */
+  private startCallWrapup(): void {
+    this.wrapupTime.set(true);
+    const roleId = this.sessionStore.currentRoleId();
+    if (roleId == null) {
+      this.runWrapupCountdown(DEFAULT_WRAPUP_SECONDS);
+      return;
+    }
+    this.callApi.getRoleBasedWrapupTime(roleId).subscribe({
+      next: (res) => {
+        const data = res?.data;
+        if (data?.isWrapUpTime && data.WrapUpTime != null) {
+          this.runWrapupCountdown(data.WrapUpTime);
+        } else {
+          this.runWrapupCountdown(DEFAULT_WRAPUP_SECONDS);
+        }
+      },
+      error: () => this.runWrapupCountdown(DEFAULT_WRAPUP_SECONDS),
+    });
+  }
+
+  /**
+   * Old `roleBasedCallWrapupTime`: `timer(2000, 1000)` countdown into `ticks`; on expiry,
+   * auto-close the call when the agent state is "closure" (the old comparison used the
+   * displayed status string — kept, including that a "(stateType)" suffix defeats it).
+   */
+  private runWrapupCountdown(timeRemaining: number): void {
+    this.unsubscribeWrapupTime();
+    this.wrapupTimerSubscription = timer(2000, 1000).subscribe((t) => {
+      this.ticks.set(timeRemaining - t);
+      if (t === timeRemaining) {
+        this.unsubscribeWrapupTime();
+        this.ticks.set(0);
+        if (this.callStatus().toLowerCase().trim() === 'closure') {
+          this.closeCall(
+            'Call disconnect from customer.',
+            'Call closed successfully',
+            this.wrapupCallID(),
+          );
+        }
+      }
+    });
+  }
+
+  private unsubscribeWrapupTime(): void {
+    this.wrapupTimerSubscription?.unsubscribe();
+    this.wrapupTimerSubscription = undefined;
+  }
+
+  /**
+   * Old innerpage `closeCall(remarks, message?, wrapupCallID?)` — the main `call/closeCall`
+   * path. Field set and semantics are verbatim (incl. the misspelled `prefferedDateTime` and
+   * the `session_id === custdisconnectCallID` guard). The Everwell/grievance outbound
+   * pre-closure branches arrive with their worklists in Phase 6.
+   */
+  protected closeCall(remarks: string, message?: string, wrapupCallId?: string | null): void {
+    const transfer = this.transferInProgress();
+    const request: CloseCallRequest = {
+      benCallID: this.callStore.benCallID() ?? undefined,
+      callTypeID: transfer ? (this.transferCallID() ?? null) : (this.wrapupCallID() ?? null),
+      fitToBlock: 'false',
+      isFollowupRequired: false,
+      prefferedDateTime: undefined,
+      endCall: !transfer,
+      callType: 'wrapup exceeds',
+      beneficiaryRegID: this.beneficiaryRegID(),
+      remarks: remarks?.trim() || null,
+      providerServiceMapID: this.sessionStore.currentServiceId() ?? undefined,
+      createdBy: this.sessionStore.user()?.userName,
+      agentID: this.sessionStore.agentId(),
+      agentIPAddress: this.ipAddress(),
+    };
+    if (this.callStore.currentCampaign() === 'OUTBOUND') {
+      request.isCompleted = true;
+    }
+    // Auto-close path (wrap-up expiry) overrides the call type and forces endCall.
+    if (wrapupCallId != null) {
+      request.callTypeID = wrapupCallId;
+      request.endCall = true;
+    }
+
+    // Old guard: only close the call the CTI actually reported disconnected.
+    if (this.callStore.sessionId() !== this.custDisconnectCallID()) {
+      return;
+    }
+    this.callApi.closeCall(request).subscribe({
+      next: () => {
+        this.notify.alert(message ?? 'Call closed successfully', 'success');
+        this.storage.removeItem(ENCRYPTED_KEYS.isOnCall);
+        this.storage.removeItem(ENCRYPTED_KEYS.isEverwellCall);
+        this.storage.removeItem(ENCRYPTED_KEYS.isGrievanceCall);
+        this.callStore.isOnCall.set(false);
+        this.router.navigate(['/MultiRoleScreenComponent/dashboard']);
+      },
+      error: (err: { errorMessage?: string }) => {
+        this.notify.alert(err?.errorMessage ?? 'Failed to close the call', 'error');
+      },
+    });
+  }
 }
+
+/** Old `config.defaultWrapupTime`. */
+const DEFAULT_WRAPUP_SECONDS = 120;
