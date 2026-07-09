@@ -73,11 +73,14 @@
     </div>
   }
 
-  <!-- CO wizard (old 1097-co 4-step carousel) — arrives in slice 5c -->
-  <div class="flex flex-1 items-center justify-center p-8">
-    <p class="max-w-md text-center text-sm text-muted-foreground">
-      The call wizard (Search Beneficiary → Provide Services → Other Details → Closure)
-      arrives with slice 5c; its forms are Phase 6.
-    </p>
-  </div>
+  <!-- CO wizard (old app-1097 → 1097-co; the supervisor console is Phase 7) -->
+  @if (isCO()) {
+    <app-call-wizard />
+  } @else {
+    <div class="flex flex-1 items-center justify-center p-8">
+      <p class="max-w-md text-center text-sm text-muted-foreground">
+        The supervisor activity console arrives in a later phase.
+      </p>
+    </div>
+  }
 </div>

@@ -43,6 +43,8 @@ import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 import { CallTypeGroup } from '@/app-modules/core/models';
 
+import { CallWizardComponent } from '../wizard/call-wizard.component';
+
 /**
  * Inner page — the call-handling screen's chrome (old `InnerpageComponent`): caller info
  * strip (CLI, category, IVRS zone, agent state, call duration, day totals), the CTI
@@ -55,7 +57,7 @@ import { CallTypeGroup } from '@/app-modules/core/models';
  */
 @Component({
   selector: 'app-innerpage',
-  imports: [NgIcon],
+  imports: [NgIcon, CallWizardComponent],
   templateUrl: './innerpage.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucidePhoneCall, lucideMapPin, lucideClock, lucideUser })],
@@ -248,7 +250,9 @@ export class InnerpageComponent implements OnInit {
     ) {
       this.custDisconnectCallID.set(parts[1]);
       this.getAgentStatus();
-      // TODO(5c): slide the wizard to the Closure step (old `disconnectCall()` UI jump).
+      // Old `disconnectCall()` UI jump: the wizard reacts to this signal (slide to Closure,
+      // lock nav) — the old app did it via jQuery + the custDisconnect subject.
+      this.callStore.custDisconnected.set(true);
       // TODO(5d): start the wrap-up countdown (old `startCallWraupup`).
     } else if (parts.length > 3 && parts[3] === 'OUTBOUND') {
       this.callStore.isOutbound.set(true);
