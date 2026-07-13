@@ -29,6 +29,7 @@ import { cardImports } from '@common-ui/ui/card';
 
 import { Privilege, RolePrivilege, Role } from '@/app-modules/core/models';
 import {
+  ENCRYPTED_KEYS,
   PLAIN_KEYS,
   SessionStorageService,
 } from '@/app-modules/core/services/session-storage.service';
@@ -75,6 +76,10 @@ export class RoleSelectionComponent {
       this.sessionStore.currentServiceId.set(service.serviceID ?? null);
       const agentId = role.agentID ?? this.sessionStore.agentId();
       this.sessionStore.agentId.set(agentId != null ? Number(agentId) : null);
+      // Persist the choice so a reload can restore it (sessionHydrationGuard) — the old
+      // app kept it memory-only and stranded the agent on a mid-call refresh.
+      this.storage.setItem(ENCRYPTED_KEYS.currentRole, roleName);
+      this.storage.setItem(ENCRYPTED_KEYS.currentRoleId, String(role.RoleID ?? ''));
       // Old app re-armed the only-outbound auto-switch on every role selection.
       this.callStore.outboundSwitchDone.set(false);
       this.router.navigate(['/MultiRoleScreenComponent/dashboard']);

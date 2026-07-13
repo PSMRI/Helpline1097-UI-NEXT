@@ -214,6 +214,8 @@ export class ShellComponent {
     this.storage.removeItem(PLAIN_KEYS.apimanKey);
     this.storage.removeItem(PLAIN_KEYS.userId);
     this.storage.removeItem(ENCRYPTED_KEYS.setLanguage);
+    this.storage.removeItem(ENCRYPTED_KEYS.currentRole);
+    this.storage.removeItem(ENCRYPTED_KEYS.currentRoleId);
     this.ui.setLanguage('English');
     this.auth.removeToken();
     this.sessionStore.reset();

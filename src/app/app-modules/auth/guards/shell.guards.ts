@@ -26,7 +26,11 @@ import { of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { AuthService } from '@/app-modules/core/auth/auth.service';
-import { Privilege, SERVICE_1097 } from '@/app-modules/core/models';
+import { Privilege, Role, SERVICE_1097 } from '@/app-modules/core/models';
+import {
+  ENCRYPTED_KEYS,
+  SessionStorageService,
+} from '@/app-modules/core/services/session-storage.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 import { AuthApiService } from '../services/auth-api.service';
@@ -38,12 +42,15 @@ import { AuthApiService } from '../services/auth-api.service';
  *
  * When a token is present but the store is empty, re-fetch the user + privileges via the
  * existing `getLoginResponse` (same call `LoginComponent` makes at startup — read-only, no
- * contract change) and repopulate the store before children activate. Selected role/service
- * are NOT restored (never persisted); the `roleSelectedGuard` then routes to role selection.
+ * contract change) and repopulate the store before children activate. The selected role is
+ * then restored from its persisted keys, validated against the FRESH privilege list (never
+ * trusted blindly) — without this a mid-call refresh stranded the agent, since the call
+ * screen blocks navigation away and needs the role/service to render. No extra API calls.
  */
 export const sessionHydrationGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const store = inject(SessionStore);
+  const storage = inject(SessionStorageService);
   const authApi = inject(AuthApiService);
 
   // Not logged in (child authGuard handles) or already hydrated → proceed.
@@ -56,9 +63,11 @@ export const sessionHydrationGuard: CanActivateFn = () => {
       const data = res?.data;
       if (data?.previlegeObj) {
         store.setUser(data);
-        store.privileges.set(
-          data.previlegeObj.filter((p: Privilege) => p.serviceName === SERVICE_1097),
+        const privileges = data.previlegeObj.filter(
+          (p: Privilege) => p.serviceName === SERVICE_1097,
         );
+        store.privileges.set(privileges);
+        restoreSelectedRole(store, storage, privileges);
       }
       return true;
     }),
@@ -67,6 +76,35 @@ export const sessionHydrationGuard: CanActivateFn = () => {
     catchError(() => of(true)),
   );
 };
+
+/**
+ * Restore the persisted role selection, rebuilding the same store slice `selectRole` sets —
+ * but only when the persisted RoleID exists in the freshly fetched privileges.
+ */
+function restoreSelectedRole(
+  store: SessionStore,
+  storage: SessionStorageService,
+  privileges: Privilege[],
+): void {
+  const roleName = storage.getItem(ENCRYPTED_KEYS.currentRole) as Role | null;
+  const roleIdRaw = storage.getItem(ENCRYPTED_KEYS.currentRoleId);
+  if (!roleName || !roleIdRaw) {
+    return;
+  }
+  const roleId = Number(roleIdRaw);
+  for (const service of privileges) {
+    const role = (service.roles ?? []).find((r) => r.RoleID === roleId);
+    if (role && service.serviceName === SERVICE_1097) {
+      store.currentRole.set(roleName);
+      store.currentRoleId.set(roleId);
+      store.currentServiceName.set(service.serviceName ?? null);
+      store.currentServiceId.set(service.serviceID ?? null);
+      const agentId = role.agentID ?? store.agentId();
+      store.agentId.set(agentId != null ? Number(agentId) : null);
+      return;
+    }
+  }
+}
 
 /**
  * Dashboard requires a selected role. Role selection is in-memory only (faithful to the old
