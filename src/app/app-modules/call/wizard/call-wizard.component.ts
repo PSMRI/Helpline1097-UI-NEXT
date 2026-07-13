@@ -87,8 +87,10 @@ export class CallWizardComponent implements OnInit {
 
   constructor() {
     // Old ngOnInit subscription to `custDisconnectCall$`: lock nav onto the closure step.
+    // The counter re-fires this on every CustDisconnect (old Subject semantics), so a
+    // duplicate event re-locks the wizard even after the agent stepped back.
     effect(() => {
-      if (this.callStore.custDisconnected() === true) {
+      if (this.callStore.custDisconnected() > 0) {
         this.step.set(this.lastStepIndex());
         this.isPrevious.set(true);
         this.disableBack.set(false);
@@ -100,7 +102,7 @@ export class CallWizardComponent implements OnInit {
 
   ngOnInit(): void {
     // Old app reset the subject on wizard init (`enablePreviousOnCustDisconnect(null)`).
-    this.callStore.custDisconnected.set(null);
+    this.callStore.custDisconnected.set(0);
     if (this.storage.getItem(ENCRYPTED_KEYS.isEverwellCall) === 'yes') {
       this.variant.set('everwell');
     } else if (this.storage.getItem(ENCRYPTED_KEYS.isGrievanceCall) === 'yes') {

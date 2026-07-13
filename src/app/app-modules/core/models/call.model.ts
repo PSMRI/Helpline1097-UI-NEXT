@@ -40,7 +40,8 @@ export interface CallTypeGroup {
  */
 export interface CloseCallRequest {
   benCallID?: number | string;
-  callTypeID?: string | null;
+  /** String on the normal paths; the old wrap-up auto-close sent the RAW numeric id. */
+  callTypeID?: string | number | null;
   fitToBlock?: string;
   isFollowupRequired?: boolean;
   prefferedDateTime?: string;

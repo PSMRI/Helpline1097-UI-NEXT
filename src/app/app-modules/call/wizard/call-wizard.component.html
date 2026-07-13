@@ -57,18 +57,21 @@
   <!-- Nav buttons (old Previous / Cancel / Closure / Next) -->
   <div class="flex items-center justify-between gap-3">
     <div>
-      @if (isPrevious()) {
+      <!-- Old app only rendered Previous in the standard (4-step) flow -->
+      @if (isPrevious() && variant() === 'standard') {
         <button z-button zType="outline" type="button" [zDisabled]="disableBack()" (click)="previous()">
           Previous
         </button>
       }
     </div>
     <div class="flex items-center gap-3">
+      <!-- Old app: standard-flow Cancel had NO disabled binding (always clickable);
+           only the everwell/grievance variants honoured isCancelDisable -->
       <button
         z-button
         zType="outline"
         type="button"
-        [zDisabled]="isCancelDisable()"
+        [zDisabled]="variant() !== 'standard' && isCancelDisable()"
         (click)="cancel()"
       >
         Cancel

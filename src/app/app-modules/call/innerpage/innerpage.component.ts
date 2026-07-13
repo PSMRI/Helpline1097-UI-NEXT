@@ -95,10 +95,11 @@ export class InnerpageComponent implements OnInit {
     return `${Math.floor(total / 60)}m ${total % 60}s`;
   });
 
-  // Call-type IDs extracted from call/getCallTypesV1 (old innerpage fields).
-  protected readonly transferCallID = signal<string | null>(null);
-  protected readonly wrapupCallID = signal<string | null>(null);
-  protected readonly disconnectCallID = signal<string | null>(null);
+  // Call-type IDs extracted from call/getCallTypesV1, kept RAW (old innerpage fields) —
+  // the normal closeCall path stringifies them, the wrap-up auto-close sent the raw number.
+  protected readonly transferCallID = signal<number | string | null>(null);
+  protected readonly wrapupCallID = signal<number | string | null>(null);
+  protected readonly disconnectCallID = signal<number | string | null>(null);
 
   /** Old `custdisconnectCallID` — session id from the CustDisconnect CTI event. */
   protected readonly custDisconnectCallID = signal<string | null>(null);
@@ -131,6 +132,8 @@ export class InnerpageComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Old innerpage initialized the outbound flag from the persisted callCategory.
+    this.callStore.isOutbound.set(this.callStore.callCategory() === 'OUTBOUND');
     // Faithful init order (old innerpage ngOnInit): call types → zone → agent state → totals.
     this.getCallTypes();
     this.getIvrsPathDetails();
@@ -159,29 +162,30 @@ export class InnerpageComponent implements OnInit {
   }
 
   private extractCallTypeIds(groups: CallTypeGroup[]): void {
+    // First-match-wins with a truthy-ID guard, like the old app (`filter(...)[0]` + `break`);
+    // a later match never overwrites an already-found id, and a missing id never nulls one.
     for (const group of groups) {
       const groupType = group.callGroupType ?? '';
-      if (groupType.toLowerCase().startsWith('transfer')) {
-        for (const callType of group.callTypes ?? []) {
-          if (callType.callTypeDesc?.toLowerCase().startsWith('transfer')) {
-            this.transferCallID.set(callType.callTypeID != null ? String(callType.callTypeID) : null);
-          }
+      if (groupType.toLowerCase().startsWith('transfer') && this.transferCallID() == null) {
+        const match = (group.callTypes ?? []).filter((ct) =>
+          ct.callTypeDesc?.toLowerCase().startsWith('transfer'),
+        )[0];
+        if (match?.callTypeID) {
+          this.transferCallID.set(match.callTypeID);
         }
       }
-      if (groupType.startsWith('Wrapup')) {
-        for (const callType of group.callTypes ?? []) {
-          if (callType.callType?.startsWith('Wrapup')) {
-            this.wrapupCallID.set(callType.callTypeID != null ? String(callType.callTypeID) : null);
-          }
+      if (groupType.startsWith('Wrapup') && this.wrapupCallID() == null) {
+        const match = (group.callTypes ?? []).find((ct) => ct.callType?.startsWith('Wrapup'));
+        if (match?.callTypeID) {
+          this.wrapupCallID.set(match.callTypeID);
         }
       }
-      if (groupType.toLowerCase().startsWith('valid')) {
-        for (const callType of group.callTypes ?? []) {
-          if (callType.callTypeDesc?.toLowerCase().startsWith('valid')) {
-            this.disconnectCallID.set(
-              callType.callTypeID != null ? String(callType.callTypeID) : null,
-            );
-          }
+      if (groupType.toLowerCase().startsWith('valid') && this.disconnectCallID() == null) {
+        const match = (group.callTypes ?? []).filter((ct) =>
+          ct.callTypeDesc?.toLowerCase().startsWith('valid'),
+        )[0];
+        if (match?.callTypeID) {
+          this.disconnectCallID.set(match.callTypeID);
         }
       }
     }
@@ -231,8 +235,11 @@ export class InnerpageComponent implements OnInit {
         this.totalCalls.set(res?.data?.total_calls ?? null);
         this.totalTime.set(res?.data?.total_call_duration ?? null);
       },
-      error: () => {
-        // Old app only logged this.
+      error: (err: { errorMessage?: string }) => {
+        // Old app alerted the error for every non-supervisor role.
+        if (this.sessionStore.currentRole() !== 'Supervisor') {
+          this.notify.alert(err?.errorMessage ?? 'Failed to get call details', 'error');
+        }
       },
     });
   }
@@ -263,9 +270,11 @@ export class InnerpageComponent implements OnInit {
     ) {
       this.custDisconnectCallID.set(parts[1]);
       this.getAgentStatus();
-      // Old `disconnectCall()` UI jump: the wizard reacts to this signal (slide to Closure,
-      // lock nav) — the old app did it via jQuery + the custDisconnect subject.
-      this.callStore.custDisconnected.set(true);
+      // Old `disconnectCall()` UI jump (slide to Closure, lock nav) ran ONLY for standard
+      // calls — everwell/grievance flows stayed on their slides. The wrap-up always starts.
+      if (this.isEverwell() !== 'yes' && this.isGrievance() !== 'yes') {
+        this.callStore.custDisconnected.update((n) => n + 1);
+      }
       this.startCallWrapup();
     } else if (parts.length > 3 && parts[3] === 'OUTBOUND') {
       this.callStore.isOutbound.set(true);
@@ -331,18 +340,25 @@ export class InnerpageComponent implements OnInit {
    * the `session_id === custdisconnectCallID` guard). The Everwell/grievance outbound
    * pre-closure branches arrive with their worklists in Phase 6.
    */
-  protected closeCall(remarks: string, message?: string, wrapupCallId?: string | null): void {
+  protected closeCall(
+    remarks: string,
+    message?: string,
+    wrapupCallId?: number | string | null,
+  ): void {
     const transfer = this.transferInProgress();
+    // Old stringified the id on the normal paths ('.toString()'); '' remarks stays '' —
+    // only null/undefined becomes null.
+    const normalCallTypeId = transfer ? this.transferCallID() : this.wrapupCallID();
     const request: CloseCallRequest = {
       benCallID: this.callStore.benCallID() ?? undefined,
-      callTypeID: transfer ? (this.transferCallID() ?? null) : (this.wrapupCallID() ?? null),
+      callTypeID: normalCallTypeId != null ? normalCallTypeId.toString() : null,
       fitToBlock: 'false',
       isFollowupRequired: false,
       prefferedDateTime: undefined,
       endCall: !transfer,
       callType: 'wrapup exceeds',
       beneficiaryRegID: this.beneficiaryRegID(),
-      remarks: remarks?.trim() || null,
+      remarks: remarks != null ? remarks.trim() : null,
       providerServiceMapID: this.sessionStore.currentServiceId() ?? undefined,
       createdBy: this.sessionStore.user()?.userName,
       agentID: this.sessionStore.agentId(),
@@ -352,6 +368,7 @@ export class InnerpageComponent implements OnInit {
       request.isCompleted = true;
     }
     // Auto-close path (wrap-up expiry) overrides the call type and forces endCall.
+    // Old sent the RAW id here (no .toString(), unlike the normal path) — kept faithful.
     if (wrapupCallId != null) {
       request.callTypeID = wrapupCallId;
       request.endCall = true;
