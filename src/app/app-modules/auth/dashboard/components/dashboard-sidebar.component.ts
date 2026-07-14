@@ -20,90 +20,60 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideActivity,
-  lucideFileText,
-  lucideMenu,
-  lucideRepeat,
-  lucideSettings,
-  lucideX,
-} from '@ng-icons/lucide';
+import { lucideArrowLeftRight, lucideLayoutDashboard } from '@ng-icons/lucide';
 
 /**
- * Dashboard left-nav (old `dashboard-navigation`). A hamburger toggles a rail with:
- *  - Switch Role → back to role selection (functional)
- *  - Activities / Reports / Configuration → routed to the inner-page in the old app; that
- *    screen is Phase 5, so these are stubbed no-ops for now (per the agreed inner-page stub).
+ * Dashboard left navigation rail — always-visible slim icon bar, matching the
+ * reviewer-approved Helpline104 design (light gray, full height, icon + tooltip):
+ *  - Switch Role (all roles) → back to role selection
+ *  - Activity Area (Supervisor only) → the supervisor console, a later phase (stub)
+ * The old app's Activities/Reports/Configuration entries belong to the inner-page /
+ * supervisor phases and are not shown on the dashboard (as in 104's approved screens).
  */
 @Component({
   selector: 'app-dashboard-sidebar',
   imports: [NgIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [
-    provideIcons({
-      lucideMenu,
-      lucideX,
-      lucideActivity,
-      lucideFileText,
-      lucideSettings,
-      lucideRepeat,
-    }),
-  ],
+  viewProviders: [provideIcons({ lucideArrowLeftRight, lucideLayoutDashboard })],
   template: `
-    <button
-      type="button"
-      class="flex h-9 w-9 items-center justify-center rounded-md border border-input text-muted-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      aria-label="Menu"
-      (click)="toggle()"
+    <nav
+      class="flex h-full w-14 flex-col items-center gap-2 border-r border-border bg-slate-50 py-3 text-muted-foreground"
+      aria-label="Dashboard navigation"
     >
-      <ng-icon [name]="open() ? 'lucideX' : 'lucideMenu'" class="text-xl" />
-    </button>
+      @if (showActivityArea()) {
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-md hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+          disabled
+          title="Activity Area — available in a later phase"
+          aria-label="Activity Area (available in a later phase)"
+        >
+          <ng-icon name="lucideLayoutDashboard" size="22" aria-hidden="true" />
+        </button>
+      }
 
-    @if (open()) {
-      <nav
-        class="mt-2 w-52 rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in slide-in-from-top-1 duration-150"
+      <button
+        type="button"
+        class="flex h-10 w-10 items-center justify-center rounded-md hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        title="Switch Role"
+        aria-label="Switch Role"
+        (click)="goToRoleSelection()"
       >
-        @for (item of items; track item.label) {
-          <button
-            type="button"
-            class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-            [disabled]="item.stub"
-            [title]="item.stub ? 'Available in a later phase' : item.label"
-            (click)="onItem(item)"
-          >
-            <ng-icon [name]="item.icon" class="text-base" />
-            {{ item.label }}
-          </button>
-        }
-      </nav>
-    }
+        <ng-icon name="lucideArrowLeftRight" size="22" aria-hidden="true" />
+      </button>
+    </nav>
   `,
 })
 export class DashboardSidebarComponent {
   private readonly router = inject(Router);
 
-  protected readonly open = signal(false);
+  /** Supervisor-only Activity Area entry (the supervisor console, a later phase). */
+  readonly showActivityArea = input(false);
 
-  protected readonly items = [
-    { label: 'Activities', icon: 'lucideActivity', stub: true },
-    { label: 'Reports', icon: 'lucideFileText', stub: true },
-    { label: 'Configuration', icon: 'lucideSettings', stub: true },
-    { label: 'Switch Role', icon: 'lucideRepeat', stub: false },
-  ];
-
-  protected toggle(): void {
-    this.open.update((v) => !v);
-  }
-
-  protected onItem(item: { label: string; stub: boolean }): void {
-    if (item.stub) {
-      return; // inner-page routing is Phase 5
-    }
-    if (item.label === 'Switch Role') {
-      this.router.navigate(['/MultiRoleScreenComponent']);
-    }
+  protected goToRoleSelection(): void {
+    this.router.navigate(['/MultiRoleScreenComponent']);
   }
 }

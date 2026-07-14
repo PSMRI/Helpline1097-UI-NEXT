@@ -53,22 +53,31 @@ import { RatingPanelComponent } from './components/rating-panel.component';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="mx-auto flex max-w-7xl flex-col gap-6 p-4 md:p-6">
-      <div class="flex items-center justify-between gap-3">
-        <app-dashboard-sidebar />
-        @if (!isSupervisor()) {
-          <app-agent-id />
-        }
-        <!-- Inbound/Outbound campaign toggle → Phase 4d (CTI) -->
-      </div>
+    <div class="relative min-h-full">
+      <!-- Always-visible left rail (reviewer-approved 104 design); absolute = non-pushing -->
+      <app-dashboard-sidebar
+        class="absolute inset-y-0 left-0 z-20"
+        [showActivityArea]="isSupervisor()"
+      />
 
-      <app-call-statistics [blank]="isSupervisor()" />
+      <div class="py-4 pl-16 pr-4 sm:pl-20 sm:pr-6 md:py-6">
+        <div class="mx-auto flex w-full max-w-7xl flex-col gap-6">
+          <div class="flex items-center justify-between gap-3">
+            @if (!isSupervisor()) {
+              <app-agent-id />
+            }
+            <!-- Inbound/Outbound campaign toggle → Phase 4d (CTI) -->
+          </div>
 
-      <div class="grid gap-6 md:grid-cols-2">
-        <app-alerts-panel />
-        <app-reports-panel />
-        <app-activity-panel />
-        <app-rating-panel />
+          <app-call-statistics [blank]="isSupervisor()" />
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <app-alerts-panel />
+            <app-reports-panel />
+            <app-activity-panel />
+            <app-rating-panel />
+          </div>
+        </div>
       </div>
     </div>
   `,
