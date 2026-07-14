@@ -37,7 +37,7 @@
               @for (role of service.roles; track role.RoleID) {
                 <button
                   type="button"
-                  class="w-full rounded-md border border-input px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                  class="w-full rounded-md border border-input px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   (click)="selectRole(role, service)"
                 >
                   {{ role.RoleName }}

@@ -41,6 +41,19 @@ export interface EmergencyContact {
   emergContactNo?: string;
 }
 
+/** One per-type unread count from `notification/getAlertsAndNotificationCount`. */
+export interface NotificationCount {
+  notificationType?: string;
+  notificationTypeUnreadCount?: number;
+}
+
+/** A knowledge-management (training) document from `notification/getNotification`. */
+export interface KmDocument {
+  notificationID?: number;
+  notificationTitle?: string;
+  fileName?: string;
+}
+
 /**
  * Notification-domain API (types, emergency contacts, alerts). Ported from the old
  * `notificationService`. `providerServiceMapID` is the selected service's id
@@ -68,6 +81,32 @@ export class NotificationApiService {
     return this.http.post<ApiResponse<EmergencyContact[]>>(
       `${this.config.commonBaseURL}notification/getEmergencyContacts`,
       { providerServiceMapID, notificationTypeID },
+    );
+  }
+
+  /** POST notification/getAlertsAndNotificationCount — per-type unread counts for the agent. */
+  getAlertsAndNotificationCount(
+    userID: number,
+    roleID: number,
+    providerServiceMapID: number,
+  ): Observable<ApiResponse<{ userNotificationTypeList?: NotificationCount[] }>> {
+    return this.http.post<ApiResponse<{ userNotificationTypeList?: NotificationCount[] }>>(
+      `${this.config.commonBaseURL}notification/getAlertsAndNotificationCount`,
+      { userID, roleID, providerServiceMapID },
+    );
+  }
+
+  /** POST notification/getNotification — knowledge-management (training) docs for a role. */
+  getKMs(
+    providerServiceMapID: number,
+    notificationTypeID: number,
+    roleId: number,
+    validFrom: Date,
+    validTill: Date,
+  ): Observable<ApiResponse<KmDocument[]>> {
+    return this.http.post<ApiResponse<KmDocument[]>>(
+      `${this.config.commonBaseURL}notification/getNotification`,
+      { providerServiceMapID, notificationTypeID, roleIDs: [roleId], validFrom, validTill },
     );
   }
 }

@@ -22,37 +22,67 @@
 
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 
-import { cardImports } from '@common-ui/ui/card';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
+import { ActivityPanelComponent } from './components/activity-panel.component';
+import { AgentIdComponent } from './components/agent-id.component';
+import { AlertsPanelComponent } from './components/alerts-panel.component';
+import { CallStatisticsComponent } from './components/call-statistics.component';
+import { DashboardSidebarComponent } from './components/dashboard-sidebar.component';
+import { ReportsPanelComponent } from './components/reports-panel.component';
+import { RatingPanelComponent } from './components/rating-panel.component';
+
 /**
- * Placeholder dashboard. The real role-aware dashboard (call stats, campaign toggle,
- * panels, CTI bar, etc.) is a later phase; this just confirms the post-login landing and
- * the selected role/service for now.
+ * Role-aware dashboard (old `dashboardContentClass`). Composes the panels; Supervisor hides
+ * the agent-id + campaign toggle and sees blanked call stats.
+ *
+ * Phase 4c increment: agent-id, call-statistics (layout), reports, rating.
+ * TODO next: alerts + activity panels (4c-4), left-nav (4c-5); campaign toggle + live
+ * call-stats/agent-status via CTI (4d).
  */
 @Component({
   selector: 'app-dashboard',
-  imports: [...cardImports],
+  imports: [
+    ActivityPanelComponent,
+    AgentIdComponent,
+    AlertsPanelComponent,
+    CallStatisticsComponent,
+    DashboardSidebarComponent,
+    ReportsPanelComponent,
+    RatingPanelComponent,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex min-h-[60vh] items-center justify-center p-4">
-      <z-card class="w-full max-w-md text-center">
-        <z-card-header class="justify-items-center">
-          <z-card-title class="text-xl">Dashboard</z-card-title>
-          <z-card-description>Coming in a later phase</z-card-description>
-        </z-card-header>
-        <z-card-content class="text-sm text-muted-foreground">
-          <p>Signed in as <span class="font-medium text-foreground">{{ userName() }}</span></p>
-          @if (role()) {
-            <p>Role: <span class="font-medium text-foreground">{{ role() }}</span></p>
-          }
-        </z-card-content>
-      </z-card>
+    <div class="relative min-h-full">
+      <!-- Always-visible left rail (reviewer-approved 104 design); absolute = non-pushing -->
+      <app-dashboard-sidebar
+        class="absolute inset-y-0 left-0 z-20"
+        [showActivityArea]="isSupervisor()"
+      />
+
+      <div class="py-4 pl-16 pr-4 sm:pl-20 sm:pr-6 md:py-6">
+        <div class="mx-auto flex w-full max-w-7xl flex-col gap-6">
+          <div class="flex items-center justify-between gap-3">
+            @if (!isSupervisor()) {
+              <app-agent-id />
+            }
+            <!-- Inbound/Outbound campaign toggle → Phase 4d (CTI) -->
+          </div>
+
+          <app-call-statistics [blank]="isSupervisor()" />
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <app-alerts-panel />
+            <app-reports-panel />
+            <app-activity-panel />
+            <app-rating-panel />
+          </div>
+        </div>
+      </div>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent {
   private readonly sessionStore = inject(SessionStore);
-  protected readonly userName = computed(() => this.sessionStore.user()?.userName ?? '');
-  protected readonly role = this.sessionStore.currentRole;
+  protected readonly isSupervisor = computed(() => this.sessionStore.currentRole() === 'Supervisor');
 }
