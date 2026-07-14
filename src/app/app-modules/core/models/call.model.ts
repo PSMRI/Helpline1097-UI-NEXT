@@ -61,3 +61,38 @@ export interface RoleWrapupTimeData {
   isWrapUpTime?: boolean;
   WrapUpTime?: number;
 }
+
+/** `services/getCallSummary` row — per-call service summary shown on the closure slide. */
+export interface CallSummary {
+  informationServices?: string;
+  counsellingServices?: string;
+  referralServices?: string;
+  feedbackServices?: string;
+  [key: string]: unknown;
+}
+
+/** `cti/transferCall` request (old closure `transferCall`; string flags are the contract). */
+export interface TransferCallRequest {
+  transfer_from?: number | string | null;
+  transfer_campaign_info?: string | null;
+  skill_transfer_flag?: '0' | '1';
+  skill?: string | null;
+  callType?: string | null;
+  callTypeID?: string | null;
+  agentIPAddress?: string;
+  benCallID?: number | string | null;
+}
+
+/** Location master rows (`location/districts|taluks|village/{id}` GETs). */
+export interface DistrictRow {
+  districtID?: number;
+  districtName?: string;
+}
+export interface TalukRow {
+  talukID?: number;
+  talukName?: string;
+}
+export interface VillageRow {
+  districtBranchID?: number;
+  villageName?: string;
+}

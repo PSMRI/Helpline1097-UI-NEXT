@@ -23,3 +23,5 @@
 export * from './api-response.model';
 export * from './user.model';
 export * from './call.model';
+export * from './beneficiary.model';
+export * from './co-services.model';
