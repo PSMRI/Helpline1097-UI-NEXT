@@ -25,6 +25,9 @@ export interface CallType {
   callTypeID?: number;
   callType?: string;
   callTypeDesc?: string;
+  /** Backend sends these as string booleans; the closure sub-type CSV carries them. */
+  fitToBlock?: boolean | string;
+  fitForFollowUp?: boolean | string;
 }
 
 /** A call-type group (`call/getCallTypesV1` returns an array of these). */
@@ -47,13 +50,19 @@ export interface CloseCallRequest {
   prefferedDateTime?: string;
   endCall?: boolean;
   isCompleted?: boolean;
-  callType?: string;
+  callType?: string | null;
   beneficiaryRegID?: number | string | null;
   remarks?: string | null;
   providerServiceMapID?: number;
   createdBy?: string;
   agentID?: number | string | null;
   agentIPAddress?: string;
+  // Closure-slide follow-up + transfer fields (old `closure.closeCall`).
+  isTransfered?: boolean;
+  IsOutbound?: boolean;
+  requestedServiceID?: number | null;
+  requestedFor?: string | null;
+  preferredLanguageName?: string | null;
 }
 
 /** `user/role/{roleID}` response data — role-based wrap-up configuration. */

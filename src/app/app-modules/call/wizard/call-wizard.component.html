@@ -55,8 +55,10 @@
       <app-co-services (serviceProvided)="onServiceProvided()" />
     } @else if (variant() === 'standard' && step() === 2) {
       <app-updates-from-beneficiary />
+    } @else if (variant() === 'standard' && step() === 3) {
+      <app-closure (callClosed)="onCallClosed()" (closedContinue)="onClosedContinue()" />
     } @else {
-      <!-- Closure slide + the outbound (everwell/grievance) variants land in 6e–6f -->
+      <!-- The outbound (everwell/grievance) variant slides land in 6f -->
       <div class="flex min-h-64 items-center justify-center">
         <p class="max-w-md text-center text-sm text-muted-foreground">
           {{ steps()[step()] }} — this form arrives in a later Phase 6 slice.
