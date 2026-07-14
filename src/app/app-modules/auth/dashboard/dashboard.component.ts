@@ -121,11 +121,13 @@ export class DashboardComponent {
     if (sessionId === undefined || sessionId === 'undefined' || sessionId === null || sessionId === '') {
       return;
     }
+    // Single dispatch (review fix): the old app's two independent `if` blocks invoked
+    // handleEvent twice for an Accept with a new session id — harmless only by accident
+    // (idempotent store writes, same-URL navigation). Same trigger conditions, one call.
     const known = this.callStore.sessionId();
-    if (!known || known !== sessionId) {
-      this.handleCtiEvent(parts);
-    }
-    if (parts[0]?.toLowerCase() === 'accept') {
+    const isNewSession = !known || known !== sessionId;
+    const isAccept = parts[0]?.toLowerCase() === 'accept';
+    if (isNewSession || isAccept) {
       this.handleCtiEvent(parts);
     }
   }
@@ -135,14 +137,19 @@ export class DashboardComponent {
     if (parts.length <= 2) {
       return;
     }
-    // Old app set isOnCall before validating (kept faithful).
-    this.callStore.setOnCall(true);
     const mobileNumber = (parts[1] ?? '').replace(/\D/g, '');
     const checkNumber = /^\d+$/;
     const sessionVar = /^\d{10}\.\d{10}$/;
-    const checkCallType = /^(INBOUND)|(OUTBOUND)$/i;
+    // Review fix (deviation from the old app, declared on PR #6): the pattern is anchored —
+    // the old `^(INBOUND)|(OUTBOUND)$` accepted e.g. "INBOUNDxyz". Real events carry bare
+    // tokens (the old innerpage compared `=== 'OUTBOUND'` exactly); verified at the
+    // live-call milestone together with the deferred origin check.
+    const checkCallType = /^(INBOUND|OUTBOUND)$/i;
 
     if (checkNumber.test(mobileNumber) && sessionVar.test(parts[2]) && checkCallType.test(parts[3])) {
+      // Review fix: isOnCall is set only for a VALID call (startCall sets it) — the old app
+      // set it before validating, stranding the agent behind the mid-call guards when a
+      // malformed event arrived (flag set, no call, no navigation, logout blocked).
       this.callStore.startCall(parts[1], parts[2], parts[3]);
       this.router.navigate([CALL_SCREEN_ROUTE]);
     } else {
