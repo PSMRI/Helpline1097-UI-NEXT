@@ -47,11 +47,18 @@
     }
   </ol>
 
-  <!-- Active slide (Phase 6 fills these with the real forms) -->
-  <div class="flex min-h-64 flex-1 items-center justify-center rounded-lg border border-dashed border-border bg-background p-8">
-    <p class="max-w-md text-center text-sm text-muted-foreground">
-      {{ steps()[step()] }} — this form arrives in Phase 6.
-    </p>
+  <!-- Active slide -->
+  <div class="min-h-64 flex-1 rounded-lg border border-border bg-background p-4 md:p-6">
+    @if (variant() === 'standard' && step() === 0) {
+      <app-beneficiary-registration (beneficiarySelected)="benService()" />
+    } @else {
+      <!-- Remaining slides (services / updates / closure, and the outbound variants) land in 6d–6f -->
+      <div class="flex min-h-64 items-center justify-center">
+        <p class="max-w-md text-center text-sm text-muted-foreground">
+          {{ steps()[step()] }} — this form arrives in a later Phase 6 slice.
+        </p>
+      </div>
+    }
   </div>
 
   <!-- Nav buttons (old Previous / Cancel / Closure / Next) -->

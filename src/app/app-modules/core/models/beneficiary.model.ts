@@ -98,6 +98,12 @@ export interface BeneficiaryRecord {
 /** `beneficiary/getRegistrationDataV1` — master-data bundle for the registration forms. */
 export interface RegistrationData {
   states?: { stateID?: number; stateName?: string }[];
+  m_Title?: { titleID?: number; titleName?: string }[];
+  m_genders?: { genderID?: number; genderName?: string }[];
+  m_maritalStatuses?: { maritalStatusID?: number; status?: string }[];
+  m_communities?: { communityID?: number; communityType?: string }[];
+  m_language?: { languageID?: number; languageName?: string }[];
+  benRelationshipTypes?: { benRelationshipID?: number; benRelationshipType?: string }[];
   sexualOrientations?: { sexualOrientationId?: number; sexualOrientation?: string }[];
   i_BeneficiaryEducation?: { educationID?: number; educationType?: string }[];
   beneficiaryOccupations?: { occupationID?: number; occupationType?: string }[];

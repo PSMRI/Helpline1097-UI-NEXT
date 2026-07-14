@@ -32,6 +32,7 @@ import {
 
 import { ZardButtonComponent } from '@common-ui/ui/button';
 
+import { BeneficiaryRegistrationComponent } from '../registration/beneficiary-registration.component';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import {
   ENCRYPTED_KEYS,
@@ -49,7 +50,7 @@ import { CallStore } from '@/app-modules/core/state/call.store';
  */
 @Component({
   selector: 'app-call-wizard',
-  imports: [ZardButtonComponent],
+  imports: [ZardButtonComponent, BeneficiaryRegistrationComponent],
   templateUrl: './call-wizard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
