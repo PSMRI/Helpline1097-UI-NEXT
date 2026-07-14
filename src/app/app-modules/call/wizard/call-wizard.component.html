@@ -51,8 +51,12 @@
   <div class="min-h-64 flex-1 rounded-lg border border-border bg-background p-4 md:p-6">
     @if (variant() === 'standard' && step() === 0) {
       <app-beneficiary-registration (beneficiarySelected)="benService()" />
+    } @else if (variant() === 'standard' && step() === 1) {
+      <app-co-services (serviceProvided)="onServiceProvided()" />
+    } @else if (variant() === 'standard' && step() === 2) {
+      <app-updates-from-beneficiary />
     } @else {
-      <!-- Remaining slides (services / updates / closure, and the outbound variants) land in 6d–6f -->
+      <!-- Closure slide + the outbound (everwell/grievance) variants land in 6e–6f -->
       <div class="flex min-h-64 items-center justify-center">
         <p class="max-w-md text-center text-sm text-muted-foreground">
           {{ steps()[step()] }} — this form arrives in a later Phase 6 slice.

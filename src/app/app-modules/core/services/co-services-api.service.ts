@@ -33,6 +33,7 @@ import {
   FeedbackListRequest,
   InformationMappingRequest,
   ReferralMappingRequest,
+  SubServiceType,
 } from '../models';
 import { ConfigService } from './config.service';
 
@@ -51,6 +52,14 @@ import { ConfigService } from './config.service';
 export class CoServicesApiService {
   private readonly http = inject(HttpClient);
   private readonly config = inject(ConfigService);
+
+  /** POST service/servicetypes — sub-services of the service (INFO/COUN/REFE/FEED masters). */
+  getServiceTypes(providerServiceMapID: number): Observable<ApiResponse<SubServiceType[]>> {
+    return this.http.post<ApiResponse<SubServiceType[]>>(
+      `${this.config.commonBaseURL}service/servicetypes`,
+      { providerServiceMapID },
+    );
+  }
 
   /** POST {1097}api/helpline1097/co/get/categoryByID — categories of a sub-service. */
   getCategories(subServiceID: number): Observable<ApiResponse<CoCategory[]>> {

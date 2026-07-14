@@ -33,6 +33,8 @@ import {
 import { ZardButtonComponent } from '@common-ui/ui/button';
 
 import { BeneficiaryRegistrationComponent } from '../registration/beneficiary-registration.component';
+import { CoServicesComponent } from '../services-tab/co-services.component';
+import { UpdatesFromBeneficiaryComponent } from '../updates/updates-from-beneficiary.component';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import {
   ENCRYPTED_KEYS,
@@ -50,7 +52,12 @@ import { CallStore } from '@/app-modules/core/state/call.store';
  */
 @Component({
   selector: 'app-call-wizard',
-  imports: [ZardButtonComponent, BeneficiaryRegistrationComponent],
+  imports: [
+    ZardButtonComponent,
+    BeneficiaryRegistrationComponent,
+    CoServicesComponent,
+    UpdatesFromBeneficiaryComponent,
+  ],
   templateUrl: './call-wizard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -119,6 +126,14 @@ export class CallWizardComponent implements OnInit {
     this.step.set(1);
     this.isNext.set(true);
     this.isCancelDisable.set(false);
+  }
+
+  /**
+   * Old `serviceGiven → closure.onView()` — a service tab persisted something, so the closure
+   * call-summary needs refreshing. Wired to the closure slide's summary reload in 6e.
+   */
+  protected onServiceProvided(): void {
+    // TODO(6e): refresh the closure call-summary once the closure slide exists.
   }
 
   /** Old `nxtVisual()` + bootstrap `data-slide="next"` (index read before the move). */
