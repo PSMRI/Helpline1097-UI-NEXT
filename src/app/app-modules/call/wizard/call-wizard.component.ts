@@ -37,6 +37,7 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { BeneficiaryRegistrationComponent } from '../registration/beneficiary-registration.component';
 import { ClosureComponent } from '../closure/closure.component';
 import { CoServicesComponent } from '../services-tab/co-services.component';
+import { GrievanceResolutionComponent } from '../grievance/grievance-resolution.component';
 import { UpdatesFromBeneficiaryComponent } from '../updates/updates-from-beneficiary.component';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import {
@@ -60,6 +61,7 @@ import { CallStore } from '@/app-modules/core/state/call.store';
     BeneficiaryRegistrationComponent,
     CoServicesComponent,
     UpdatesFromBeneficiaryComponent,
+    GrievanceResolutionComponent,
     ClosureComponent,
   ],
   templateUrl: './call-wizard.component.html',

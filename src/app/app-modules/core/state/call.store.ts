@@ -57,6 +57,10 @@ export class CallStore {
   readonly beneficiaryRegId = signal<number | string | null>(null);
   /** Old `dataService.callData.benCallID` — set by `call/startCall` (Phase 6), read by closeCall. */
   readonly benCallID = signal<number | string | null>(null);
+  /** Old `dataService.outboundGrievanceData` — populated by the grievance outbound worklist. */
+  readonly outboundGrievanceData = signal<Record<string, unknown> | null>(null);
+  /** Old `dataService.outboundEverwellData` — populated by the Everwell outbound worklist. */
+  readonly outboundEverwellData = signal<Record<string, unknown> | null>(null);
   /**
    * Old `dataService.custDisconnectCall$`/`enablePreviousOnCustDisconnect` subject — bumped
    * by the innerpage's CustDisconnect handler; the wizard reacts (jump to Closure, lock nav).
@@ -142,6 +146,8 @@ export class CallStore {
     this.beneficiary.set({});
     this.beneficiaryRegId.set(null);
     this.benCallID.set(null);
+    this.outboundGrievanceData.set(null);
+    this.outboundEverwellData.set(null);
     this.custDisconnected.set(0);
     this.onlyOutboundAvailable.set(false);
     this.isOutBoundSelected.set(false);

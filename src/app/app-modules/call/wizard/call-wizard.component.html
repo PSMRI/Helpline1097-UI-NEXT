@@ -57,11 +57,19 @@
       <app-updates-from-beneficiary />
     } @else if (variant() === 'standard' && step() === 3) {
       <app-closure (callClosed)="onCallClosed()" (closedContinue)="onClosedContinue()" />
+    } @else if (variant() === 'grievance' && step() === 0) {
+      <app-grievance-resolution />
+    } @else if (variant() === 'grievance' && step() === 1) {
+      <app-closure (callClosed)="onCallClosed()" (closedContinue)="onClosedContinue()" />
+    } @else if (variant() === 'everwell' && step() === 1) {
+      <app-closure (callClosed)="onCallClosed()" (closedContinue)="onClosedContinue()" />
     } @else {
-      <!-- The outbound (everwell/grievance) variant slides land in 6f -->
+      <!-- Everwell step 0 (adherence-calendar worklist + support-action feedback) is a large
+           outbound-only surface; it lands with the Everwell module in Phase 8. -->
       <div class="flex min-h-64 items-center justify-center">
         <p class="max-w-md text-center text-sm text-muted-foreground">
-          {{ steps()[step()] }} — this form arrives in a later Phase 6 slice.
+          {{ steps()[step()] }} — the Everwell adherence worklist arrives with the Everwell
+          module (Phase 8).
         </p>
       </div>
     }
