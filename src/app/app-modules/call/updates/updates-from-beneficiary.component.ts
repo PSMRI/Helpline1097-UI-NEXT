@@ -184,6 +184,8 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
     const v = this.form.getRawValue();
     const num = (s: string | null) => (s ? Number(s) : null);
     const ben = { ...(this.callStore.beneficiary() as BeneficiaryRecord) };
+    // Ensure the registration id is present (authoritative store value) before updating.
+    ben.beneficiaryRegID = ben.beneficiaryRegID ?? this.callStore.beneficiaryRegId() ?? undefined;
     if (ben.beneficiaryRegID == null) {
       this.notify.alert('No beneficiary selected', 'error');
       return;

@@ -203,7 +203,6 @@ export class CoFeedbackComponent implements OnInit {
     }
     const v = this.form.getRawValue();
     const num = (s: string | null) => (s ? Number(s) : null);
-    const ben = this.callStore.beneficiary() as { beneficiaryRegID?: number | string };
     const serviceId = this.serviceId();
     this.saving.set(true);
     this.api
@@ -214,7 +213,7 @@ export class CoFeedbackComponent implements OnInit {
         feedbackTypeID: num(v.feedbackType),
         severityID: num(v.severity),
         feedback: v.feedback.trim() || null,
-        beneficiaryRegID: ben?.beneficiaryRegID ?? null,
+        beneficiaryRegID: this.callStore.beneficiaryRegId(),
         serviceAvailDate: v.serviceAvailDate ?? null,
         serviceID: serviceId,
         subServiceID: this.subServiceId(),

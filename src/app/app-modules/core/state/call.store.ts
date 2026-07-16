@@ -48,6 +48,13 @@ export class CallStore {
   readonly currentCampaign = signal<string | null>(null);
   readonly isOutbound = signal<boolean>(false);
   readonly beneficiary = signal<Record<string, unknown>>({});
+  /**
+   * The selected/registered beneficiary's registration id — the single authoritative value
+   * read by the service saves and closeCall (old `dataService.benRegId`). Captured via
+   * `setBeneficiary` from wherever the source object carries it, so downstream code never
+   * has to guess the (search vs create) response shape.
+   */
+  readonly beneficiaryRegId = signal<number | string | null>(null);
   /** Old `dataService.callData.benCallID` — set by `call/startCall` (Phase 6), read by closeCall. */
   readonly benCallID = signal<number | string | null>(null);
   /**
@@ -96,6 +103,21 @@ export class CallStore {
   }
 
   /**
+   * Store the selected/registered beneficiary and derive the authoritative registration id.
+   * Different sources nest it differently (create → top-level `beneficiaryRegID`; some search
+   * shapes nest it under `i_bendemographics`), so we check both before giving up.
+   */
+  setBeneficiary(record: Record<string, unknown>): void {
+    this.beneficiary.set(record ?? {});
+    const demo = (record?.['i_bendemographics'] ?? {}) as Record<string, unknown>;
+    const regId =
+      (record?.['beneficiaryRegID'] as number | string | undefined) ??
+      (demo['beneficiaryRegID'] as number | string | undefined) ??
+      null;
+    this.beneficiaryRegId.set(regId ?? null);
+  }
+
+  /**
    * Persist an active call's flags in one step (shared by the dashboard's CTI-event
    * handler and the agent-status call recovery). `callCategory` is only written when the
    * source provides it — the old status-recovery path didn't set it.
@@ -118,6 +140,7 @@ export class CallStore {
     this.currentCampaign.set(null);
     this.isOutbound.set(false);
     this.beneficiary.set({});
+    this.beneficiaryRegId.set(null);
     this.benCallID.set(null);
     this.custDisconnected.set(0);
     this.onlyOutboundAvailable.set(false);

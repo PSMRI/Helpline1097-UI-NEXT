@@ -332,7 +332,6 @@ export class ClosureComponent implements OnInit {
   /** Old `closeCall` payload assembly (faithful field set incl. the CSV split + misspelling). */
   private closeCall(kind: 'continue' | 'close', transfer: boolean): void {
     const v = this.form.getRawValue();
-    const ben = this.callStore.beneficiary() as { beneficiaryRegID?: number | string };
     const csv = (v.callSubType ?? '').split(',');
     const campaign = this.callStore.currentCampaign();
 
@@ -341,7 +340,7 @@ export class ClosureComponent implements OnInit {
       providerServiceMapID: this.serviceId() ?? undefined,
       createdBy: this.sessionStore.user()?.userName,
       agentID: this.sessionStore.agentId(),
-      beneficiaryRegID: ben?.beneficiaryRegID ?? null,
+      beneficiaryRegID: this.callStore.beneficiaryRegId(),
       callType: v.callType,
       callTypeID: csv[0] || null,
       fitToBlock: csv[1] ?? 'false',

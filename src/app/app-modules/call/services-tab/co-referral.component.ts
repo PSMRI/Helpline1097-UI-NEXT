@@ -240,11 +240,10 @@ export class CoReferralComponent implements OnInit {
       return;
     }
     const num = (s: string | null) => (s ? Number(s) : null);
-    const ben = this.callStore.beneficiary() as { beneficiaryRegID?: number | string };
     this.saving.set(true);
     this.api
       .saveReferralMapping({
-        beneficiaryRegID: ben?.beneficiaryRegID ?? null,
+        beneficiaryRegID: this.callStore.beneficiaryRegId(),
         benCallID: this.callStore.benCallID(),
         subServiceID: this.subServiceId(),
         createdBy: this.sessionStore.user()?.userName,
@@ -269,12 +268,12 @@ export class CoReferralComponent implements OnInit {
   }
 
   private loadHistory(): void {
-    const ben = this.callStore.beneficiary() as { beneficiaryRegID?: number | string };
+    const regId = this.callStore.beneficiaryRegId();
     const serviceId = this.serviceId();
-    if (ben?.beneficiaryRegID == null || serviceId == null) {
+    if (regId == null || serviceId == null) {
       return;
     }
-    this.api.getReferralHistory(ben.beneficiaryRegID, serviceId).subscribe({
+    this.api.getReferralHistory(regId, serviceId).subscribe({
       next: (res) => this.history.set(Array.isArray(res?.data) ? res.data : []),
       error: () => this.history.set([]),
     });

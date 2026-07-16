@@ -259,7 +259,6 @@ export class CoCategoryServiceComponent implements OnInit {
   }
 
   private beneficiaryRegID(): number | string | null {
-    const ben = this.callStore.beneficiary() as { beneficiaryRegID?: number | string };
-    return ben?.beneficiaryRegID ?? null;
+    return this.callStore.beneficiaryRegId();
   }
 }

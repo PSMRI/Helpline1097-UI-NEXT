@@ -246,8 +246,10 @@ export class BeneficiaryRegistrationComponent implements OnInit {
   }
 
   private linkBeneficiaryToCall(beneficiary: BeneficiaryRecord): void {
-    const regId = beneficiary.beneficiaryRegID ?? null;
-    this.callStore.beneficiary.set(beneficiary as Record<string, unknown>);
+    // Store the beneficiary + derive the authoritative registration id (handles create's
+    // top-level id and the various search-result shapes).
+    this.callStore.setBeneficiary(beneficiary as Record<string, unknown>);
+    const regId = this.callStore.beneficiaryRegId();
     // Old `updatebeneficiaryincall`: attach the beneficiary to the open call record.
     this.callApi
       .updateBeneficiaryInCall({
