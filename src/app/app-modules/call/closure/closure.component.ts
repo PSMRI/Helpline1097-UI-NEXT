@@ -528,6 +528,9 @@ export class ClosureComponent implements OnInit {
 
     if (this.callStore.benCallID() == null) {
       this.notify.alert('Cannot close the call: benCallID missing.', 'error');
+      // The transfer path arrives here with busy already true — release it or the
+      // Transfer button spins forever.
+      this.busy.set(false);
       return;
     }
     this.busy.set(true);

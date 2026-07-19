@@ -213,6 +213,9 @@ export class GrievanceResolutionComponent implements OnInit {
   }
 
   protected submit(): void {
+    if (this.saving()) {
+      return; // in-flight save — ignore double-clicks/Enter repeats
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
