@@ -202,6 +202,8 @@ export class GrievanceResolutionComponent implements OnInit {
       next: (res) => {
         if (res?.data?.benCallID != null) {
           this.callStore.benCallID.set(res.data.benCallID);
+          // Old `savedData.callData = response` — kept whole (see CallStore.callData).
+          this.callStore.callData.set(res.data as Record<string, unknown>);
         }
       },
       error: (err: { errorMessage?: string }) => {

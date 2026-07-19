@@ -197,6 +197,8 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       next: (res) => {
         if (res?.data?.benCallID != null) {
           this.callStore.benCallID.set(res.data.benCallID);
+          // Old `saved_data.callData = response` — kept whole for updatebeneficiaryincall.
+          this.callStore.callData.set(res.data as Record<string, unknown>);
         }
       },
       error: () => {
@@ -250,10 +252,13 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     // top-level id and the various search-result shapes).
     this.callStore.setBeneficiary(beneficiary as Record<string, unknown>);
     const regId = this.callStore.beneficiaryRegId();
-    // Old `updatebeneficiaryincall`: attach the beneficiary to the open call record.
+    // Old `updatebeneficiaryincall`: POST the FULL startCall callData with beneficiaryRegID
+    // patched in (the old app sent the whole object, not a minimal body). The old code also
+    // patched `isCalledEarlier` from the called-earlier radio — that radio is a deferred
+    // registration sub-part, so the response's own value is kept meanwhile.
     this.callApi
       .updateBeneficiaryInCall({
-        benCallID: this.callStore.benCallID(),
+        ...(this.callStore.callData() ?? { benCallID: this.callStore.benCallID() }),
         beneficiaryRegID: regId,
       })
       .subscribe({

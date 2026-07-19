@@ -29,6 +29,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { ZardButtonComponent } from '@common-ui/ui/button';
@@ -37,6 +38,10 @@ import { ZardSelectImports } from '@common-ui/ui/select';
 
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import {
+  ENCRYPTED_KEYS,
+  SessionStorageService,
+} from '@/app-modules/core/services/session-storage.service';
 import { CallSummary, CallType, CallTypeGroup, CloseCallRequest } from '@/app-modules/core/models';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
@@ -107,6 +112,14 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
           <input z-input formControlName="remarks" type="text" maxlength="100" placeholder="Remarks" />
         </label>
 
+        <!-- Old IVR-feedback checkbox: Valid calls only, hidden on Everwell -->
+        @if (showFeedbackFlag() && !isEverwell) {
+          <label class="flex items-center gap-2 text-sm sm:col-span-2 lg:col-span-3">
+            <input type="checkbox" formControlName="isFeedback" />
+            <span>IVR Feedback Required</span>
+          </label>
+        }
+
         @if (showFollowUp()) {
           <label class="flex items-center gap-2 text-sm sm:col-span-2 lg:col-span-3">
             <input type="checkbox" formControlName="isFollowupRequired" />
@@ -143,13 +156,31 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
 
       <div class="flex items-center justify-end gap-3">
         @if (transferValid()) {
-          <button z-button type="button" [zDisabled]="form.invalid" [zLoading]="busy()" (click)="transfer()">
+          <!-- Old Transfer disable: isCallDisconnected || Form.invalid -->
+          <button
+            z-button
+            type="button"
+            [zDisabled]="custDisconnected() || form.invalid"
+            [zLoading]="busy()"
+            (click)="transfer()"
+          >
             Transfer
           </button>
         } @else {
-          <button z-button zType="outline" type="button" [zDisabled]="form.invalid || busy()" (click)="submit('continue')">
-            Submit &amp; Continue
-          </button>
+          <!-- Old Submit & Continue: hidden on OUTBOUND; disabled when the customer already
+               disconnected or the call type is Invalid (Submit & Close keeps neither guard —
+               a disconnected call must still be closable) -->
+          @if (!isOutboundCampaign()) {
+            <button
+              z-button
+              zType="outline"
+              type="button"
+              [zDisabled]="custDisconnected() || invalidType() || form.invalid || busy()"
+              (click)="submit('continue')"
+            >
+              Submit &amp; Continue
+            </button>
+          }
           <button z-button zType="destructive" type="button" [zDisabled]="form.invalid || busy()" (click)="submit('close')">
             Submit &amp; Close
           </button>
@@ -164,6 +195,7 @@ export class ClosureComponent implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
+  private readonly storage = inject(SessionStorageService);
 
   /** Old `callClosed` — emits the campaign; the wizard clears flags and returns to dashboard. */
   readonly callClosed = output<string>();
@@ -178,6 +210,19 @@ export class ClosureComponent implements OnInit {
   protected readonly subTypes = signal<CallType[]>([]);
   protected readonly transferValid = signal(false);
   protected readonly showFollowUp = signal(false);
+  /** Old `showFeedbackRequiredFlag` — the IVR-feedback checkbox shows only for Valid calls. */
+  protected readonly showFeedbackFlag = signal(false);
+  /** Old `callType.value == 'Invalid'` — Submit & Continue is blocked on Invalid calls. */
+  protected readonly invalidType = signal(false);
+  /** Old `isCallDisconnected` — blocks Submit & Continue / Transfer, NOT Submit & Close. */
+  protected readonly custDisconnected = computed(() => this.callStore.custDisconnected() > 0);
+  /** Old `*ngIf="current_campaign !== 'OUTBOUND'"` on Submit & Continue. */
+  protected readonly isOutboundCampaign = computed(
+    () => this.callStore.currentCampaign() === 'OUTBOUND',
+  );
+  /** Old `isEverwell` — the feedback checkbox is hidden on Everwell calls. */
+  protected readonly isEverwell =
+    this.storage.getItem(ENCRYPTED_KEYS.isEverwellCall) === 'yes';
   protected readonly campaigns = signal<string[]>([]);
   protected readonly skills = signal<string[]>([]);
   protected readonly languages = signal<{ languageID?: number; languageName?: string }[]>([]);
@@ -191,12 +236,44 @@ export class ClosureComponent implements OnInit {
     campaignName: this.fb.control<string | null>(null),
     campaignSkill: this.fb.control<string | null>(null),
     remarks: this.fb.control<string | null>(null),
+    isFeedback: this.fb.control(false, { nonNullable: true }),
     isFollowupRequired: this.fb.control(false, { nonNullable: true }),
     prefferedDateTime: this.fb.control<string | null>(null),
     requestedFor: this.fb.control<string | null>(null),
     preferredLanguageName: this.fb.control<string | null>(null),
     requestedServiceID: this.fb.control<string | null>(null),
   });
+
+  constructor() {
+    // The follow-up fields are required only while rendered (old template-driven `required`
+    // attrs applied only while the *ngIf kept the controls in the form).
+    this.form.controls.isFollowupRequired.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.syncFollowUpValidators());
+  }
+
+  /**
+   * Old semantics: the follow-up controls carried `required` only while visible (checkbox
+   * ticked on a fit-for-follow-up sub-type); hidden template-driven controls dropped out of
+   * the form entirely, taking their validators with them.
+   */
+  private syncFollowUpValidators(): void {
+    const required = this.showFollowUp() && this.form.controls.isFollowupRequired.value;
+    const controls = [
+      this.form.controls.prefferedDateTime,
+      this.form.controls.requestedFor,
+      this.form.controls.preferredLanguageName,
+      this.form.controls.requestedServiceID,
+    ];
+    for (const control of controls) {
+      if (required) {
+        control.addValidators(Validators.required);
+      } else {
+        control.removeValidators(Validators.required);
+      }
+      control.updateValueAndValidity({ emitEvent: false });
+    }
+  }
 
   ngOnInit(): void {
     const serviceId = this.serviceId();
@@ -210,7 +287,17 @@ export class ClosureComponent implements OnInit {
         this.notify.alert(err?.errorMessage ?? 'Failed to load call types', 'error'),
     });
     this.callApi.getLanguages().subscribe({
-      next: (res) => this.languages.set(Array.isArray(res?.data) ? res.data : []),
+      next: (res) => {
+        const languages = Array.isArray(res?.data) ? res.data : [];
+        this.languages.set(languages);
+        // Old `getLanguages` pre-selected Hindi as the follow-up language.
+        const hindi = (languages as { languageName?: string }[]).find(
+          (l) => l.languageName?.toLowerCase() === 'hindi',
+        );
+        if (hindi?.languageName) {
+          this.form.patchValue({ preferredLanguageName: hindi.languageName });
+        }
+      },
       error: () => this.languages.set([]),
     });
     this.callApi.getCampaignNames(this.sessionStore.currentServiceName() ?? '').subscribe({
@@ -249,9 +336,13 @@ export class ClosureComponent implements OnInit {
     );
   }
 
-  /** Composite option value split later: `callTypeID,fitToBlock,fitForFollowUp` (old CSV). */
+  /**
+   * Composite option value split later: `callTypeID,fitToBlock,fitForFollowUp` (old CSV).
+   * Missing flags interpolate to `''` exactly like the old Angular template did — a JS
+   * template literal would stringify `undefined` to the literal word instead.
+   */
   protected subTypeValue(st: CallType): string {
-    return `${st.callTypeID},${st.fitToBlock},${st.fitForFollowUp}`;
+    return `${st.callTypeID},${st.fitToBlock ?? ''},${st.fitForFollowUp ?? ''}`;
   }
 
   protected onCallTypeChange(): void {
@@ -260,8 +351,17 @@ export class ClosureComponent implements OnInit {
     this.subTypes.set([]);
     this.showFollowUp.set(false);
     this.transferValid.set(!!group && group.toLowerCase().startsWith('transfer'));
+    // Old `sliderVisibility`: the IVR-feedback checkbox exists only for Valid calls, and
+    // Submit & Continue is blocked outright on Invalid ones.
+    const isValid = !!group && group.toUpperCase() === 'VALID';
+    this.showFeedbackFlag.set(isValid);
+    if (!isValid) {
+      this.form.patchValue({ isFeedback: false });
+    }
+    this.invalidType.set(group === 'Invalid');
     const match = this.callTypeGroups.find((g) => g.callGroupType === group);
     this.subTypes.set(match?.callTypes ?? []);
+    this.syncFollowUpValidators();
   }
 
   /** Old `sliderVisibility` — follow-up shows when the sub-type's fitForFollowUp is "true". */
@@ -269,6 +369,12 @@ export class ClosureComponent implements OnInit {
     const value = this.form.controls.callSubType.value ?? '';
     const fitForFollowUp = value.split(',')[2];
     this.showFollowUp.set(fitForFollowUp === 'true');
+    // A hidden checkbox left the old form entirely (`isFollowupRequired == undefined` →
+    // coerced false in closeCall), so an unfit sub-type must clear it here too.
+    if (fitForFollowUp !== 'true') {
+      this.form.patchValue({ isFollowupRequired: false });
+    }
+    this.syncFollowUpValidators();
   }
 
   protected onCampaignChange(): void {
@@ -343,8 +449,11 @@ export class ClosureComponent implements OnInit {
       beneficiaryRegID: this.callStore.beneficiaryRegId(),
       callType: v.callType,
       callTypeID: csv[0] || null,
-      fitToBlock: csv[1] ?? 'false',
+      // Old interpolation sent '' (never the word "undefined") when fitToBlock was absent.
+      fitToBlock: csv[1] ?? '',
       remarks: v.remarks != null ? v.remarks.trim() : null,
+      // Old `values.isFeedback = this.isFeedbackRequiredFlag` — sent on EVERY close.
+      isFeedback: v.isFeedback ?? false,
       isFollowupRequired: v.isFollowupRequired ?? false,
       endCall: kind === 'close',
       isTransfered: transfer,
@@ -353,7 +462,9 @@ export class ClosureComponent implements OnInit {
     if (campaign === 'OUTBOUND') {
       request.isCompleted = true;
     }
-    if (v.prefferedDateTime) {
+    // Old form dropped the hidden follow-up controls from `Form.value`, so the follow-up
+    // block was only sent while the checkbox was ticked.
+    if (v.isFollowupRequired && v.prefferedDateTime) {
       request.prefferedDateTime = new Date(v.prefferedDateTime).toJSON();
       request.requestedServiceID = v.requestedServiceID ? Number(v.requestedServiceID) : null;
       request.requestedFor = v.requestedFor;
@@ -372,7 +483,16 @@ export class ClosureComponent implements OnInit {
         if (kind === 'close') {
           this.callClosed.emit(campaign ?? '');
         } else {
-          this.form.reset({ isFollowupRequired: false });
+          this.form.reset({ isFeedback: false, isFollowupRequired: false });
+          this.showFeedbackFlag.set(false);
+          this.showFollowUp.set(false);
+          this.invalidType.set(false);
+          this.transferValid.set(false);
+          // Keep the old Hindi pre-selection alive for the next service's follow-up.
+          const hindi = this.languages().find((l) => l.languageName?.toLowerCase() === 'hindi');
+          if (hindi?.languageName) {
+            this.form.patchValue({ preferredLanguageName: hindi.languageName });
+          }
           this.closedContinue.emit();
         }
       },

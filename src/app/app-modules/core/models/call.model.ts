@@ -58,6 +58,8 @@ export interface CloseCallRequest {
   agentID?: number | string | null;
   agentIPAddress?: string;
   // Closure-slide follow-up + transfer fields (old `closure.closeCall`).
+  /** Old `isFeedbackRequiredFlag` — ALWAYS sent (false unless the Valid-call checkbox is ticked). */
+  isFeedback?: boolean;
   isTransfered?: boolean;
   IsOutbound?: boolean;
   requestedServiceID?: number | null;

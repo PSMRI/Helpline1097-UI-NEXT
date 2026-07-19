@@ -57,6 +57,12 @@ export class CallStore {
   readonly beneficiaryRegId = signal<number | string | null>(null);
   /** Old `dataService.callData.benCallID` — set by `call/startCall` (Phase 6), read by closeCall. */
   readonly benCallID = signal<number | string | null>(null);
+  /**
+   * Old `dataService.callData` — the FULL `call/startCall` response. The old
+   * `updatebeneficiaryincall` posted this whole object (with `beneficiaryRegID` patched in),
+   * so it must be kept, not just the id.
+   */
+  readonly callData = signal<Record<string, unknown> | null>(null);
   /** Old `dataService.outboundGrievanceData` — populated by the grievance outbound worklist. */
   readonly outboundGrievanceData = signal<Record<string, unknown> | null>(null);
   /** Old `dataService.outboundEverwellData` — populated by the Everwell outbound worklist. */
@@ -146,6 +152,7 @@ export class CallStore {
     this.beneficiary.set({});
     this.beneficiaryRegId.set(null);
     this.benCallID.set(null);
+    this.callData.set(null);
     this.outboundGrievanceData.set(null);
     this.outboundEverwellData.set(null);
     this.custDisconnected.set(0);
