@@ -96,6 +96,14 @@ export class BeneficiaryRegistrationComponent implements OnInit {
   protected readonly results = signal<BeneficiaryRecord[]>([]);
   protected readonly searching = signal(false);
   protected readonly submitting = signal(false);
+  /**
+   * True while the inbound `call/startCall` is in flight. Selecting/creating a beneficiary
+   * in that window would post `updatebeneficiaryincall` with a null benCallID and orphan the
+   * linkage, so the Select/Register actions wait for it. Deliberately NOT gated on
+   * benCallID existing: if startCall fails the old app carried on (error swallowed), and
+   * locking the whole call behind a failed request would be a behaviour change.
+   */
+  protected readonly startCallPending = signal(false);
 
   // Master data (from getRegistrationDataV1)
   protected readonly titles = signal<RegistrationData['m_Title']>([]);
@@ -193,6 +201,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       receivedRoleName: this.sessionStore.currentRole() ?? undefined,
       isOutbound: this.callStore.isOutbound(),
     };
+    this.startCallPending.set(true);
     this.callApi.startCall(request).subscribe({
       next: (res) => {
         if (res?.data?.benCallID != null) {
@@ -200,9 +209,11 @@ export class BeneficiaryRegistrationComponent implements OnInit {
           // Old `saved_data.callData = response` — kept whole for updatebeneficiaryincall.
           this.callStore.callData.set(res.data as Record<string, unknown>);
         }
+        this.startCallPending.set(false);
       },
       error: () => {
         // Old app swallowed startCall errors (the agent can still work the call).
+        this.startCallPending.set(false);
       },
     });
   }

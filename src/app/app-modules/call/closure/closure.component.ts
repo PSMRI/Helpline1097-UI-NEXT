@@ -125,6 +125,15 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
             <input type="checkbox" formControlName="isFollowupRequired" />
             <span>Follow-up required</span>
           </label>
+          <!-- Old "N follow up already taken for {dates}" duplicate-booking warning -->
+          @if (form.controls.isFollowupRequired.value && noOfOutbounds()) {
+            <p class="text-sm text-destructive sm:col-span-2 lg:col-span-3">
+              {{ noOfOutbounds() }} follow up already taken for
+              @for (d of prefferedDatedTaken(); track $index) {
+                {{ followUpDate(d) }}@if (!$last) {,}
+              }
+            </p>
+          }
           @if (form.controls.isFollowupRequired.value) {
             <label class="flex flex-col gap-1.5 text-sm">
               <span>Preferred Date <span class="text-destructive">*</span></span>
@@ -227,6 +236,9 @@ export class ClosureComponent implements OnInit {
   protected readonly skills = signal<string[]>([]);
   protected readonly languages = signal<{ languageID?: number; languageName?: string }[]>([]);
   protected readonly subServices = signal<{ subServiceID?: number; subServiceName?: string }[]>([]);
+  /** Old `noOfOutbounds`/`prefferedDatedTaken` — prior follow-ups already booked for the ben. */
+  protected readonly noOfOutbounds = signal(0);
+  protected readonly prefferedDatedTaken = signal<(number | string)[]>([]);
   protected readonly summary = signal<CallSummary | null>(null);
   protected readonly busy = signal(false);
 
@@ -362,6 +374,49 @@ export class ClosureComponent implements OnInit {
     const match = this.callTypeGroups.find((g) => g.callGroupType === group);
     this.subTypes.set(match?.callTypes ?? []);
     this.syncFollowUpValidators();
+    this.loadPriorFollowUps(group);
+  }
+
+  /**
+   * Old `getBenOutboundList` (fired on every call-type change, populated only for Valid) —
+   * "N follow up already taken for {dates}" so the agent doesn't double-book. The old app
+   * posted even with an undefined beneficiaryRegID; skipping that no-op request is the same
+   * declared fewer-identical-calls deviation class as 4d's MANUAL-mode fix.
+   */
+  private loadPriorFollowUps(group: string | null): void {
+    const regId = this.callStore.beneficiaryRegId();
+    const serviceId = this.serviceId();
+    if (regId == null || serviceId == null) {
+      return;
+    }
+    this.callApi.getBenRequestedOutboundCalls(regId, serviceId).subscribe({
+      next: (res) => {
+        if (group !== 'Valid') {
+          return; // old `getBenOutboundDataSuccess` only populated for Valid
+        }
+        const rows = Array.isArray(res?.data)
+          ? (res.data as { prefferedDateTime?: number | string }[])
+          : [];
+        this.prefferedDatedTaken.set(
+          rows.map((r) => r?.prefferedDateTime).filter((v): v is number | string => v != null),
+        );
+        this.noOfOutbounds.set(rows.length);
+      },
+      error: () => {
+        // Old app only console.logged this fetch failing.
+      },
+    });
+  }
+
+  /** Old `millisToUTCDate(...) | date:'dd/MM/yyyy'` — format the UTC date parts. */
+  protected followUpDate(value: number | string): string {
+    const d = new Date(value);
+    if (isNaN(d.getTime())) {
+      return '';
+    }
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}/${d.getUTCFullYear()}`;
   }
 
   /** Old `sliderVisibility` — follow-up shows when the sub-type's fitForFollowUp is "true". */

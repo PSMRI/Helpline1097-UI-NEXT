@@ -65,7 +65,14 @@
               <td class="px-3 py-2">{{ b.i_bendemographics?.stateName }}</td>
               <td class="px-3 py-2">{{ b.i_bendemographics?.districtName }}</td>
               <td class="px-3 py-2 text-right">
-                <button z-button zSize="sm" type="button" (click)="selectBeneficiary(b)">
+                <!-- Waits for startCall so the link never posts a null benCallID -->
+                <button
+                  z-button
+                  zSize="sm"
+                  type="button"
+                  [zDisabled]="startCallPending()"
+                  (click)="selectBeneficiary(b)"
+                >
                   Select
                 </button>
               </td>
@@ -209,7 +216,12 @@
 
       <div class="flex items-center justify-end gap-3">
         <button z-button zType="outline" type="button" (click)="toggleMode()">Back to search</button>
-        <button z-button type="submit" [zDisabled]="form.invalid" [zLoading]="submitting()">
+        <button
+          z-button
+          type="submit"
+          [zDisabled]="form.invalid || startCallPending()"
+          [zLoading]="submitting()"
+        >
           Register &amp; Continue
         </button>
       </div>
