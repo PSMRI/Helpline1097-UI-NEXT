@@ -25,6 +25,7 @@ import {
   Component,
   computed,
   inject,
+  input,
   OnInit,
   output,
   signal,
@@ -34,7 +35,6 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
-import { BeneficiaryApiService } from '@/app-modules/core/services/beneficiary-api.service';
 import { CoServicesApiService } from '@/app-modules/core/services/co-services-api.service';
 import { LocationApiService } from '@/app-modules/core/services/location-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
@@ -43,10 +43,12 @@ import {
   InstituteDirectory,
   InstituteSubDirectory,
   RegistrationData,
+  SubServiceType,
   TalukRow,
 } from '@/app-modules/core/models';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
+import { numOrNull } from '@/app-modules/core/utils/select-value';
 
 /**
  * Referral service tab (old `co-referral-services`). State→District→Taluk cascade +
@@ -143,17 +145,22 @@ export class CoReferralComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(CoServicesApiService);
   private readonly locationApi = inject(LocationApiService);
-  private readonly beneficiaryApi = inject(BeneficiaryApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
 
+  /** Shared masters fetched ONCE by the co-services host. */
+  readonly serviceTypes = input<SubServiceType[]>([]);
+  readonly states = input<RegistrationData['states']>([]);
   readonly serviceProvided = output<void>();
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
-  private readonly subServiceId = signal<number | null>(null);
+  private readonly subServiceId = computed(
+    () =>
+      this.serviceTypes().find((t) => t.subServiceName?.toUpperCase().includes('REFE'))
+        ?.subServiceID ?? null,
+  );
 
-  protected readonly states = signal<RegistrationData['states']>([]);
   protected readonly districts = signal<DistrictRow[]>([]);
   protected readonly taluks = signal<TalukRow[]>([]);
   protected readonly directories = signal<InstituteDirectory[]>([]);
@@ -176,20 +183,10 @@ export class CoReferralComponent implements OnInit {
     if (serviceId == null) {
       return;
     }
-    this.beneficiaryApi.getRegistrationData(serviceId).subscribe({
-      next: (res) => this.states.set(res?.data?.states ?? []),
-      error: () => this.states.set([]),
-    });
+    // states + sub-service id come from the host's shared fetch (inputs above).
     this.locationApi.getDirectories(serviceId).subscribe({
       next: (res) => this.directories.set(res?.data?.directory ?? []),
       error: () => this.directories.set([]),
-    });
-    this.api.getServiceTypes(serviceId).subscribe({
-      next: (res) => {
-        const match = (res?.data ?? []).find((t) => t.subServiceName?.toUpperCase().includes('REFE'));
-        this.subServiceId.set(match?.subServiceID ?? null);
-      },
-      error: () => this.subServiceId.set(null),
     });
     this.loadHistory();
   }
@@ -239,7 +236,6 @@ export class CoReferralComponent implements OnInit {
     if (!v.state || !v.district || !v.directory || !v.subDirectory) {
       return;
     }
-    const num = (s: string | null) => (s ? Number(s) : null);
     this.saving.set(true);
     this.api
       .saveReferralMapping({
@@ -247,11 +243,11 @@ export class CoReferralComponent implements OnInit {
         benCallID: this.callStore.benCallID(),
         subServiceID: this.subServiceId(),
         createdBy: this.sessionStore.user()?.userName,
-        instituteDirectoryID: num(v.directory),
-        instituteSubDirectoryID: num(v.subDirectory),
-        stateID: num(v.state),
-        districtID: num(v.district),
-        blockID: num(v.taluk),
+        instituteDirectoryID: numOrNull(v.directory),
+        instituteSubDirectoryID: numOrNull(v.subDirectory),
+        stateID: numOrNull(v.state),
+        districtID: numOrNull(v.district),
+        blockID: numOrNull(v.taluk),
       })
       .subscribe({
         next: () => {

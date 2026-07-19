@@ -51,6 +51,7 @@ import {
 } from '@/app-modules/core/models';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
+import { numOrNull } from '@/app-modules/core/utils/select-value';
 
 /**
  * Beneficiary registration — wizard slide 0 (old `beneficiary-registration`, ~1827 lines).
@@ -142,11 +143,6 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     alternateNumber1: this.fb.control(''),
     preferredLanguage: this.fb.control<string | null>(null, Validators.required),
   });
-
-  /** z-select values are strings → coerce ID fields to numbers for the backend payload. */
-  private num(value: string | null): number | null {
-    return value != null && value !== '' ? Number(value) : null;
-  }
 
   ngOnInit(): void {
     this.loadRegistrationData();
@@ -288,7 +284,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     this.taluks.set([]);
     this.villages.set([]);
     this.form.patchValue({ district: null, taluk: null, village: null });
-    const state = this.num(this.form.controls.state.value);
+    const state = numOrNull(this.form.controls.state.value);
     if (state == null) {
       return;
     }
@@ -302,7 +298,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     this.taluks.set([]);
     this.villages.set([]);
     this.form.patchValue({ taluk: null, village: null });
-    const district = this.num(this.form.controls.district.value);
+    const district = numOrNull(this.form.controls.district.value);
     if (district == null) {
       return;
     }
@@ -315,7 +311,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
   protected onTalukChange(): void {
     this.villages.set([]);
     this.form.patchValue({ village: null });
-    const taluk = this.num(this.form.controls.taluk.value);
+    const taluk = numOrNull(this.form.controls.taluk.value);
     if (taluk == null) {
       return;
     }
@@ -333,7 +329,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     }
     const v = this.form.getRawValue();
     const userName = this.sessionStore.user()?.userName;
-    const relationshipId = this.num(v.beneficiaryRelationID);
+    const relationshipId = numOrNull(v.beneficiaryRelationID);
     const phoneMaps: BenPhoneMap[] = [
       {
         parentBenRegID: null,
@@ -354,21 +350,21 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     }
     const beneficiary: BeneficiaryRecord = {
       providerServiceMapID: this.providerServiceMapId() ?? undefined,
-      titleId: this.num(v.titleId),
+      titleId: numOrNull(v.titleId),
       firstName: v.firstName,
       lastName: v.lastName,
-      genderID: this.num(v.genderID),
+      genderID: numOrNull(v.genderID),
       dOB: v.dOB ?? undefined,
-      maritalStatusID: this.num(v.maritalStatusID),
+      maritalStatusID: numOrNull(v.maritalStatusID),
       benPhoneMaps: phoneMaps,
       i_bendemographics: {
-        communityID: this.num(v.community),
-        stateID: this.num(v.state),
-        districtID: this.num(v.district),
-        blockID: this.num(v.taluk),
-        districtBranchID: this.num(v.village),
+        communityID: numOrNull(v.community),
+        stateID: numOrNull(v.state),
+        districtID: numOrNull(v.district),
+        blockID: numOrNull(v.taluk),
+        districtBranchID: numOrNull(v.village),
         pinCode: v.pincode || null,
-        preferredLangID: this.num(v.preferredLanguage),
+        preferredLangID: numOrNull(v.preferredLanguage),
       },
       statusID: 1,
       createdBy: userName,

@@ -24,6 +24,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   OnInit,
@@ -37,7 +38,7 @@ import { ZardSelectImports } from '@common-ui/ui/select';
 
 import { CoServicesApiService } from '@/app-modules/core/services/co-services-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
-import { CoCategory, CoSubCategory } from '@/app-modules/core/models';
+import { CoCategory, CoSubCategory, SubServiceType } from '@/app-modules/core/models';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
@@ -134,10 +135,19 @@ export class CoCategoryServiceComponent implements OnInit {
 
   /** 'information' → INFO + saveInformationMapping; 'counselling' → COUN + saveCounsellingMapping. */
   readonly serviceType = input.required<'information' | 'counselling'>();
+  /** Sub-service master, fetched ONCE by the co-services host (all four tabs share it). */
+  readonly serviceTypes = input<SubServiceType[]>([]);
   readonly serviceProvided = output<void>();
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
-  private readonly subServiceId = signal<number | null>(null);
+  private readonly subServiceId = computed(() => {
+    const token = this.serviceType() === 'information' ? 'INFO' : 'COUN';
+    return (
+      this.serviceTypes().find((t) => t.subServiceName?.toUpperCase().includes(token))
+        ?.subServiceID ?? null
+    );
+  });
+  private categoriesLoaded = false;
 
   protected readonly categories = signal<CoCategory[]>([]);
   protected readonly subCategories = signal<CoSubCategory[]>([]);
@@ -152,26 +162,19 @@ export class CoCategoryServiceComponent implements OnInit {
     subCategoryId: this.fb.control<string | null>(null),
   });
 
-  ngOnInit(): void {
-    const serviceId = this.serviceId();
-    if (serviceId == null) {
-      return;
-    }
-    const token = this.serviceType() === 'information' ? 'INFO' : 'COUN';
-    this.api.getServiceTypes(serviceId).subscribe({
-      next: (res) => {
-        const match = (res?.data ?? []).find((t) =>
-          t.subServiceName?.toUpperCase().includes(token),
-        );
-        if (match?.subServiceID != null) {
-          this.subServiceId.set(match.subServiceID);
-          this.loadCategories(match.subServiceID);
-        }
-      },
-      error: () => {
-        // Old app only logged this.
-      },
+  constructor() {
+    // The host's servicetypes fetch resolves after this tab mounts — load the category
+    // master once the matching sub-service id lands.
+    effect(() => {
+      const subServiceID = this.subServiceId();
+      if (subServiceID != null && !this.categoriesLoaded) {
+        this.categoriesLoaded = true;
+        this.loadCategories(subServiceID);
+      }
     });
+  }
+
+  ngOnInit(): void {
     this.loadHistory();
   }
 

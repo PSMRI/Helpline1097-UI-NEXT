@@ -20,19 +20,36 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { ChangeDetectionStrategy, Component, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  output,
+  signal,
+} from '@angular/core';
 
 import { ZardTabComponent, ZardTabGroupComponent } from '@common-ui/ui/tabs';
 
 import { CoCategoryServiceComponent } from './co-category-service.component';
 import { CoFeedbackComponent } from './co-feedback.component';
 import { CoReferralComponent } from './co-referral.component';
+import { BeneficiaryApiService } from '@/app-modules/core/services/beneficiary-api.service';
+import { CoServicesApiService } from '@/app-modules/core/services/co-services-api.service';
+import { RegistrationData, SubServiceType } from '@/app-modules/core/models';
+import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /**
  * "Provide Services" slide (old `co-services` tab host). Four tabs — Information /
  * Counselling / Referral / Feedback — each of which persists a service and re-emits
  * `serviceProvided` up so the wizard refreshes the closure call-summary (old
  * `serviceGiven → closure.onView`).
+ *
+ * The tab group renders all four bodies eagerly, so the master data every tab needs
+ * (`service/servicetypes`, the states list from `getRegistrationDataV1`) is fetched ONCE
+ * here and passed down — the old app (and our first cut) fired 4 identical requests at
+ * mount. Declared fewer-identical-calls deviation; payloads unchanged.
  */
 @Component({
   selector: 'app-co-services',
@@ -47,20 +64,62 @@ import { CoReferralComponent } from './co-referral.component';
   template: `
     <z-tab-group>
       <z-tab label="Information">
-        <app-co-category-service serviceType="information" (serviceProvided)="serviceProvided.emit()" />
+        <app-co-category-service
+          serviceType="information"
+          [serviceTypes]="serviceTypes()"
+          (serviceProvided)="serviceProvided.emit()"
+        />
       </z-tab>
       <z-tab label="Counselling">
-        <app-co-category-service serviceType="counselling" (serviceProvided)="serviceProvided.emit()" />
+        <app-co-category-service
+          serviceType="counselling"
+          [serviceTypes]="serviceTypes()"
+          (serviceProvided)="serviceProvided.emit()"
+        />
       </z-tab>
       <z-tab label="Referral">
-        <app-co-referral (serviceProvided)="serviceProvided.emit()" />
+        <app-co-referral
+          [serviceTypes]="serviceTypes()"
+          [states]="states()"
+          (serviceProvided)="serviceProvided.emit()"
+        />
       </z-tab>
       <z-tab label="Feedback">
-        <app-co-feedback (serviceProvided)="serviceProvided.emit()" />
+        <app-co-feedback
+          [serviceTypes]="serviceTypes()"
+          [states]="states()"
+          (serviceProvided)="serviceProvided.emit()"
+        />
       </z-tab>
     </z-tab-group>
   `,
 })
-export class CoServicesComponent {
+export class CoServicesComponent implements OnInit {
+  private readonly api = inject(CoServicesApiService);
+  private readonly beneficiaryApi = inject(BeneficiaryApiService);
+  private readonly sessionStore = inject(SessionStore);
+
   readonly serviceProvided = output<void>();
+
+  private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
+
+  protected readonly serviceTypes = signal<SubServiceType[]>([]);
+  protected readonly states = signal<NonNullable<RegistrationData['states']>>([]);
+
+  ngOnInit(): void {
+    const serviceId = this.serviceId();
+    if (serviceId == null) {
+      return;
+    }
+    this.api.getServiceTypes(serviceId).subscribe({
+      next: (res) => this.serviceTypes.set(res?.data ?? []),
+      error: () => {
+        // Old app only logged this per tab.
+      },
+    });
+    this.beneficiaryApi.getRegistrationData(serviceId).subscribe({
+      next: (res) => this.states.set(res?.data?.states ?? []),
+      error: () => this.states.set([]),
+    });
+  }
 }

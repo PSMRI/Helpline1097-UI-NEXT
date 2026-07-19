@@ -25,6 +25,7 @@ import {
   Component,
   computed,
   inject,
+  input,
   OnInit,
   output,
   signal,
@@ -35,13 +36,13 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
-import { BeneficiaryApiService } from '@/app-modules/core/services/beneficiary-api.service';
 import { CoServicesApiService } from '@/app-modules/core/services/co-services-api.service';
 import { LocationApiService } from '@/app-modules/core/services/location-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
-import { DistrictRow, RegistrationData } from '@/app-modules/core/models';
+import { DistrictRow, RegistrationData, SubServiceType } from '@/app-modules/core/models';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
+import { numOrNull } from '@/app-modules/core/utils/select-value';
 
 /**
  * Feedback service tab (old `co-feedback-services`, the largest tab). Captures a
@@ -125,17 +126,22 @@ export class CoFeedbackComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(CoServicesApiService);
   private readonly locationApi = inject(LocationApiService);
-  private readonly beneficiaryApi = inject(BeneficiaryApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
 
+  /** Shared masters fetched ONCE by the co-services host. */
+  readonly serviceTypes = input<SubServiceType[]>([]);
+  readonly states = input<RegistrationData['states']>([]);
   readonly serviceProvided = output<void>();
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
-  private readonly subServiceId = signal<number | null>(null);
+  private readonly subServiceId = computed(
+    () =>
+      this.serviceTypes().find((t) => t.subServiceName?.toUpperCase().includes('FEED'))
+        ?.subServiceID ?? null,
+  );
 
-  protected readonly states = signal<RegistrationData['states']>([]);
   protected readonly districts = signal<DistrictRow[]>([]);
   protected readonly designations = signal<{ designationID?: number; designationName?: string }[]>([]);
   protected readonly feedbackTypes = signal<{ feedbackTypeID?: number; feedbackTypeName?: string }[]>([]);
@@ -158,10 +164,7 @@ export class CoFeedbackComponent implements OnInit {
     if (serviceId == null) {
       return;
     }
-    this.beneficiaryApi.getRegistrationData(serviceId).subscribe({
-      next: (res) => this.states.set(res?.data?.states ?? []),
-      error: () => this.states.set([]),
-    });
+    // states + sub-service id come from the host's shared fetch (inputs above).
     this.api.getDesignations().subscribe({
       next: (res) => this.designations.set(Array.isArray(res?.data) ? res.data : []),
       error: () => this.designations.set([]),
@@ -173,13 +176,6 @@ export class CoFeedbackComponent implements OnInit {
     this.api.getFeedbackSeverities(serviceId).subscribe({
       next: (res) => this.severities.set(Array.isArray(res?.data) ? res.data : []),
       error: () => this.severities.set([]),
-    });
-    this.api.getServiceTypes(serviceId).subscribe({
-      next: (res) => {
-        const match = (res?.data ?? []).find((t) => t.subServiceName?.toUpperCase().includes('FEED'));
-        this.subServiceId.set(match?.subServiceID ?? null);
-      },
-      error: () => this.subServiceId.set(null),
     });
   }
 
@@ -202,16 +198,15 @@ export class CoFeedbackComponent implements OnInit {
       return;
     }
     const v = this.form.getRawValue();
-    const num = (s: string | null) => (s ? Number(s) : null);
     const serviceId = this.serviceId();
     this.saving.set(true);
     this.api
       .saveBenFeedback({
-        stateID: num(v.state),
-        districtID: num(v.district),
-        designationID: num(v.designation),
-        feedbackTypeID: num(v.feedbackType),
-        severityID: num(v.severity),
+        stateID: numOrNull(v.state),
+        districtID: numOrNull(v.district),
+        designationID: numOrNull(v.designation),
+        feedbackTypeID: numOrNull(v.feedbackType),
+        severityID: numOrNull(v.severity),
         feedback: v.feedback.trim() || null,
         beneficiaryRegID: this.callStore.beneficiaryRegId(),
         serviceAvailDate: v.serviceAvailDate ?? null,

@@ -39,6 +39,7 @@ import { NotificationService } from '@/app-modules/core/services/notification.se
 import { BeneficiaryRecord, RegistrationData } from '@/app-modules/core/models';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
+import { numOrNull } from '@/app-modules/core/utils/select-value';
 
 /** Old hardcoded `sourceOfInfo` list (id 7 = Not Disclosed disables the rest). */
 const SOURCE_OF_INFO = [
@@ -182,7 +183,6 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
 
   protected submit(): void {
     const v = this.form.getRawValue();
-    const num = (s: string | null) => (s ? Number(s) : null);
     const ben = { ...(this.callStore.beneficiary() as BeneficiaryRecord) };
     // Ensure the registration id is present (authoritative store value) before updating.
     ben.beneficiaryRegID = ben.beneficiaryRegID ?? this.callStore.beneficiaryRegId() ?? undefined;
@@ -192,10 +192,10 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
     }
     ben.i_bendemographics = {
       ...(ben.i_bendemographics ?? {}),
-      occupationID: num(v.occupationID),
-      educationID: num(v.educationID),
+      occupationID: numOrNull(v.occupationID),
+      educationID: numOrNull(v.educationID),
     };
-    ben.sexualOrientationID = num(v.sexualOrientationID);
+    ben.sexualOrientationID = numOrNull(v.sexualOrientationID);
     ben.placeOfWork = v.placeOfWork?.trim() || null;
     ben.isHIVPos = v.isHIVPos;
     ben.remarks = v.remarks?.trim() || null;
