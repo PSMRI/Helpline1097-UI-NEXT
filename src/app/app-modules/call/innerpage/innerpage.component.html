@@ -73,14 +73,10 @@
     </div>
   }
 
-  <!-- CO wizard (old app-1097 → 1097-co; the supervisor console is Phase 7) -->
+  <!-- Old app-1097 role fork: CO → call wizard; Supervisor → activity console -->
   @if (isCO()) {
     <app-call-wizard />
   } @else {
-    <div class="flex flex-1 items-center justify-center p-8">
-      <p class="max-w-md text-center text-sm text-muted-foreground">
-        The supervisor activity console arrives in a later phase.
-      </p>
-    </div>
+    <app-supervisor-shell />
   }
 </div>

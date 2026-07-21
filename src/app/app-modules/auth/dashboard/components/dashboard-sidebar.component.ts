@@ -29,7 +29,7 @@ import { lucideArrowLeftRight, lucideLayoutDashboard } from '@ng-icons/lucide';
  * Dashboard left navigation rail — always-visible slim icon bar, matching the
  * reviewer-approved Helpline104 design (light gray, full height, icon + tooltip):
  *  - Switch Role (all roles) → back to role selection
- *  - Activity Area (Supervisor only) → the supervisor console, a later phase (stub)
+ *  - Activity Area (Supervisor only) → the supervisor console (old `InnerpageComponent`)
  * The old app's Activities/Reports/Configuration entries belong to the inner-page /
  * supervisor phases and are not shown on the dashboard (as in 104's approved screens).
  */
@@ -46,10 +46,10 @@ import { lucideArrowLeftRight, lucideLayoutDashboard } from '@ng-icons/lucide';
       @if (showActivityArea()) {
         <button
           type="button"
-          class="flex h-10 w-10 items-center justify-center rounded-md hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-          disabled
-          title="Activity Area — available in a later phase"
-          aria-label="Activity Area (available in a later phase)"
+          class="flex h-10 w-10 items-center justify-center rounded-md hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          title="Activity Area"
+          aria-label="Activity Area"
+          (click)="goToActivityArea()"
         >
           <ng-icon name="lucideLayoutDashboard" size="22" aria-hidden="true" />
         </button>
@@ -70,10 +70,15 @@ import { lucideArrowLeftRight, lucideLayoutDashboard } from '@ng-icons/lucide';
 export class DashboardSidebarComponent {
   private readonly router = inject(Router);
 
-  /** Supervisor-only Activity Area entry (the supervisor console, a later phase). */
+  /** Supervisor-only Activity Area entry (the supervisor console). */
   readonly showActivityArea = input(false);
 
   protected goToRoleSelection(): void {
     this.router.navigate(['/MultiRoleScreenComponent']);
+  }
+
+  /** Old dashboard "activityArea" icon (Supervisor-only) → the supervisor console. */
+  protected goToActivityArea(): void {
+    this.router.navigate(['/MultiRoleScreenComponent/InnerpageComponent']);
   }
 }

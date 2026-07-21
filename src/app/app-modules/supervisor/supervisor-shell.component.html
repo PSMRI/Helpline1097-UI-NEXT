@@ -1,0 +1,113 @@
+<!--
+  AMRIT – Accessible Medical Records via Integrated Technologies
+  Integrated EHR (Electronic Health Records) Solution
+
+  Copyright (C) "Piramal Swasthya Management and Research Institute"
+
+  This file is part of AMRIT.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see https://www.gnu.org/licenses/.
+-->
+
+<div class="flex min-h-full flex-col gap-3 p-3 md:p-4">
+  <!-- Navbar (old bootstrap navbar: Activities / Reports / Configurations + Back to Dashboard) -->
+  <nav
+    class="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background px-3 py-2"
+    aria-label="Supervisor activities"
+  >
+    <button z-button zType="ghost" type="button" [zMenuTriggerFor]="activitiesMenu">
+      Activities
+    </button>
+    <z-menu #activitiesMenu>
+      <button z-menu-item (click)="show('2')">Agent Status</button>
+      <button z-menu-item (click)="show('3')">Blacklist a Number</button>
+      <button z-menu-item (click)="show('29')">Grievance Outbound Call Allocation</button>
+      <button z-menu-item (click)="show('30')">Grievance Outbound Call Re-Allocation</button>
+      <button z-menu-item (click)="show('12')">Outbound Call List</button>
+      <button z-menu-item (click)="show('13')">Outbound Call Re-Allocation</button>
+      <button z-menu-item (click)="show('5')">Call Auditing</button>
+      <button z-menu-item (click)="show('26')">Everwell Call Allocation</button>
+      <button z-menu-item (click)="show('27')">Everwell Call Re-Allocation</button>
+      <button z-menu-item (click)="show('28')">Everwell Guidelines Upload</button>
+      <button z-menu-item (click)="show('1')">Feedback Tracking</button>
+      <button z-menu-item (click)="show('14')">Campaign Status</button>
+      <!-- Old Communication submenu, rendered as a labeled group (flat z-menu) -->
+      <div class="px-3 pb-0.5 pt-2 text-xs font-semibold uppercase text-muted-foreground">
+        Communication
+      </div>
+      <button z-menu-item (click)="show('19')">Alerts and Notifications</button>
+      <button z-menu-item (click)="show('20')">Location Messages</button>
+      <button z-menu-item (click)="show('21')">Training Resource</button>
+      <button z-menu-item (click)="show('22')">Emergency Contacts</button>
+      <div class="my-1 border-t border-border"></div>
+      <button z-menu-item (click)="show('23')">Force Logout</button>
+    </z-menu>
+
+    <button z-button zType="ghost" type="button" [zMenuTriggerFor]="reportsMenu">Reports</button>
+    <z-menu #reportsMenu>
+      <button z-menu-item (click)="show('7')">Telephony Reports</button>
+      <!-- Old Call Reports submenu, rendered as a labeled group -->
+      <div class="px-3 pb-0.5 pt-2 text-xs font-semibold uppercase text-muted-foreground">
+        Call Reports
+      </div>
+      <button z-menu-item (click)="show('9')">Call Type Report</button>
+      <button z-menu-item (click)="show('15')">Caller Age Report</button>
+      <button z-menu-item (click)="show('16')">Sexual Orientation Report</button>
+      <button z-menu-item (click)="show('17')">Language Distribution Report</button>
+      <button z-menu-item (click)="show('18')">Gender Distribution Report</button>
+    </z-menu>
+
+    <button z-button zType="ghost" type="button" [zMenuTriggerFor]="configMenu">
+      Configurations
+    </button>
+    <z-menu #configMenu>
+      <button z-menu-item (click)="show('10')">Knowledge Management</button>
+      <button z-menu-item (click)="show('24')">SMS Templates</button>
+    </z-menu>
+
+    <a z-button zType="outline" class="ml-auto" routerLink="/MultiRoleScreenComponent/dashboard">
+      Back to Dashboard
+    </a>
+  </nav>
+
+  <!-- Active page (old [ngSwitch]="Activity_Number", min-height 570px) -->
+  <div class="min-h-[570px] flex-1 rounded-lg border border-border bg-background p-3">
+    @switch (activityNumber()) {
+      @case ('2') {
+        <app-telephony-iframe query="agentStatus" label="Agent Status" />
+      }
+      @case ('14') {
+        <app-telephony-iframe query="campaignStatus" label="Campaign Status" />
+      }
+      @case ('7') {
+        <app-telephony-iframe query="reportUI" label="Telephony Reports" />
+      }
+      @default {
+        <!-- Not-yet-migrated pages land slice-by-slice (see component doc) -->
+        <div class="flex min-h-[500px] items-center justify-center">
+          <p class="max-w-md text-center text-sm text-muted-foreground">
+            {{ pages[activityNumber()]?.label ?? 'This screen' }} — arrives in
+            {{ pages[activityNumber()]?.arrives ?? 'a later slice' }}.
+          </p>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- Old hidden CZentrix SSO iframe (remote_login.php) — see component doc for the
+     key=undefined quirk kept from the old app -->
+<div [hidden]="true" aria-hidden="true">
+  <iframe [src]="ssoUrl" width="100%" height="700" title="CZentrix session sign-in"></iframe>
+</div>
