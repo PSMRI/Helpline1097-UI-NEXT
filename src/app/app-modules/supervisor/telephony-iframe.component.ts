@@ -21,7 +21,7 @@
  */
 
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { SafeResourceUrl } from '@angular/platform-browser';
 
 import { ConfigService } from '@/app-modules/core/services/config.service';
 
@@ -36,16 +36,16 @@ import { ConfigService } from '@/app-modules/core/services/config.service';
   selector: 'app-telephony-iframe',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    <!-- Old iframes were 700px tall inside the scrollable page container -->
     <iframe
       [src]="url()"
       [title]="label()"
-      class="h-[570px] w-full border-0"
+      class="h-[700px] w-full border-0"
     ></iframe>
   `,
 })
 export class TelephonyIframeComponent {
   private readonly config = inject(ConfigService);
-  private readonly sanitizer = inject(DomSanitizer);
 
   /** The `adminui.php` query flag (old: agentStatus | campaignStatus | reportUI). */
   readonly query = input.required<string>();
@@ -53,8 +53,6 @@ export class TelephonyIframeComponent {
   readonly label = input<string>('CZentrix console');
 
   protected readonly url = computed<SafeResourceUrl>(() =>
-    this.sanitizer.bypassSecurityTrustResourceUrl(
-      `${this.config.telephonyServerURL}adminui.php?${this.query()}`,
-    ),
+    this.config.trustedTelephonyUrl(`adminui.php?${this.query()}`),
   );
 }

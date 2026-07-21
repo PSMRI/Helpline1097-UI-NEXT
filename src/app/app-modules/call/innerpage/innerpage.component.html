@@ -73,10 +73,11 @@
     </div>
   }
 
-  <!-- Old app-1097 role fork: CO → call wizard; Supervisor → activity console -->
+  <!-- Old app-1097 role fork: CO → call wizard; Supervisor → activity console;
+       any OTHER role (Admin) rendered nothing in the old app — kept faithful -->
   @if (isCO()) {
     <app-call-wizard />
-  } @else {
+  } @else if (isSupervisor()) {
     <app-supervisor-shell />
   }
 </div>

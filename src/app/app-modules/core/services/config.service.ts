@@ -20,7 +20,8 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { environment } from '@env/environment';
 
 /**
@@ -30,6 +31,8 @@ import { environment } from '@env/environment';
  */
 @Injectable({ providedIn: 'root' })
 export class ConfigService {
+  private readonly sanitizer = inject(DomSanitizer);
+
   readonly commonBaseURL = environment.commonAPI;
   readonly openCommonBaseURL = environment.commonAPI;
   readonly helpline1097BaseURL = environment.ip1097;
@@ -44,4 +47,15 @@ export class ConfigService {
 
   readonly localeString = 'en-in';
   readonly defaultWrapupTime = 120;
+
+  /**
+   * Build a trusted iframe URL on the CZentrix telephony server. The SINGLE
+   * `bypassSecurityTrustResourceUrl` site for that origin (CTI bar, SSO, adminui embeds) —
+   * keep every telephony iframe on this helper so trust-bypass stays reviewable in one place.
+   */
+  trustedTelephonyUrl(pathAndQuery: string): SafeResourceUrl {
+    return this.sanitizer.bypassSecurityTrustResourceUrl(
+      `${this.telephonyServerURL}${pathAndQuery}`,
+    );
+  }
 }

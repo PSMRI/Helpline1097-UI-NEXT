@@ -78,6 +78,11 @@ export class InnerpageComponent implements OnInit {
   protected readonly callerNumber = this.callStore.cli;
   protected readonly callCategory = this.callStore.callCategory;
   protected readonly isCO = computed(() => this.sessionStore.currentRole() === 'CO');
+  /** Old `app-1097` fork rendered the supervisor console ONLY for 'supervisor' — any other
+   * role (Admin) got an empty content area, so the fork must be explicit, not an @else. */
+  protected readonly isSupervisor = computed(
+    () => this.sessionStore.currentRole() === 'Supervisor',
+  );
 
   protected readonly zoneName = signal('');
   protected readonly callStatus = signal('');
