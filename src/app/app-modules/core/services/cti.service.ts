@@ -20,44 +20,188 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
+
 import { ApiResponse } from '../models';
+import { skipAuth, skipLoader } from '../http/http-context';
+import { ConfigService } from './config.service';
+import { ENCRYPTED_KEYS, SessionStorageService } from './session-storage.service';
+import { SessionStore } from '../state/session.store';
 
 /**
- * Czentrix telephony (CTI) abstraction. Out of scope for now (per mentor): provided as an
- * abstract token with a success-shaped stub so screens that depend on CTI compile and run.
- * Swap the provider for the real REST integration (the old czentrix.service) later.
+ * Agent-status shape returned by `cti/getAgentState` (old innerpage/dashboardUserId readers:
+ * `data.stateObj.stateName` + optional `stateType`, `dialer_type`).
+ */
+export interface AgentStateData {
+  stateObj?: { stateName?: string; stateType?: string };
+  dialer_type?: string;
+  /** Present when the agent is INCALL/CLOSURE — used by the dashboard's call recovery. */
+  cust_ph_no?: string;
+  session_id?: string;
+}
+
+/** Call-stats shape returned by `cti/getAgentCallStats` (old call-statistics reader). */
+export interface AgentCallStatsData {
+  total_calls?: number | string;
+  total_invalid_calls?: number | string;
+  total_call_duration?: number | string;
+  total_break_time?: number | string;
+  total_free_time?: number | string;
+}
+
+/**
+ * Czentrix telephony (CTI) abstraction. Two providers:
+ *  - `CzentrixHttpService` — the real REST integration (faithful port of the old
+ *    `czentrix.service` + the campaign-switch calls from the old `callservice.service`).
+ *  - `CzentrixStubService` — success-shaped stub kept for unit tests / CTI-less demos.
  */
 export abstract class CtiService {
   abstract getLoginKey(username: string, password: string): Observable<ApiResponse>;
-  abstract getAgentStatus(): Observable<ApiResponse>;
+  abstract getAgentStatus(): Observable<ApiResponse<AgentStateData>>;
   abstract getIvrsPathDetails(): Observable<ApiResponse>;
-  abstract getCallDetails(): Observable<ApiResponse>;
+  abstract getCallDetails(): Observable<ApiResponse<AgentCallStatsData>>;
   abstract dialBeneficiary(phoneNumber: string): Observable<ApiResponse>;
   abstract agentLogout(): Observable<ApiResponse>;
   abstract userLogout(): Observable<ApiResponse>;
   abstract getIpAddress(): Observable<ApiResponse>;
   abstract setCustomerPreferredLanguage(data: unknown): Observable<ApiResponse>;
+  abstract switchToInbound(): Observable<ApiResponse>;
+  abstract switchToOutbound(): Observable<ApiResponse>;
+}
+
+/**
+ * Real CZentrix REST integration. Endpoint URLs, payloads (`{agent_id}`) and the response
+ * envelope are byte-faithful to the old app; `agent_id` is the selected role's agent id
+ * (old `dataService.cZentrixAgentID`, now `SessionStore.agentId`).
+ */
+@Injectable()
+export class CzentrixHttpService extends CtiService {
+  private readonly http = inject(HttpClient);
+  private readonly config = inject(ConfigService);
+  private readonly sessionStore = inject(SessionStore);
+  private readonly storage = inject(SessionStorageService);
+
+  private agentPayload(): { agent_id: number | string } {
+    return { agent_id: this.sessionStore.agentId() ?? '' };
+  }
+
+  /**
+   * GET the CTI login key straight from the telephony server. Faithful port note: the old
+   * app defined this but never called it (the `cti_handler.php` iframe logs the agent into
+   * CZentrix itself) — kept for parity. Skips auth/loader: the telephony server is not our
+   * API and must not receive the Authorization header.
+   */
+  getLoginKey(username: string, password: string): Observable<ApiResponse> {
+    const url =
+      `${this.config.telephonyServerURL}apps/cust_appsHandler.php` +
+      `?transaction_id=CTI_LOGIN_KEY&username=${username}&password=${password}&resFormat=3`;
+    return this.http.get<ApiResponse>(url, { context: skipAuth(skipLoader()) });
+  }
+
+  /** POST cti/getAgentState — live agent state (`data.stateObj.stateName`). */
+  getAgentStatus(): Observable<ApiResponse<AgentStateData>> {
+    return this.http.post<ApiResponse<AgentStateData>>(
+      `${this.config.commonBaseURL}cti/getAgentState`,
+      this.agentPayload(),
+    );
+  }
+
+  /** POST cti/getIVRSPathDetails — IVRS routing info (`data.zoneName`). */
+  getIvrsPathDetails(): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(
+      `${this.config.commonBaseURL}cti/getIVRSPathDetails`,
+      this.agentPayload(),
+    );
+  }
+
+  /** POST cti/getAgentCallStats — today's call statistics for the agent. */
+  getCallDetails(): Observable<ApiResponse<AgentCallStatsData>> {
+    return this.http.post<ApiResponse<AgentCallStatsData>>(
+      `${this.config.commonBaseURL}cti/getAgentCallStats`,
+      this.agentPayload(),
+    );
+  }
+
+  /** POST cti/callBeneficiary — outbound manual dial. */
+  dialBeneficiary(phoneNumber: string): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(`${this.config.commonBaseURL}cti/callBeneficiary`, {
+      ...this.agentPayload(),
+      phone_num: phoneNumber,
+    });
+  }
+
+  /** POST cti/doAgentLogout — CTI-level agent logout. */
+  agentLogout(): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(
+      `${this.config.openCommonBaseURL}cti/doAgentLogout`,
+      this.agentPayload(),
+    );
+  }
+
+  /**
+   * POST user/userLogout — app-level logout. The old czentrix service cleared
+   * `privilege_flag` / `session_id` / `callTransferred` synchronously BEFORE issuing the
+   * request (so they are wiped even if the call fails); kept faithful.
+   */
+  userLogout(): Observable<ApiResponse> {
+    this.storage.removeItem(ENCRYPTED_KEYS.privilegeFlag);
+    this.storage.removeItem(ENCRYPTED_KEYS.sessionId);
+    this.storage.removeItem(ENCRYPTED_KEYS.callTransferred);
+    return this.http.post<ApiResponse>(`${this.config.openCommonBaseURL}user/userLogout`, {});
+  }
+
+  /** POST cti/getAgentIPAddress (`data.agent_ip`). */
+  getIpAddress(): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(
+      `${this.config.commonBaseURL}cti/getAgentIPAddress`,
+      this.agentPayload(),
+    );
+  }
+
+  /** POST cti/customerPreferredLanguage — per-call language preference. */
+  setCustomerPreferredLanguage(data: unknown): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(
+      `${this.config.commonBaseURL}cti/customerPreferredLanguage`,
+      data,
+    );
+  }
+
+  /** POST cti/switchToInbound — move the agent to the INBOUND campaign. */
+  switchToInbound(): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(
+      `${this.config.commonBaseURL}cti/switchToInbound`,
+      this.agentPayload(),
+    );
+  }
+
+  /** POST cti/switchToOutbound — move the agent to the OUTBOUND (manual dial) campaign. */
+  switchToOutbound(): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(
+      `${this.config.commonBaseURL}cti/switchToOutbound`,
+      this.agentPayload(),
+    );
+  }
 }
 
 @Injectable()
 export class CzentrixStubService extends CtiService {
-  private ok(): Observable<ApiResponse> {
-    return of({ statusCode: 200, data: null });
+  private ok<T = unknown>(): Observable<ApiResponse<T>> {
+    return of({ statusCode: 200, data: null as T });
   }
 
   getLoginKey(): Observable<ApiResponse> {
     return this.ok();
   }
-  getAgentStatus(): Observable<ApiResponse> {
-    return this.ok();
+  getAgentStatus(): Observable<ApiResponse<AgentStateData>> {
+    return this.ok<AgentStateData>();
   }
   getIvrsPathDetails(): Observable<ApiResponse> {
     return this.ok();
   }
-  getCallDetails(): Observable<ApiResponse> {
-    return this.ok();
+  getCallDetails(): Observable<ApiResponse<AgentCallStatsData>> {
+    return this.ok<AgentCallStatsData>();
   }
   dialBeneficiary(): Observable<ApiResponse> {
     return this.ok();
@@ -72,6 +216,12 @@ export class CzentrixStubService extends CtiService {
     return this.ok();
   }
   setCustomerPreferredLanguage(): Observable<ApiResponse> {
+    return this.ok();
+  }
+  switchToInbound(): Observable<ApiResponse> {
+    return this.ok();
+  }
+  switchToOutbound(): Observable<ApiResponse> {
     return this.ok();
   }
 }

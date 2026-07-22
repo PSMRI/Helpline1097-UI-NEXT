@@ -20,8 +20,9 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleHelp, lucidePhone, lucidePower, lucideUser, lucideUserX } from '@ng-icons/lucide';
@@ -68,6 +69,7 @@ import { VersionDialogComponent } from './version-dialog.component';
 export class ShellComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly sanitizer = inject(DomSanitizer);
   private readonly auth = inject(AuthService);
   private readonly cti = inject(CtiService);
   private readonly config = inject(ConfigService);
@@ -123,6 +125,26 @@ export class ShellComponent {
   protected readonly showContacts = computed(() => this.routeData()['showContacts'] === true);
   /** Force-logout is CO-only. */
   protected readonly isCO = computed(() => this.sessionStore.currentRole() === 'CO');
+
+  /**
+   * CZentrix softphone bar (old `multi-role-screen` iframe): CO agents only, and only when
+   * the role carries an agent id. Supervisor never sees it (old `hideBar` flow).
+   */
+  protected readonly showCtiBar = computed(
+    () => this.isCO() && this.sessionStore.agentId() != null,
+  );
+  /** Old `barMinimized` — the bar starts minimized; the footer button toggles it. */
+  protected readonly barMinimized = signal(true);
+  /** `{telephonyServerURL}bar/cti_handler.php?e={agentID}` (iframe logs into CZentrix itself). */
+  protected readonly ctiHandlerUrl = computed(() =>
+    this.sanitizer.bypassSecurityTrustResourceUrl(
+      `${this.config.telephonyServerURL}bar/cti_handler.php?e=${this.sessionStore.agentId()}`,
+    ),
+  );
+
+  protected toggleBar(): void {
+    this.barMinimized.set(!this.barMinimized());
+  }
 
   protected onLanguageChange(value: string | string[]): void {
     this.ui.setLanguage(Array.isArray(value) ? (value[0] ?? '') : value);

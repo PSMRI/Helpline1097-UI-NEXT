@@ -40,6 +40,9 @@ export interface RolePrivilege {
   RoleName?: string;
   workingLocationID?: number;
   agentID?: number | string;
+  /** CTI campaign privileges (old dashboard `setCampaign` reads these). */
+  inbound?: boolean;
+  outbound?: boolean;
   serviceRoleScreenMappings?: ServiceRoleScreenMapping[];
 }
 

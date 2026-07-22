@@ -32,6 +32,7 @@ import {
   PLAIN_KEYS,
   SessionStorageService,
 } from '@/app-modules/core/services/session-storage.service';
+import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /**
@@ -51,6 +52,7 @@ export class RoleSelectionComponent {
   private readonly router = inject(Router);
   private readonly storage = inject(SessionStorageService);
   private readonly sessionStore = inject(SessionStore);
+  private readonly callStore = inject(CallStore);
 
   protected readonly privileges = this.sessionStore.privileges;
 
@@ -73,6 +75,8 @@ export class RoleSelectionComponent {
       this.sessionStore.currentServiceId.set(service.serviceID ?? null);
       const agentId = role.agentID ?? this.sessionStore.agentId();
       this.sessionStore.agentId.set(agentId != null ? Number(agentId) : null);
+      // Old app re-armed the only-outbound auto-switch on every role selection.
+      this.callStore.outboundSwitchDone.set(false);
       this.router.navigate(['/MultiRoleScreenComponent/dashboard']);
     }
   }

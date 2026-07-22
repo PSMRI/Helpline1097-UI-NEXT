@@ -20,14 +20,18 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject } from '@angular/core';
+import { Router } from '@angular/router';
 
+import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { CALL_SCREEN_ROUTE, CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 import { ActivityPanelComponent } from './components/activity-panel.component';
 import { AgentIdComponent } from './components/agent-id.component';
 import { AlertsPanelComponent } from './components/alerts-panel.component';
 import { CallStatisticsComponent } from './components/call-statistics.component';
+import { CampaignToggleComponent } from './components/campaign-toggle.component';
 import { DashboardSidebarComponent } from './components/dashboard-sidebar.component';
 import { ReportsPanelComponent } from './components/reports-panel.component';
 import { RatingPanelComponent } from './components/rating-panel.component';
@@ -47,6 +51,7 @@ import { RatingPanelComponent } from './components/rating-panel.component';
     AgentIdComponent,
     AlertsPanelComponent,
     CallStatisticsComponent,
+    CampaignToggleComponent,
     DashboardSidebarComponent,
     ReportsPanelComponent,
     RatingPanelComponent,
@@ -65,8 +70,8 @@ import { RatingPanelComponent } from './components/rating-panel.component';
           <div class="flex items-center justify-between gap-3">
             @if (!isSupervisor()) {
               <app-agent-id />
+              <app-campaign-toggle />
             }
-            <!-- Inbound/Outbound campaign toggle → Phase 4d (CTI) -->
           </div>
 
           <app-call-statistics [blank]="isSupervisor()" />
@@ -84,5 +89,71 @@ import { RatingPanelComponent } from './components/rating-panel.component';
 })
 export class DashboardComponent {
   private readonly sessionStore = inject(SessionStore);
+  private readonly callStore = inject(CallStore);
+  private readonly router = inject(Router);
+  private readonly notify = inject(NotificationService);
+  private readonly destroyRef = inject(DestroyRef);
+
   protected readonly isSupervisor = computed(() => this.sessionStore.currentRole() === 'Supervisor');
+
+  constructor() {
+    // The CZentrix iframe announces calls via window.postMessage — old dashboard `listener`.
+    const listener = (event: Event) => this.onCtiMessage(event);
+    window.addEventListener('message', listener, false);
+    this.destroyRef.onDestroy(() => window.removeEventListener('message', listener, false));
+  }
+
+  /**
+   * Old `listener(event)`: parse the pipe-delimited CTI event
+   * `"{Action}|{phone}|{sessionId}|{INBOUND|OUTBOUND}"` (from `event.data`, or
+   * `event.detail.data` for CustomEvents). Handle it when it carries a session id we don't
+   * already have, or is an explicit Accept.
+   */
+  private onCtiMessage(event: Event): void {
+    const raw =
+      (event as MessageEvent).data ?? (event as CustomEvent<{ data?: unknown }>).detail?.data;
+    if (typeof raw !== 'string') {
+      // Browsers/devtools post non-CZentrix objects on window too; only pipe strings matter.
+      return;
+    }
+    const parts = raw.split('|');
+    const sessionId = parts[2];
+    if (sessionId === undefined || sessionId === 'undefined' || sessionId === null || sessionId === '') {
+      return;
+    }
+    // Single dispatch (review fix): the old app's two independent `if` blocks invoked
+    // handleEvent twice for an Accept with a new session id — harmless only by accident
+    // (idempotent store writes, same-URL navigation). Same trigger conditions, one call.
+    const known = this.callStore.sessionId();
+    const isNewSession = !known || known !== sessionId;
+    const isAccept = parts[0]?.toLowerCase() === 'accept';
+    if (isNewSession || isAccept) {
+      this.handleCtiEvent(parts);
+    }
+  }
+
+  /** Old `handleEvent()`: validate, persist the call flags, open the call screen. */
+  private handleCtiEvent(parts: string[]): void {
+    if (parts.length <= 2) {
+      return;
+    }
+    const mobileNumber = (parts[1] ?? '').replace(/\D/g, '');
+    const checkNumber = /^\d+$/;
+    const sessionVar = /^\d{10}\.\d{10}$/;
+    // Review fix (deviation from the old app, declared on PR #6): the pattern is anchored —
+    // the old `^(INBOUND)|(OUTBOUND)$` accepted e.g. "INBOUNDxyz". Real events carry bare
+    // tokens (the old innerpage compared `=== 'OUTBOUND'` exactly); verified at the
+    // live-call milestone together with the deferred origin check.
+    const checkCallType = /^(INBOUND|OUTBOUND)$/i;
+
+    if (checkNumber.test(mobileNumber) && sessionVar.test(parts[2]) && checkCallType.test(parts[3])) {
+      // Review fix: isOnCall is set only for a VALID call (startCall sets it) — the old app
+      // set it before validating, stranding the agent behind the mid-call guards when a
+      // malformed event arrived (flag set, no call, no navigation, logout blocked).
+      this.callStore.startCall(parts[1], parts[2], parts[3]);
+      this.router.navigate([CALL_SCREEN_ROUTE]);
+    } else {
+      this.notify.alert('Invalid call. Please check.', 'error');
+    }
+  }
 }

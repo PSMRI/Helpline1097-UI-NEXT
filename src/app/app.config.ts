@@ -36,7 +36,7 @@ import {
   offlineInterceptor,
   responseInterceptor,
 } from '@/app-modules/core/http';
-import { CtiService, CzentrixStubService } from '@/app-modules/core/services/cti.service';
+import { CtiService, CzentrixHttpService } from '@/app-modules/core/services/cti.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -56,7 +56,8 @@ export const appConfig: ApplicationConfig = {
         responseInterceptor,
       ]),
     ),
-    // Czentrix telephony is stubbed for now (out of scope); swap for the real REST impl later.
-    { provide: CtiService, useClass: CzentrixStubService },
+    // Real CZentrix REST integration (Phase 4d). CzentrixStubService remains available for
+    // unit tests / CTI-less demos.
+    { provide: CtiService, useClass: CzentrixHttpService },
   ],
 };
