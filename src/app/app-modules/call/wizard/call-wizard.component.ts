@@ -30,8 +30,15 @@ import {
   signal,
 } from '@angular/core';
 
+import { Router } from '@angular/router';
+
 import { ZardButtonComponent } from '@common-ui/ui/button';
 
+import { BeneficiaryRegistrationComponent } from '../registration/beneficiary-registration.component';
+import { ClosureComponent } from '../closure/closure.component';
+import { CoServicesComponent } from '../services-tab/co-services.component';
+import { GrievanceResolutionComponent } from '../grievance/grievance-resolution.component';
+import { UpdatesFromBeneficiaryComponent } from '../updates/updates-from-beneficiary.component';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import {
   ENCRYPTED_KEYS,
@@ -49,7 +56,14 @@ import { CallStore } from '@/app-modules/core/state/call.store';
  */
 @Component({
   selector: 'app-call-wizard',
-  imports: [ZardButtonComponent],
+  imports: [
+    ZardButtonComponent,
+    BeneficiaryRegistrationComponent,
+    CoServicesComponent,
+    UpdatesFromBeneficiaryComponent,
+    GrievanceResolutionComponent,
+    ClosureComponent,
+  ],
   templateUrl: './call-wizard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -57,6 +71,7 @@ export class CallWizardComponent implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly storage = inject(SessionStorageService);
   private readonly callStore = inject(CallStore);
+  private readonly router = inject(Router);
 
   /** Which carousel variant is active (old `#myCarousel` / `Everwell` / `Grievance`). */
   protected readonly variant = signal<'standard' | 'everwell' | 'grievance'>('standard');
@@ -118,6 +133,36 @@ export class CallWizardComponent implements OnInit {
     this.step.set(1);
     this.isNext.set(true);
     this.isCancelDisable.set(false);
+  }
+
+  /**
+   * Old `serviceGiven → closure.onView()` — a service tab persisted something, so the closure
+   * call-summary needs refreshing. Wired to the closure slide's summary reload in 6e.
+   */
+  protected onServiceProvided(): void {
+    // The closure slide reloads its own summary on init (only the active slide renders), so
+    // no cross-slide refresh is needed here — old `closure.onView()` equivalent.
+  }
+
+  /**
+   * Old `closeCall(compain_type)` — the closure emitted `callClosed`: clear the call flags
+   * and return to the dashboard. Faithful to the old app (which also cleared the same keys).
+   */
+  protected onCallClosed(): void {
+    this.storage.removeItem(ENCRYPTED_KEYS.isOnCall);
+    this.storage.removeItem(ENCRYPTED_KEYS.isEverwellCall);
+    this.storage.removeItem(ENCRYPTED_KEYS.isGrievanceCall);
+    this.callStore.reset();
+    this.router.navigate(['/MultiRoleScreenComponent/dashboard']);
+  }
+
+  /** Old `closedContinue()` — restart the wizard for a new service on the same call. */
+  protected onClosedContinue(): void {
+    this.step.set(0);
+    this.isCancelDisable.set(true);
+    this.isClosureDisable.set(false);
+    this.isNext.set(false);
+    this.isPrevious.set(false);
   }
 
   /** Old `nxtVisual()` + bootstrap `data-slide="next"` (index read before the move). */

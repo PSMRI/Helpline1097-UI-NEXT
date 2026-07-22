@@ -25,6 +25,9 @@ export interface CallType {
   callTypeID?: number;
   callType?: string;
   callTypeDesc?: string;
+  /** Backend sends these as string booleans; the closure sub-type CSV carries them. */
+  fitToBlock?: boolean | string;
+  fitForFollowUp?: boolean | string;
 }
 
 /** A call-type group (`call/getCallTypesV1` returns an array of these). */
@@ -47,17 +50,60 @@ export interface CloseCallRequest {
   prefferedDateTime?: string;
   endCall?: boolean;
   isCompleted?: boolean;
-  callType?: string;
+  callType?: string | null;
   beneficiaryRegID?: number | string | null;
   remarks?: string | null;
   providerServiceMapID?: number;
   createdBy?: string;
   agentID?: number | string | null;
   agentIPAddress?: string;
+  // Closure-slide follow-up + transfer fields (old `closure.closeCall`).
+  /** Old `isFeedbackRequiredFlag` — ALWAYS sent (false unless the Valid-call checkbox is ticked). */
+  isFeedback?: boolean;
+  isTransfered?: boolean;
+  IsOutbound?: boolean;
+  requestedServiceID?: number | null;
+  requestedFor?: string | null;
+  preferredLanguageName?: string | null;
 }
 
 /** `user/role/{roleID}` response data — role-based wrap-up configuration. */
 export interface RoleWrapupTimeData {
   isWrapUpTime?: boolean;
   WrapUpTime?: number;
+}
+
+/** `services/getCallSummary` row — per-call service summary shown on the closure slide. */
+export interface CallSummary {
+  informationServices?: string;
+  counsellingServices?: string;
+  referralServices?: string;
+  feedbackServices?: string;
+  [key: string]: unknown;
+}
+
+/** `cti/transferCall` request (old closure `transferCall`; string flags are the contract). */
+export interface TransferCallRequest {
+  transfer_from?: number | string | null;
+  transfer_campaign_info?: string | null;
+  skill_transfer_flag?: '0' | '1';
+  skill?: string | null;
+  callType?: string | null;
+  callTypeID?: string | null;
+  agentIPAddress?: string;
+  benCallID?: number | string | null;
+}
+
+/** Location master rows (`location/districts|taluks|village/{id}` GETs). */
+export interface DistrictRow {
+  districtID?: number;
+  districtName?: string;
+}
+export interface TalukRow {
+  talukID?: number;
+  talukName?: string;
+}
+export interface VillageRow {
+  districtBranchID?: number;
+  villageName?: string;
 }

@@ -20,8 +20,11 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-export * from './api-response.model';
-export * from './user.model';
-export * from './call.model';
-export * from './beneficiary.model';
-export * from './co-services.model';
+/**
+ * z-select emits STRING values, but the backend payloads carry numeric ids — coerce,
+ * mapping empty/null/undefined to null. Shared by the call-flow forms (was duplicated
+ * inline per component).
+ */
+export function numOrNull(value: string | null | undefined): number | null {
+  return value != null && value !== '' ? Number(value) : null;
+}

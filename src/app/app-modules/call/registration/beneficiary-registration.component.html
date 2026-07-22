@@ -1,0 +1,230 @@
+<!--
+  AMRIT – Accessible Medical Records via Integrated Technologies
+  Integrated EHR (Electronic Health Records) Solution
+
+  Copyright (C) "Piramal Swasthya Management and Research Institute"
+
+  This file is part of AMRIT.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see https://www.gnu.org/licenses/.
+-->
+
+<div class="flex flex-col gap-4">
+  @if (mode() === 'search') {
+    <!-- Search area -->
+    <div class="flex flex-wrap items-end gap-3">
+      <div class="flex flex-col gap-1.5">
+        <label for="benId" class="text-sm font-medium">Beneficiary ID</label>
+        <input
+          z-input
+          id="benId"
+          [formControl]="searchId"
+          type="text"
+          maxlength="12"
+          placeholder="Search by beneficiary ID"
+          class="w-56"
+        />
+      </div>
+      <button z-button type="button" (click)="search()" [zLoading]="searching()">Search</button>
+      <button z-button zType="outline" type="button" (click)="retrieveAll()">Retrieve All</button>
+      <button z-button zType="ghost" type="button" class="ml-auto" (click)="toggleMode()">
+        + Register New
+      </button>
+    </div>
+
+    <!-- Results table -->
+    <div class="overflow-x-auto rounded-md border border-border">
+      <table class="w-full text-sm">
+        <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+          <tr>
+            <th class="px-3 py-2">Ben ID</th>
+            <th class="px-3 py-2">Name</th>
+            <th class="px-3 py-2">Gender</th>
+            <th class="px-3 py-2">State</th>
+            <th class="px-3 py-2">District</th>
+            <th class="px-3 py-2"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (b of results(); track b.beneficiaryRegID) {
+            <tr class="border-t border-border hover:bg-accent/50">
+              <td class="px-3 py-2">{{ b.beneficiaryID }}</td>
+              <td class="px-3 py-2">{{ b.firstName }} {{ b.lastName }}</td>
+              <td class="px-3 py-2">{{ b.genderName }}</td>
+              <td class="px-3 py-2">{{ b.i_bendemographics?.stateName }}</td>
+              <td class="px-3 py-2">{{ b.i_bendemographics?.districtName }}</td>
+              <td class="px-3 py-2 text-right">
+                <!-- Waits for startCall so the link never posts a null benCallID -->
+                <button
+                  z-button
+                  zSize="sm"
+                  type="button"
+                  [zDisabled]="startCallPending()"
+                  (click)="selectBeneficiary(b)"
+                >
+                  Select
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="px-3 py-6 text-center text-muted-foreground">
+                @if (searching()) {
+                  Searching…
+                } @else {
+                  No beneficiary found. Use "Register New" to add one.
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <!-- Register-new form -->
+    <form [formGroup]="form" (ngSubmit)="register()" class="flex flex-col gap-4">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Title</span>
+          <z-select formControlName="titleId" zPlaceholder="Select">
+            @for (t of titles(); track t.titleID) {
+              <z-select-item [zValue]="t.titleID + ''">{{ t.titleName }}</z-select-item>
+            }
+          </z-select>
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>First Name</span>
+          <input z-input formControlName="firstName" type="text" maxlength="25" placeholder="First name" />
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Last Name</span>
+          <input z-input formControlName="lastName" type="text" maxlength="25" placeholder="Last name" />
+        </label>
+
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Gender <span class="text-destructive">*</span></span>
+          <z-select formControlName="genderID" zPlaceholder="Select gender">
+            @for (g of genders(); track g.genderID) {
+              <z-select-item [zValue]="g.genderID + ''">{{ g.genderName }}</z-select-item>
+            }
+          </z-select>
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Date of Birth</span>
+          <input z-input formControlName="dOB" type="date" />
+        </label>
+        <div class="flex gap-2">
+          <label class="flex flex-1 flex-col gap-1.5 text-sm">
+            <span>Age</span>
+            <input z-input formControlName="age" type="number" min="0" max="150" placeholder="Age" />
+          </label>
+          <label class="flex flex-1 flex-col gap-1.5 text-sm">
+            <span>Unit</span>
+            <z-select formControlName="ageUnit" zPlaceholder="Unit">
+              @for (u of ageUnits; track u) {
+                <z-select-item [zValue]="u">{{ u }}</z-select-item>
+              }
+            </z-select>
+          </label>
+        </div>
+
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Marital Status</span>
+          <z-select formControlName="maritalStatusID" zPlaceholder="Select">
+            @for (m of maritalStatuses(); track m.maritalStatusID) {
+              <z-select-item [zValue]="m.maritalStatusID + ''">{{ m.status }}</z-select-item>
+            }
+          </z-select>
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Caste / Community</span>
+          <z-select formControlName="community" zPlaceholder="Select">
+            @for (c of communities(); track c.communityID) {
+              <z-select-item [zValue]="c.communityID + ''">{{ c.communityType }}</z-select-item>
+            }
+          </z-select>
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Relationship</span>
+          <z-select formControlName="beneficiaryRelationID" zPlaceholder="Select">
+            @for (r of relationships(); track r.benRelationshipID) {
+              <z-select-item [zValue]="r.benRelationshipID + ''">{{ r.benRelationshipType }}</z-select-item>
+            }
+          </z-select>
+        </label>
+
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>State <span class="text-destructive">*</span></span>
+          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange()">
+            @for (s of states(); track s.stateID) {
+              <z-select-item [zValue]="s.stateID + ''">{{ s.stateName }}</z-select-item>
+            }
+          </z-select>
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>District <span class="text-destructive">*</span></span>
+          <z-select formControlName="district" zPlaceholder="Select district" (zValueChange)="onDistrictChange()">
+            @for (d of districts(); track d.districtID) {
+              <z-select-item [zValue]="d.districtID + ''">{{ d.districtName }}</z-select-item>
+            }
+          </z-select>
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Taluk</span>
+          <z-select formControlName="taluk" zPlaceholder="Select taluk" (zValueChange)="onTalukChange()">
+            @for (t of taluks(); track t.talukID) {
+              <z-select-item [zValue]="t.talukID + ''">{{ t.talukName }}</z-select-item>
+            }
+          </z-select>
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Village</span>
+          <z-select formControlName="village" zPlaceholder="Select village">
+            @for (v of villages(); track v.districtBranchID) {
+              <z-select-item [zValue]="v.districtBranchID + ''">{{ v.villageName }}</z-select-item>
+            }
+          </z-select>
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Pincode</span>
+          <input z-input formControlName="pincode" type="text" maxlength="6" placeholder="6-digit pincode" />
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Alternate Number</span>
+          <input z-input formControlName="alternateNumber1" type="text" maxlength="10" placeholder="Alternate mobile" />
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Preferred Language <span class="text-destructive">*</span></span>
+          <z-select formControlName="preferredLanguage" zPlaceholder="Select language">
+            @for (l of languages(); track l.languageID) {
+              <z-select-item [zValue]="l.languageID + ''">{{ l.languageName }}</z-select-item>
+            }
+          </z-select>
+        </label>
+      </div>
+
+      <div class="flex items-center justify-end gap-3">
+        <button z-button zType="outline" type="button" (click)="toggleMode()">Back to search</button>
+        <button
+          z-button
+          type="submit"
+          [zDisabled]="form.invalid || startCallPending()"
+          [zLoading]="submitting()"
+        >
+          Register &amp; Continue
+        </button>
+      </div>
+    </form>
+  }
+</div>

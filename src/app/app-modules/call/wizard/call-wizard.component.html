@@ -47,11 +47,32 @@
     }
   </ol>
 
-  <!-- Active slide (Phase 6 fills these with the real forms) -->
-  <div class="flex min-h-64 flex-1 items-center justify-center rounded-lg border border-dashed border-border bg-background p-8">
-    <p class="max-w-md text-center text-sm text-muted-foreground">
-      {{ steps()[step()] }} — this form arrives in Phase 6.
-    </p>
+  <!-- Active slide -->
+  <div class="min-h-64 flex-1 rounded-lg border border-border bg-background p-4 md:p-6">
+    @if (variant() === 'standard' && step() === 0) {
+      <app-beneficiary-registration (beneficiarySelected)="benService()" />
+    } @else if (variant() === 'standard' && step() === 1) {
+      <app-co-services (serviceProvided)="onServiceProvided()" />
+    } @else if (variant() === 'standard' && step() === 2) {
+      <app-updates-from-beneficiary />
+    } @else if (variant() === 'standard' && step() === 3) {
+      <app-closure (callClosed)="onCallClosed()" (closedContinue)="onClosedContinue()" />
+    } @else if (variant() === 'grievance' && step() === 0) {
+      <app-grievance-resolution />
+    } @else if (variant() === 'grievance' && step() === 1) {
+      <app-closure (callClosed)="onCallClosed()" (closedContinue)="onClosedContinue()" />
+    } @else if (variant() === 'everwell' && step() === 1) {
+      <app-closure (callClosed)="onCallClosed()" (closedContinue)="onClosedContinue()" />
+    } @else {
+      <!-- Everwell step 0 (adherence-calendar worklist + support-action feedback) is a large
+           outbound-only surface; it lands with the Everwell module in Phase 8. -->
+      <div class="flex min-h-64 items-center justify-center">
+        <p class="max-w-md text-center text-sm text-muted-foreground">
+          {{ steps()[step()] }} — the Everwell adherence worklist arrives with the Everwell
+          module (Phase 8).
+        </p>
+      </div>
+    }
   </div>
 
   <!-- Nav buttons (old Previous / Cancel / Closure / Next) -->
