@@ -232,6 +232,9 @@ export class ClosureComponent implements OnInit {
   /** Old `isEverwell` — the feedback checkbox is hidden on Everwell calls. */
   protected readonly isEverwell =
     this.storage.getItem(ENCRYPTED_KEYS.isEverwellCall) === 'yes';
+  /** Old `isGrievance` — with isEverwell, gates the generic-outbound completion call. */
+  private readonly isGrievance =
+    this.storage.getItem(ENCRYPTED_KEYS.isGrievanceCall) === 'yes';
   protected readonly campaigns = signal<string[]>([]);
   protected readonly skills = signal<string[]>([]);
   protected readonly languages = signal<{ languageID?: number; languageName?: string }[]>([]);
@@ -534,6 +537,29 @@ export class ClosureComponent implements OnInit {
       return;
     }
     this.busy.set(true);
+    // Old plain-OUTBOUND branch (7c): mark the worklist item completed FIRST, then close
+    // the call (`closeOutBoundCall(outBoundCallID, true)` → closeCall). Everwell/grievance
+    // closures have their own completion endpoints (Phase 8 / grievance slide).
+    if (campaign === 'OUTBOUND' && !this.isEverwell && !this.isGrievance) {
+      this.callApi.completeOutboundCall(this.callStore.outBoundCallID(), true).subscribe({
+        next: () => this.postCloseCall(request, kind, campaign),
+        error: (err: { status?: number }) => {
+          this.busy.set(false);
+          // Old handler alerted the bare HTTP status here (quirk kept).
+          this.notify.alert(String(err?.status ?? 'error'), 'error');
+        },
+      });
+      return;
+    }
+    this.postCloseCall(request, kind, campaign);
+  }
+
+  /** The actual `call/closeCall` POST + post-close bookkeeping. */
+  private postCloseCall(
+    request: CloseCallRequest,
+    kind: 'continue' | 'close',
+    campaign: string | null,
+  ): void {
     this.callApi.closeCall(request).subscribe({
       next: () => {
         this.busy.set(false);

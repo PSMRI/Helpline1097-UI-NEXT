@@ -67,6 +67,20 @@ export class CallStore {
   readonly outboundGrievanceData = signal<Record<string, unknown> | null>(null);
   /** Old `dataService.outboundEverwellData` — populated by the Everwell outbound worklist. */
   readonly outboundEverwellData = signal<Record<string, unknown> | null>(null);
+  /** Old `dataService.outboundData` — the generic outbound worklist row being dialed. */
+  readonly outboundData = signal<Record<string, unknown> | null>(null);
+  /** Old `dataService.outboundBenRegID` — NOTE the old generic worklist stored the
+   * beneficiary's `beneficiaryID` (12-digit id) here, not the regID (faithful quirk). */
+  readonly outboundBenRegID = signal<number | string | null>(null);
+  /** Old `dataService.outBoundCallID` — the generic row's `outboundCallReqID`, consumed by
+   * the closure's `call/completeOutboundCall`. */
+  readonly outBoundCallID = signal<number | string | null>(null);
+  // Everwell hand-off state (old dataService fields) — reset by the worklist dial, consumed
+  // by the Phase 8 in-call everwell slide + the closure's everwell branch.
+  readonly checkEverwellResponse = signal<boolean>(false);
+  readonly everwellCallNotConnected = signal<string | null>(null);
+  readonly feedbackData = signal<Record<string, unknown>[]>([]);
+  readonly updatedFeedbackList = signal<unknown[]>([]);
   /**
    * Old `dataService.custDisconnectCall$`/`enablePreviousOnCustDisconnect` subject — bumped
    * by the innerpage's CustDisconnect handler; the wizard reacts (jump to Closure, lock nav).
@@ -155,6 +169,13 @@ export class CallStore {
     this.callData.set(null);
     this.outboundGrievanceData.set(null);
     this.outboundEverwellData.set(null);
+    this.outboundData.set(null);
+    this.outboundBenRegID.set(null);
+    this.outBoundCallID.set(null);
+    this.checkEverwellResponse.set(false);
+    this.everwellCallNotConnected.set(null);
+    this.feedbackData.set([]);
+    this.updatedFeedbackList.set([]);
     this.custDisconnected.set(0);
     this.onlyOutboundAvailable.set(false);
     this.isOutBoundSelected.set(false);

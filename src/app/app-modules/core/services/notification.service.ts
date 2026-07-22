@@ -59,6 +59,17 @@ export class NotificationService {
     }
   }
 
+  /** Modal info dialog (old display-only dialogs, e.g. the complaint description). */
+  info(message: string, title = 'Information'): void {
+    this.dialog.create<unknown, unknown>({
+      zTitle: title,
+      zContent: message,
+      zOkText: 'Close',
+      zCancelText: null,
+      zMaskClosable: true,
+    });
+  }
+
   confirm(message: string, title = 'Confirm', options?: ConfirmOptions): Observable<boolean> {
     return new Observable<boolean>((observer) => {
       this.dialog.create<unknown, unknown>({

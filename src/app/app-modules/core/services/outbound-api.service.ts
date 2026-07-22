@@ -82,6 +82,39 @@ export class OutboundApiService {
     );
   }
 
+  /** POST getGrievanceOutboundWorklist — the agent's allocated grievance complaints. */
+  getGrievanceOutboundWorklist(
+    providerServiceMapID: number,
+    userId: number | string,
+  ): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(
+      `${this.config.commonBaseURL}getGrievanceOutboundWorklist`,
+      { providerServiceMapID, userId },
+    );
+  }
+
+  /** POST everwellCall/outboundCallList — the agent's allocated Everwell records. */
+  getEverwellOutboundWorklist(
+    providerServiceMapId: number,
+    agentId: number | string,
+  ): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(
+      `${this.config.commonBaseURL}everwellCall/outboundCallList`,
+      { providerServiceMapId, agentId },
+    );
+  }
+
+  /** POST everwellCall/checkIfAlreadyCalled — pre-dial guard (`.data.isCompleted`). */
+  checkIfAlreadyCalled(
+    eapiId: number | string,
+    providerServiceMapId: number,
+  ): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(
+      `${this.config.commonBaseURL}everwellCall/checkIfAlreadyCalled`,
+      { eapiId, providerServiceMapId },
+    );
+  }
+
   /** POST everwellCall/outboundCallListWithMobileNumber — beneficiaries on a phone number. */
   everwellBeneficiariesByPhone(
     providerServiceMapId: number,

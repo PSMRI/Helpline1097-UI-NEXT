@@ -146,6 +146,12 @@ export class BeneficiaryRegistrationComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadRegistrationData();
+    if (this.callStore.callCategory() === 'OUTBOUND') {
+      // Generic outbound (7c): open the call with the worklist row's beneficiary, then
+      // load that beneficiary for selection (old `startOutBoundCall` → `outboundEvent`).
+      this.startOutboundCall();
+      return;
+    }
     this.startCall();
     // INBOUND: auto-search the caller's number (old `reloadCall`).
     const cli = this.callStore.cli();
@@ -212,6 +218,74 @@ export class BeneficiaryRegistrationComponent implements OnInit {
         this.startCallPending.set(false);
       },
     });
+  }
+
+  /**
+   * Old `startOutBoundCall` + `outboundEvent` (generic outbound, 7c): open the call record
+   * with the worklist row's regID/phone; on success capture `outBoundCallID` (the row's
+   * `outboundCallReqID`, consumed by the closure's completeOutboundCall) and load the
+   * row's beneficiary by id for selection. Without a hand-off row (recovery), fall back to
+   * the old `reloadCall` search by `outboundBenRegID`.
+   */
+  private startOutboundCall(): void {
+    const row = this.callStore.outboundData() as {
+      outboundCallReqID?: number | string;
+      beneficiary?: {
+        beneficiaryID?: number | string;
+        beneficiaryRegID?: number | string;
+        benPhoneMaps?: { phoneNo?: string }[];
+      };
+    } | null;
+    if (!row) {
+      const benId = this.callStore.outboundBenRegID();
+      if (benId != null) {
+        this.runSearch(this.beneficiaryApi.searchByBeneficiaryId(String(benId)));
+      }
+      return;
+    }
+    if (this.callStore.benCallID() != null) {
+      // Call already open (wizard restart on the same call) — just reload the beneficiary.
+      this.searchOutboundBeneficiary(row);
+      return;
+    }
+    const request: StartCallRequest = {
+      callID: this.callStore.sessionId(),
+      createdBy: this.sessionStore.user()?.userName,
+      calledServiceID: this.providerServiceMapId() ?? undefined,
+      phoneNo: row.beneficiary?.benPhoneMaps?.[0]?.phoneNo ?? null,
+      agentID: this.sessionStore.agentId(),
+      callReceivedUserID: this.sessionStore.userId(),
+      receivedRoleName: this.sessionStore.currentRole() ?? undefined,
+      beneficiaryRegID: row.beneficiary?.beneficiaryRegID ?? null,
+      isOutbound: this.callStore.isOutbound(),
+    };
+    this.startCallPending.set(true);
+    this.callApi.startCall(request).subscribe({
+      next: (res) => {
+        if (res?.data?.benCallID != null) {
+          this.callStore.benCallID.set(res.data.benCallID);
+          this.callStore.callData.set(res.data as Record<string, unknown>);
+        }
+        this.startCallPending.set(false);
+        // Old `outboundEvent`: search + outBoundCallID only after startCall succeeded.
+        this.callStore.outBoundCallID.set(row.outboundCallReqID ?? null);
+        this.searchOutboundBeneficiary(row);
+      },
+      error: (err: { errorMessage?: string }) => {
+        this.startCallPending.set(false);
+        this.notify.alert(err?.errorMessage ?? 'Failed to start call', 'error');
+      },
+    });
+  }
+
+  /** Old `retrieveRegHistory(beneficiaryID)` — load the dialed beneficiary for selection. */
+  private searchOutboundBeneficiary(row: {
+    beneficiary?: { beneficiaryID?: number | string };
+  }): void {
+    const beneficiaryId = row.beneficiary?.beneficiaryID;
+    if (beneficiaryId != null) {
+      this.runSearch(this.beneficiaryApi.searchByBeneficiaryId(String(beneficiaryId)));
+    }
   }
 
   protected search(): void {

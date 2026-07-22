@@ -114,6 +114,17 @@ export const routes: Routes = [
         canActivate: [authGuard, roleSelectedGuard],
         data: { title: 'Activity Area' },
       },
+      {
+        // Old `OutboundCallWorklistsComponent` — the CO's outbound dialing hub (old
+        // AuthGuard = our authGuard; a selected role is needed for the service/user ids).
+        path: 'OutboundCallWorklistsComponent',
+        loadComponent: () =>
+          import('./app-modules/outbound/outbound-worklists.component').then(
+            (m) => m.OutboundWorklistsComponent,
+          ),
+        canActivate: [authGuard, roleSelectedGuard],
+        data: { title: 'Outbound Worklist' },
+      },
     ],
   },
 ];
