@@ -234,7 +234,6 @@ export class ClosureComponent implements OnInit {
   /** Old `isEverwell` — the feedback checkbox is hidden on Everwell calls. */
   protected readonly isEverwell =
     this.storage.getItem(ENCRYPTED_KEYS.isEverwellCall) === 'yes';
-  /** Old `isGrievance` — with isEverwell, gates the generic-outbound completion call. */
   private readonly isGrievance =
     this.storage.getItem(ENCRYPTED_KEYS.isGrievanceCall) === 'yes';
   protected readonly campaigns = signal<string[]>([]);
@@ -539,22 +538,20 @@ export class ClosureComponent implements OnInit {
       return;
     }
     this.busy.set(true);
-    // Old OUTBOUND branch: each flavor completes its worklist item FIRST, then closes.
+    // OUTBOUND completes the worklist item FIRST, then closes (old branch order); the
+    // bare-HTTP-status error alerts are the old handlers' quirk.
     if (campaign === 'OUTBOUND') {
       if (!this.isEverwell && !this.isGrievance) {
-        // Plain outbound: `closeOutBoundCall(outBoundCallID, true)` → closeCall.
         this.callApi.completeOutboundCall(this.callStore.outBoundCallID(), true).subscribe({
           next: () => this.postCloseCall(request, kind, campaign),
           error: (err: { status?: number }) => {
             this.busy.set(false);
-            // Old handler alerted the bare HTTP status here (quirk kept).
             this.notify.alert(String(err?.status ?? 'error'), 'error');
           },
         });
         return;
       }
       if (this.isGrievance) {
-        // Old grievance branch: completeGrievanceCall with this exact payload, then close.
         const grievanceData = this.callStore.outboundGrievanceData() ?? {};
         this.outboundApi
           .completeGrievanceCall({
@@ -576,17 +573,14 @@ export class ClosureComponent implements OnInit {
           });
         return;
       }
-      // Everwell: the old app only completed+closed when `everwellFeedbackCallData` (built
-      // by the Phase 8 support-action feedback flow) was non-empty — with no feedback the
-      // OUTBOUND branch fell through and NOTHING was posted (the documented silent no-op
-      // quirk). Until Phase 8 lands the feedback flow, that no-op is the faithful state.
+      // Everwell without feedback data posted NOTHING in the old app (silent no-op quirk);
+      // the Phase 8 feedback flow adds the completion branch.
       this.busy.set(false);
       return;
     }
     this.postCloseCall(request, kind, campaign);
   }
 
-  /** The actual `call/closeCall` POST + post-close bookkeeping. */
   private postCloseCall(
     request: CloseCallRequest,
     kind: 'continue' | 'close',

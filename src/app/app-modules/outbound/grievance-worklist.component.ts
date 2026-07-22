@@ -42,8 +42,7 @@ import { ENCRYPTED_KEYS } from '@/app-modules/core/services/session-storage.serv
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
-/** A grievance worklist row — `severety` misspelling and `beneficiaryRegId` casing are the
- * backend's field names, kept verbatim. */
+/** `severety` and `beneficiaryRegId` are the backend's field names, kept verbatim. */
 interface GrievanceRow {
   complaintID?: number | string;
   subjectOfComplaint?: string;
@@ -57,12 +56,8 @@ interface GrievanceRow {
   [key: string]: unknown;
 }
 
-/**
- * Grievance outbound worklist tab (old `grievance-outbound-worklist`): the complaints
- * allocated to this agent. View opens the complaint text; the dial hands the row off to
- * the grievance-resolution slide (Phase 6f) via `outboundGrievanceData` + the
- * `isGrievanceCall` flag.
- */
+/** Grievance outbound worklist tab (old `grievance-outbound-worklist`) — dial hands off to
+ * the grievance-resolution slide via `outboundGrievanceData` + `isGrievanceCall`. */
 @Component({
   selector: 'app-grievance-worklist',
   imports: [NgIcon, ReactiveFormsModule, ZardInputDirective],
@@ -171,13 +166,11 @@ export class GrievanceWorklistComponent implements OnInit {
   }
 
   protected lastCall(row: GrievanceRow): string {
-    // Old cell: date shown only when callCounter > 0 AND lastCall present, else 'N/A'.
     return (row.callCounter ?? 0) > 0 && row.lastCall != null
       ? formatWorklistDateTime(row.lastCall)
       : 'N/A';
   }
 
-  /** Old `filterComponentList` — substring match over exactly these four keys. */
   protected filter(): void {
     const term = this.search.value.trim().toLowerCase();
     if (!term) {
@@ -193,7 +186,6 @@ export class GrievanceWorklistComponent implements OnInit {
     );
   }
 
-  /** Old `viewComplaintDesc` — description dialog, or an info alert when there is none. */
   protected viewComplaint(row: GrievanceRow): void {
     if (row.complaint == null || row.complaint === '') {
       this.notify.alert('No complaint description found', 'info');
@@ -202,10 +194,7 @@ export class GrievanceWorklistComponent implements OnInit {
     this.notify.info(row.complaint, `Complaint ${row.complaintID ?? ''}`);
   }
 
-  /** Old `listBenDetailsOnPhoneNo` — stash the row, dial, set the grievance call flags. */
   protected dial(row: GrievanceRow): void {
-    // Old quirk kept: the worklist stores `beneficiaryRegId` (lowercase d); downstream
-    // readers check both casings off the full row.
     this.callStore.outboundBenRegID.set(row.beneficiaryRegId ?? null);
     this.callStore.outboundGrievanceData.set(row as Record<string, unknown>);
     this.dialService.dial(row.primaryNumber ?? '', ENCRYPTED_KEYS.isGrievanceCall);

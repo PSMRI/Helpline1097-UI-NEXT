@@ -82,11 +82,7 @@ export class ShellComponent {
   private readonly shellDestroyRef = inject(DestroyRef);
 
   constructor() {
-    // The CZentrix call-event listener lives on the SHELL so it is active on every
-    // post-login page (dashboard, role selection, worklists, activity area) — the old
-    // app's dashboard listener LEAKED and was effectively alive everywhere after the first
-    // dashboard visit; this is the same coverage, attached deliberately and cleaned up.
-    // The call screen keeps its own listener too (old app ran both concurrently).
+    // Shell-wide CZentrix call-event listener (see CtiCallEventsService for why).
     this.ctiEvents.attach(this.shellDestroyRef);
   }
   private readonly cti = inject(CtiService);

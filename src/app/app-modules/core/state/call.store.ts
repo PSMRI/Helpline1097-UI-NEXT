@@ -69,14 +69,11 @@ export class CallStore {
   readonly outboundEverwellData = signal<Record<string, unknown> | null>(null);
   /** Old `dataService.outboundData` — the generic outbound worklist row being dialed. */
   readonly outboundData = signal<Record<string, unknown> | null>(null);
-  /** Old `dataService.outboundBenRegID` — NOTE the old generic worklist stored the
-   * beneficiary's `beneficiaryID` (12-digit id) here, not the regID (faithful quirk). */
+  /** Old quirk: the generic worklist stores the 12-digit `beneficiaryID` here, not a regID. */
   readonly outboundBenRegID = signal<number | string | null>(null);
-  /** Old `dataService.outBoundCallID` — the generic row's `outboundCallReqID`, consumed by
-   * the closure's `call/completeOutboundCall`. */
+  /** The generic row's `outboundCallReqID` (old `outBoundCallID`) for completeOutboundCall. */
   readonly outBoundCallID = signal<number | string | null>(null);
-  // Everwell hand-off state (old dataService fields) — reset by the worklist dial, consumed
-  // by the Phase 8 in-call everwell slide + the closure's everwell branch.
+  // Everwell hand-off state (old dataService fields; consumers land with Phase 8).
   readonly checkEverwellResponse = signal<boolean>(false);
   readonly everwellCallNotConnected = signal<string | null>(null);
   readonly feedbackData = signal<Record<string, unknown>[]>([]);

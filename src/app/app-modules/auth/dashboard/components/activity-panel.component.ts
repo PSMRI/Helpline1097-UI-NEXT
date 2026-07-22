@@ -44,11 +44,8 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
 const KM_TYPE = 'KM';
 
 /**
- * "Activity for this week" panel. Faithful to the old `activity-this-week`: shows the
- * count of Training Resources (KM docs) for the current role/service, plus the
- * "Outbound Worklist" link (CO on the OUTBOUND campaign only) that re-asserts the outbound
- * CTI mode and opens the worklist hub (old `agentLoginStatus`). The training-doc dialog is
- * deferred to a later phase.
+ * "Activity for this week" panel (old `activity-this-week`): Training Resources count and
+ * the CO-on-OUTBOUND "Outbound Worklist" link. The training-doc dialog is a later phase.
  */
 @Component({
   selector: 'app-activity-panel',
@@ -64,7 +61,6 @@ const KM_TYPE = 'KM';
         </z-card-title>
       </z-card-header>
       <z-card-content class="pt-4">
-        <!-- Old OUTBOUND-campaign link (CO only): switchToOutbound → the worklist hub -->
         @if (showOutboundLink()) {
           <button
             type="button"
@@ -101,17 +97,13 @@ export class ActivityPanelComponent implements OnInit {
   private readonly router = inject(Router);
 
   protected readonly trainingCount = signal(0);
-  /** Old `*ngIf="role==='CO' && current_campaign == 'OUTBOUND'"`. */
   protected readonly showOutboundLink = computed(
     () =>
       this.sessionStore.currentRole() === 'CO' &&
       this.callStore.currentCampaign() === 'OUTBOUND',
   );
 
-  /**
-   * Old `agentLoginStatus()`: re-assert OUTBOUND on the CTI, persist the campaign, then
-   * open the worklist hub — navigating anyway on the "already in MANUAL mode" error.
-   */
+  /** Old `agentLoginStatus()` — the "already in MANUAL mode" error still navigates. */
   protected openOutboundWorklist(): void {
     this.cti.switchToOutbound().subscribe({
       next: () => {

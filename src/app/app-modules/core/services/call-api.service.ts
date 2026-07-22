@@ -152,11 +152,8 @@ export class CallApiService {
     return this.http.post<ApiResponse>(`${this.config.commonBaseURL}cti/transferCall`, request);
   }
 
-  /**
-   * POST call/outboundCallList — the agent's assigned generic (non-everwell/grievance)
-   * outbound follow-up calls. Old `getOutboundCallList(serviceID, userID?)` treated the
-   * user id as OPTIONAL — without it the body omitted `assignedUserID` (service-wide list).
-   */
+  /** POST call/outboundCallList — the agent's generic outbound follow-ups. A missing user
+   * id omits `assignedUserID` (service-wide list, old semantics). */
   getAgentOutboundWorklist(
     providerServiceMapID: number,
     assignedUserID?: number | string | null,
@@ -171,8 +168,7 @@ export class CallApiService {
     );
   }
 
-  /** POST call/completeOutboundCall — mark an outbound work item completed. The old app
-   * posted `null` when the id was never captured (quirk kept). */
+  /** POST call/completeOutboundCall — old app posted `null` when the id was never captured. */
   completeOutboundCall(
     outboundCallReqID: number | string | null,
     isCompleted: boolean,

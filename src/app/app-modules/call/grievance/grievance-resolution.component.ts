@@ -168,10 +168,8 @@ export class GrievanceResolutionComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    // Capture the beneficiary the outbound worklist selected so the Closure step (grievance
-    // variant step 1) has the authoritative regId. The worklist row carries the backend's
-    // `beneficiaryRegId` (lowercase d) — the old app read `beneficiaryRegID` off the same
-    // row, so BOTH casings are checked.
+    // The worklist row carries the backend's `beneficiaryRegId` (lowercase d); both
+    // casings are read, and the old startCall gate did NOT require a regId.
     const data = this.grievanceData();
     const regId = (data['beneficiaryRegID'] ?? data['beneficiaryRegId']) as
       | number
@@ -180,8 +178,6 @@ export class GrievanceResolutionComponent implements OnInit {
     if (regId != null) {
       this.callStore.beneficiaryRegId.set(regId);
     }
-    // Old `ngOnInit` opened the outbound call whenever the campaign was OUTBOUND and the
-    // hand-off data existed — regId presence was NOT part of the old gate.
     if (
       this.callStore.currentCampaign() === 'OUTBOUND' &&
       Object.keys(data).length > 0 &&
@@ -195,7 +191,6 @@ export class GrievanceResolutionComponent implements OnInit {
       .subscribe((v) => this.remarkCount.set((v ?? '').length));
   }
 
-  /** Old `startOutBoundCall` — open the call record for the grievance outbound beneficiary. */
   private startOutboundCall(): void {
     const data = this.grievanceData();
     const request = buildStartCallRequest(this.sessionStore, this.callStore, {

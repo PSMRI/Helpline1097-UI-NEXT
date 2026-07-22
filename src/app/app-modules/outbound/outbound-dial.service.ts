@@ -28,11 +28,8 @@ import { SessionStorageService } from '@/app-modules/core/services/session-stora
 import { CallStore } from '@/app-modules/core/state/call.store';
 
 /**
- * The shared CZentrix worklist-dial handshake (old `manualDialaNumber` success handling,
- * identical across the three worklist tabs): ring the number; on success remember the
- * caller (memory-only, like the old `callerNumber` — the Accept event persists CLI),
- * set `isOnCall`, and stamp the variant flag when the flow has one
- * (`isEverwellCall` / `isGrievanceCall`).
+ * Shared worklist-dial handshake (old `manualDialaNumber` success handling). `cli` is set
+ * memory-only like the old `callerNumber` — the Accept event persists CLI/session.
  */
 @Injectable({ providedIn: 'root' })
 export class OutboundDialService {

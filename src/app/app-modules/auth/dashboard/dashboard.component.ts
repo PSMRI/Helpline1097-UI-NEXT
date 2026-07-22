@@ -87,7 +87,5 @@ import { RatingPanelComponent } from './components/rating-panel.component';
 export class DashboardComponent {
   private readonly sessionStore = inject(SessionStore);
 
-  // The CZentrix call-event listener is attached once at SHELL level (CtiCallEventsService)
-  // so it covers this page and every other post-login page.
   protected readonly isSupervisor = computed(() => this.sessionStore.currentRole() === 'Supervisor');
 }

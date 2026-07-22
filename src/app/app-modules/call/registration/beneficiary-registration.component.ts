@@ -146,17 +146,13 @@ export class BeneficiaryRegistrationComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadRegistrationData();
-    // Old registration branched on `current_campaign` (the CAMPAIGN, memory-only — a
-    // mid-call reload reset it and fell into the inbound startNewCall path), NOT on the
-    // CTI event's call type.
+    // The fork keys on the CAMPAIGN (memory-only, like the old current_campaign — a
+    // mid-call reload falls into the inbound path), not the event's call type.
     if (this.callStore.currentCampaign() === 'OUTBOUND') {
-      // Generic outbound (7c): open the call with the worklist row's beneficiary, then
-      // load that beneficiary for selection (old `startOutBoundCall` → `outboundEvent`).
       this.startOutboundCall();
       return;
     }
     this.startCall();
-    // Non-OUTBOUND campaign: auto-search the caller's number (old `reloadCall`).
     const cli = this.callStore.cli();
     if (cli) {
       this.searchId.setValue('');
@@ -193,8 +189,6 @@ export class BeneficiaryRegistrationComponent implements OnInit {
    * being freshly set), storing `benCallID` for the later service/closure saves.
    */
   private startCall(): void {
-    // Only guard on an already-open call — the campaign fork happened in ngOnInit (old
-    // `startNewCall` ran for the INBOUND campaign regardless of the event's call type).
     if (this.callStore.benCallID() != null) {
       return;
     }
@@ -214,13 +208,8 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     });
   }
 
-  /**
-   * Old `startOutBoundCall` + `outboundEvent` (generic outbound, 7c): open the call record
-   * with the worklist row's regID/phone; on success capture `outBoundCallID` (the row's
-   * `outboundCallReqID`, consumed by the closure's completeOutboundCall) and load the
-   * row's beneficiary by id for selection. Without a hand-off row (recovery), fall back to
-   * the old `reloadCall` search by `outboundBenRegID`.
-   */
+  /** Generic outbound (old `startOutBoundCall`+`outboundEvent`): open the call with the
+   * worklist row, capture `outBoundCallID`, load the row's beneficiary for selection. */
   private startOutboundCall(): void {
     const row = this.callStore.outboundData() as {
       outboundCallReqID?: number | string;
@@ -238,7 +227,6 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       return;
     }
     if (this.callStore.benCallID() != null) {
-      // Call already open (wizard restart on the same call) — just reload the beneficiary.
       this.searchOutboundBeneficiary(row);
       return;
     }
@@ -251,7 +239,6 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       next: (res) => {
         captureStartCallResponse(res, this.callStore);
         this.startCallPending.set(false);
-        // Old `outboundEvent`: search + outBoundCallID only after startCall succeeded.
         this.callStore.outBoundCallID.set(row.outboundCallReqID ?? null);
         this.searchOutboundBeneficiary(row);
       },
@@ -262,7 +249,6 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     });
   }
 
-  /** Old `retrieveRegHistory(beneficiaryID)` — load the dialed beneficiary for selection. */
   private searchOutboundBeneficiary(row: {
     beneficiary?: { beneficiaryID?: number | string };
   }): void {

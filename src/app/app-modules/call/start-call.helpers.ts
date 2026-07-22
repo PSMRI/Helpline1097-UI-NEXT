@@ -24,12 +24,8 @@ import { ApiResponse, CallData, StartCallRequest } from '@/app-modules/core/mode
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
-/**
- * Build the common `call/startCall` request the old app assembled identically at every
- * call-open site (inbound registration, generic-outbound registration, grievance slide):
- * session/user/service bookkeeping fields, with per-flow `phoneNo`/`beneficiaryRegID`
- * overrides. The service adds the forced `is1097`/`isCalledEarlier` pair.
- */
+/** Common `call/startCall` request fields; the service adds the forced
+ * `is1097`/`isCalledEarlier` pair. */
 export function buildStartCallRequest(
   sessionStore: SessionStore,
   callStore: CallStore,
@@ -47,7 +43,7 @@ export function buildStartCallRequest(
   };
 }
 
-/** Old `saved_data.callData = response` — capture benCallID + the WHOLE call record. */
+/** Capture benCallID + the WHOLE call record (old `saved_data.callData`). */
 export function captureStartCallResponse(
   res: ApiResponse<CallData> | null | undefined,
   callStore: CallStore,

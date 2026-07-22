@@ -41,7 +41,6 @@ import { NotificationService } from '@/app-modules/core/services/notification.se
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
-/** A generic outbound worklist row (old `call/outboundCallList` response item). */
 interface OutboundRow {
   outboundCallReqID?: number | string;
   prefferedDateTime?: number | string;
@@ -57,12 +56,8 @@ interface OutboundRow {
   [key: string]: unknown;
 }
 
-/**
- * Generic outbound worklist tab (old `outbond-worklist`): the beneficiary-requested
- * follow-up calls assigned to this agent (created by the closure's follow-up booking).
- * Dialing stores the row + flags and rings via CZentrix; the hub's CTI listener opens the
- * call screen when the `Accept` event arrives.
- */
+/** Generic outbound worklist tab (old `outbond-worklist`) — the agent's assigned
+ * follow-up calls; dial rings via CZentrix and the shell CTI listener opens the screen. */
 @Component({
   selector: 'app-generic-worklist',
   imports: [NgIcon, ZardButtonComponent],
@@ -139,8 +134,6 @@ export class GenericWorklistComponent implements OnInit {
     if (serviceId == null) {
       return;
     }
-    // userId is optional like the old service — absent, the backend returns the
-    // service-wide list.
     this.callApi.getAgentOutboundWorklist(serviceId, this.sessionStore.userId()).subscribe({
       next: (res) => this.rows.set(Array.isArray(res?.data) ? (res.data as OutboundRow[]) : []),
       error: (err: { errorMessage?: string }) =>
@@ -148,17 +141,12 @@ export class GenericWorklistComponent implements OnInit {
     });
   }
 
-  /** Old `millisToUTCDate(...) | date:'dd/MM/yyyy'`. */
   protected requestedDate(row: OutboundRow): string {
     return row.prefferedDateTime != null ? formatWorklistDate(row.prefferedDateTime) : '';
   }
 
-  /**
-   * Old `viewHistory(data)` — stash the row, dial via CZentrix, set the call flags. The
-   * old quirk is kept: `outboundBenRegID` stores the beneficiary's `beneficiaryID` (the
-   * 12-digit id), not the regID.
-   */
   protected dial(row: OutboundRow): void {
+    // Old quirk: outboundBenRegID stores the 12-digit beneficiaryID, not the regID.
     this.callStore.outboundBenRegID.set(row.beneficiary?.beneficiaryID ?? null);
     this.callStore.outboundData.set(row as Record<string, unknown>);
     this.dialService.dial(row.beneficiary?.benPhoneMaps?.[0]?.phoneNo ?? '');

@@ -42,7 +42,7 @@ import { ENCRYPTED_KEYS } from '@/app-modules/core/services/session-storage.serv
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
-/** An Everwell worklist row — PascalCase fields are the backend's names, kept verbatim. */
+/** PascalCase fields are the backend's names, kept verbatim. */
 interface EverwellRow {
   eapiId?: number | string;
   beneficiaryID?: number | string;
@@ -58,12 +58,8 @@ interface EverwellRow {
   [key: string]: unknown;
 }
 
-/**
- * Everwell outbound worklist tab (old `everwell-outbound-worklist`): the agent's allocated
- * Everwell adherence records. The dial hands off via `outboundEverwellData` + the
- * `isEverwellCall` flag (the in-call adherence-calendar slide is Phase 8) after the
- * `checkIfAlreadyCalled` pre-dial guard.
- */
+/** Everwell outbound worklist tab (old `everwell-outbound-worklist`) — dial hands off via
+ * `outboundEverwellData` + `isEverwellCall`; the in-call adherence slide is Phase 8. */
 @Component({
   selector: 'app-everwell-worklist-tab',
   imports: [NgIcon, ReactiveFormsModule, ZardInputDirective],
@@ -161,7 +157,6 @@ export class EverwellWorklistTabComponent implements OnInit {
     });
   }
 
-  /** Old cell: 'N/A' for NaN/undefined/null comments. */
   protected comments(row: EverwellRow): string {
     const value = row.comments;
     if (value == null || value === 'NaN' || (typeof value === 'number' && isNaN(value))) {
@@ -176,7 +171,6 @@ export class EverwellWorklistTabComponent implements OnInit {
       : 'N/A';
   }
 
-  /** Old `filterComponentList` — substring match over FirstName / PrimaryNumber / beneficiaryID. */
   protected filter(): void {
     const term = this.search.value.trim().toLowerCase();
     if (!term) {
@@ -192,10 +186,6 @@ export class EverwellWorklistTabComponent implements OnInit {
     );
   }
 
-  /**
-   * Old `listBenDetailsOnPhnNo` — reset the everwell hand-off state, stash the row, run the
-   * already-called guard, then dial with the everwell flag.
-   */
   protected dial(row: EverwellRow): void {
     const serviceId = this.serviceId();
     if (serviceId == null) {
@@ -210,10 +200,8 @@ export class EverwellWorklistTabComponent implements OnInit {
 
     this.outboundApi.checkIfAlreadyCalled(row.eapiId ?? '', serviceId).subscribe({
       next: (res) => {
-        // Old code read `response.isCompleted` off the WHOLE envelope (its extractData
-        // returned res.json()), i.e. a TOP-LEVEL field — kept verbatim. And the old guard
-        // only acted when the flag was PRESENT: true → alert, false → dial, absent →
-        // nothing at all (no dial). All three branches kept.
+        // Old guard read isCompleted off the TOP-LEVEL envelope and acted only when the
+        // flag was present: true → alert, false → dial, absent → nothing.
         const isCompleted = (res as { isCompleted?: boolean } | null)?.isCompleted;
         if (isCompleted == null) {
           return;

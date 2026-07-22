@@ -28,16 +28,8 @@ import { EverwellWorklistTabComponent } from './everwell-worklist-tab.component'
 import { GenericWorklistComponent } from './generic-worklist.component';
 import { GrievanceWorklistComponent } from './grievance-worklist.component';
 
-/**
- * Outbound worklists hub (old `OutboundCallWorklistsComponent`) — three tabs: the generic
- * 1097 follow-up worklist, the Everwell worklist and the grievance worklist. The CO lands
- * here from the dashboard's "Outbound Worklist" link after switching to the OUTBOUND
- * campaign.
- *
- * After a dial, CZentrix posts `Accept|phone|session|OUTBOUND` while the agent is still on
- * this page — the SHELL-level CtiCallEventsService listener opens the call screen. (The
- * old app relied on the dashboard's LEAKED listener for this.)
- */
+/** Outbound worklists hub (old `OutboundCallWorklistsComponent`) — generic / Everwell /
+ * grievance tabs; the shell CTI listener opens the call screen after a dial connects. */
 @Component({
   selector: 'app-outbound-worklists',
   imports: [
