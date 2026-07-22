@@ -36,6 +36,7 @@ import { APP_VERSION } from '@/app-modules/core/app-version';
 import { AuthService } from '@/app-modules/core/auth/auth.service';
 import { ConfigService } from '@/app-modules/core/services/config.service';
 import { CtiService } from '@/app-modules/core/services/cti.service';
+import { NotificationService } from '@/app-modules/core/services/notification.service';
 import {
   ENCRYPTED_KEYS,
   PLAIN_KEYS,
@@ -77,6 +78,7 @@ export class ShellComponent {
   private readonly storage = inject(SessionStorageService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
+  private readonly notify = inject(NotificationService);
   protected readonly ui = inject(UiStore);
 
   protected readonly appVersion = APP_VERSION;
@@ -193,6 +195,12 @@ export class ShellComponent {
    * (Old app navigated to /feedback?sl=1097; that route isn't migrated yet — TODO restore.)
    */
   protected logout(): void {
+    // Old innerpage blocked CO logout during an active call (its own header replaced the
+    // shell's mid-call; ours stays visible, so the check lives here).
+    if (this.isCO() && this.storage.getItem(ENCRYPTED_KEYS.isOnCall) === 'yes') {
+      this.notify.alert('Cannot logout during an active call.', 'warning');
+      return;
+    }
     this.cti.userLogout().subscribe({
       next: () => this.finishLogout(),
       error: () => this.finishLogout(),
@@ -206,6 +214,8 @@ export class ShellComponent {
     this.storage.removeItem(PLAIN_KEYS.apimanKey);
     this.storage.removeItem(PLAIN_KEYS.userId);
     this.storage.removeItem(ENCRYPTED_KEYS.setLanguage);
+    this.storage.removeItem(ENCRYPTED_KEYS.currentRole);
+    this.storage.removeItem(ENCRYPTED_KEYS.currentRoleId);
     this.ui.setLanguage('English');
     this.auth.removeToken();
     this.sessionStore.reset();

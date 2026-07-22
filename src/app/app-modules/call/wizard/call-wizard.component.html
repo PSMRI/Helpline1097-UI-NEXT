@@ -1,0 +1,93 @@
+<!--
+  AMRIT – Accessible Medical Records via Integrated Technologies
+  Integrated EHR (Electronic Health Records) Solution
+
+  Copyright (C) "Piramal Swasthya Management and Research Institute"
+
+  This file is part of AMRIT.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see https://www.gnu.org/licenses/.
+-->
+
+<div class="flex flex-1 flex-col gap-4 p-4 md:p-6">
+  <!-- Step header (old bs-wizard) -->
+  <ol class="flex items-center gap-2" aria-label="Call steps">
+    @for (label of steps(); track label; let i = $index) {
+      <li class="flex flex-1 flex-col items-center gap-1">
+        <span
+          class="flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors"
+          [class]="
+            i === step()
+              ? 'border-primary bg-primary text-primary-foreground'
+              : i < step()
+                ? 'border-primary/60 bg-primary/10 text-primary'
+                : 'border-border bg-background text-muted-foreground'
+          "
+        >
+          {{ i + 1 }}
+        </span>
+        <span
+          class="text-center text-xs"
+          [class]="i === step() ? 'font-semibold text-foreground' : 'text-muted-foreground'"
+        >
+          {{ label }}
+        </span>
+      </li>
+    }
+  </ol>
+
+  <!-- Active slide (Phase 6 fills these with the real forms) -->
+  <div class="flex min-h-64 flex-1 items-center justify-center rounded-lg border border-dashed border-border bg-background p-8">
+    <p class="max-w-md text-center text-sm text-muted-foreground">
+      {{ steps()[step()] }} — this form arrives in Phase 6.
+    </p>
+  </div>
+
+  <!-- Nav buttons (old Previous / Cancel / Closure / Next) -->
+  <div class="flex items-center justify-between gap-3">
+    <div>
+      <!-- Old app only rendered Previous in the standard (4-step) flow -->
+      @if (isPrevious() && variant() === 'standard') {
+        <button z-button zType="outline" type="button" [zDisabled]="disableBack()" (click)="previous()">
+          Previous
+        </button>
+      }
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- Old app: standard-flow Cancel had NO disabled binding (always clickable);
+           only the everwell/grievance variants honoured isCancelDisable -->
+      <button
+        z-button
+        zType="outline"
+        type="button"
+        [zDisabled]="variant() !== 'standard' && isCancelDisable()"
+        (click)="cancel()"
+      >
+        Cancel
+      </button>
+      <button
+        z-button
+        zType="destructive"
+        type="button"
+        [zDisabled]="isClosureDisable()"
+        (click)="closure()"
+      >
+        Closure
+      </button>
+      @if (isNext()) {
+        <button z-button type="button" (click)="next()">Next</button>
+      }
+    </div>
+  </div>
+</div>

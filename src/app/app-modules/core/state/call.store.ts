@@ -48,6 +48,16 @@ export class CallStore {
   readonly currentCampaign = signal<string | null>(null);
   readonly isOutbound = signal<boolean>(false);
   readonly beneficiary = signal<Record<string, unknown>>({});
+  /** Old `dataService.callData.benCallID` — set by `call/startCall` (Phase 6), read by closeCall. */
+  readonly benCallID = signal<number | string | null>(null);
+  /**
+   * Old `dataService.custDisconnectCall$`/`enablePreviousOnCustDisconnect` subject — bumped
+   * by the innerpage's CustDisconnect handler; the wizard reacts (jump to Closure, lock nav).
+   * A counter (not a boolean) because the old Subject re-fired its subscriber on EVERY
+   * event — duplicate CustDisconnect messages must re-lock the wizard. The wizard resets it
+   * to 0 on init (old `enablePreviousOnCustDisconnect(null)`).
+   */
+  readonly custDisconnected = signal<number>(0);
 
   // Campaign flags for the only-outbound auto-switch flow (memory-only, like the old
   // dataService/callservice fields they replace).
@@ -108,6 +118,8 @@ export class CallStore {
     this.currentCampaign.set(null);
     this.isOutbound.set(false);
     this.beneficiary.set({});
+    this.benCallID.set(null);
+    this.custDisconnected.set(0);
     this.onlyOutboundAvailable.set(false);
     this.isOutBoundSelected.set(false);
     this.outboundRetryPending.set(false);

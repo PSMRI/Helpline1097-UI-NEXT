@@ -205,10 +205,13 @@ export class LoginComponent implements OnInit {
       return;
     }
     this.hydrateSession(data);
-    // Clear stale call flags (faithful to old app).
+    // Clear stale call flags (faithful to old app) + any stale persisted role, so a fresh
+    // login always goes through role selection (the restore keys are reload-only).
     this.storage.removeItem(ENCRYPTED_KEYS.isOnCall);
     this.storage.removeItem(ENCRYPTED_KEYS.isEverwellCall);
     this.storage.removeItem(ENCRYPTED_KEYS.isGrievanceCall);
+    this.storage.removeItem(ENCRYPTED_KEYS.currentRole);
+    this.storage.removeItem(ENCRYPTED_KEYS.currentRoleId);
 
     if (data.isAuthenticated === true && data.Status === 'Active') {
       if (this.sessionStore.currentServiceId() == null) {

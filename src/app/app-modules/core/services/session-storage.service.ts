@@ -50,6 +50,11 @@ export const ENCRYPTED_KEYS = {
   privilegeFlag: 'privilege_flag',
   authen: 'authen',
   setLanguage: 'setLanguage',
+  // Selected role, persisted so a reload can restore it (NEW keys — the old app kept the
+  // role in memory only and stranded the agent on a mid-call refresh; client-side only,
+  // never sent to the backend).
+  currentRole: 'currentRole',
+  currentRoleId: 'currentRoleID',
 } as const;
 
 /**

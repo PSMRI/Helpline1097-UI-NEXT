@@ -92,11 +92,10 @@ export const routes: Routes = [
       },
       {
         // Old `RedirectToInnerpageComponent` — reachable only mid-call (old AuthGuard2).
-        // Phase 4d ships a stub; the real call screen is Phase 5.
         path: 'RedirectToInnerpageComponent',
         loadComponent: () =>
-          import('./app-modules/call/innerpage/innerpage-stub.component').then(
-            (m) => m.InnerpageStubComponent,
+          import('./app-modules/call/innerpage/innerpage.component').then(
+            (m) => m.InnerpageComponent,
           ),
         canActivate: [onCallGuard],
         data: { title: 'Call' },
