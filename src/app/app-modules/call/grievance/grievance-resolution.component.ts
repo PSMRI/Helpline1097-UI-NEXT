@@ -39,9 +39,9 @@ import { ZardSelectImports } from '@common-ui/ui/select';
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { OutboundApiService } from '@/app-modules/core/services/outbound-api.service';
-import { StartCallRequest } from '@/app-modules/core/models';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
+import { buildStartCallRequest, captureStartCallResponse } from '../start-call.helpers';
 
 /** Old grievance-resolution `resolutionMaster` — the two dispositions. */
 const RESOLUTION_OPTIONS = ['Resolved', 'Unresolved'];
@@ -169,13 +169,24 @@ export class GrievanceResolutionComponent implements OnInit {
 
   ngOnInit(): void {
     // Capture the beneficiary the outbound worklist selected so the Closure step (grievance
-    // variant step 1) has the authoritative regId.
-    const regId = this.grievanceData()['beneficiaryRegID'] as number | string | undefined;
+    // variant step 1) has the authoritative regId. The worklist row carries the backend's
+    // `beneficiaryRegId` (lowercase d) — the old app read `beneficiaryRegID` off the same
+    // row, so BOTH casings are checked.
+    const data = this.grievanceData();
+    const regId = (data['beneficiaryRegID'] ?? data['beneficiaryRegId']) as
+      | number
+      | string
+      | undefined;
     if (regId != null) {
       this.callStore.beneficiaryRegId.set(regId);
     }
-    // Old `ngOnInit` opened the outbound call when on the OUTBOUND campaign — gives us benCallID.
-    if (this.callStore.currentCampaign() === 'OUTBOUND' && regId != null && this.callStore.benCallID() == null) {
+    // Old `ngOnInit` opened the outbound call whenever the campaign was OUTBOUND and the
+    // hand-off data existed — regId presence was NOT part of the old gate.
+    if (
+      this.callStore.currentCampaign() === 'OUTBOUND' &&
+      Object.keys(data).length > 0 &&
+      this.callStore.benCallID() == null
+    ) {
       this.startOutboundCall();
     }
     // Drive the char counter (old `updateCount`) from the control's value stream.
@@ -187,25 +198,14 @@ export class GrievanceResolutionComponent implements OnInit {
   /** Old `startOutBoundCall` — open the call record for the grievance outbound beneficiary. */
   private startOutboundCall(): void {
     const data = this.grievanceData();
-    const request: StartCallRequest = {
-      callID: this.callStore.sessionId(),
-      createdBy: this.sessionStore.user()?.userName,
-      calledServiceID: this.sessionStore.currentServiceId() ?? undefined,
+    const request = buildStartCallRequest(this.sessionStore, this.callStore, {
       phoneNo: (data['primaryNumber'] as string | undefined) ?? null,
-      agentID: this.sessionStore.agentId(),
-      callReceivedUserID: this.sessionStore.userId(),
-      receivedRoleName: this.sessionStore.currentRole() ?? undefined,
-      beneficiaryRegID: (data['beneficiaryRegID'] as number | string | undefined) ?? null,
-      isOutbound: this.callStore.isOutbound(),
-    };
+      beneficiaryRegID:
+        ((data['beneficiaryRegID'] ?? data['beneficiaryRegId']) as number | string | undefined) ??
+        null,
+    });
     this.callApi.startCall(request).subscribe({
-      next: (res) => {
-        if (res?.data?.benCallID != null) {
-          this.callStore.benCallID.set(res.data.benCallID);
-          // Old `savedData.callData = response` — kept whole (see CallStore.callData).
-          this.callStore.callData.set(res.data as Record<string, unknown>);
-        }
-      },
+      next: (res) => captureStartCallResponse(res, this.callStore),
       error: (err: { errorMessage?: string }) => {
         this.notify.alert(err?.errorMessage ?? 'Failed to start call', 'error');
       },

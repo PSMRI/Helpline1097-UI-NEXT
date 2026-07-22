@@ -20,9 +20,14 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
+/** Angular's DatePipe coerced numeric STRINGS to epoch millis — `new Date()` does not. */
+function toDate(value: number | string): Date {
+  return new Date(typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : value);
+}
+
 /** Old `millisToUTCDate(...) | date:'dd/MM/yyyy'` — format the UTC date parts. */
 export function formatWorklistDate(value: number | string): string {
-  const d = new Date(value);
+  const d = toDate(value);
   if (isNaN(d.getTime())) {
     return '';
   }
@@ -33,7 +38,7 @@ export function formatWorklistDate(value: number | string): string {
 
 /** Old `lastCall | date:'dd/MM/yyyy hh:mm a'` — local-time render like the old pipe. */
 export function formatWorklistDateTime(value: number | string): string {
-  const d = new Date(value);
+  const d = toDate(value);
   if (isNaN(d.getTime())) {
     return '';
   }

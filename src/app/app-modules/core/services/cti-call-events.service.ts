@@ -30,14 +30,15 @@ import { CALL_SCREEN_ROUTE, CallStore } from '../state/call.store';
  * The CZentrix `window.postMessage` call-event listener
  * (`"{Action}|{phone}|{sessionId}|{INBOUND|OUTBOUND}"` → validate → open the call screen).
  *
- * Extracted from the dashboard so the outbound worklist hub can host it too. The OLD app
- * only wired this on the dashboard — but via a raw `addEventListener("message",
- * this.listener.bind(this))` that was NEVER removed (the bound reference is lost), so the
- * listener silently leaked and stayed alive on every later page. That leak is the only
- * reason the old outbound-worklist dial ever reached the call screen. We host the SAME
- * listener deliberately on the two pages where call events matter (dashboard + worklist
- * hub), properly cleaned up — same user-visible behaviour, no leak (declared old-bug
- * non-replication; zero backend impact).
+ * Extracted from the dashboard and attached ONCE at the shell (MultiRoleScreenComponent),
+ * so it is active on every post-login page. The OLD app only wired this on the dashboard —
+ * but via a raw `addEventListener("message", this.listener.bind(this))` that was NEVER
+ * removed (the bound reference is lost), so the listener silently leaked and stayed alive
+ * on every page visited after the first dashboard load. That leak is the only reason the
+ * old outbound-worklist dial ever reached the call screen. Shell-level hosting reproduces
+ * that effective coverage deliberately, cleaned up with the shell — same user-visible
+ * behaviour, no leak (declared old-bug non-replication; zero backend impact). The call
+ * screen keeps its own mid-call listener, exactly as the old app ran both concurrently.
  */
 @Injectable({ providedIn: 'root' })
 export class CtiCallEventsService {

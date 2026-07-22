@@ -34,14 +34,11 @@ import { lucidePhoneOutgoing } from '@ng-icons/lucide';
 
 import { ZardInputDirective } from '@common-ui/ui/input';
 
+import { OutboundDialService } from './outbound-dial.service';
 import { formatWorklistDateTime } from './worklist-date';
-import { CtiService } from '@/app-modules/core/services/cti.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { OutboundApiService } from '@/app-modules/core/services/outbound-api.service';
-import {
-  ENCRYPTED_KEYS,
-  SessionStorageService,
-} from '@/app-modules/core/services/session-storage.service';
+import { ENCRYPTED_KEYS } from '@/app-modules/core/services/session-storage.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
@@ -136,9 +133,8 @@ interface EverwellRow {
 })
 export class EverwellWorklistTabComponent implements OnInit {
   private readonly outboundApi = inject(OutboundApiService);
-  private readonly cti = inject(CtiService);
+  private readonly dialService = inject(OutboundDialService);
   private readonly notify = inject(NotificationService);
-  private readonly storage = inject(SessionStorageService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
 
@@ -215,32 +211,21 @@ export class EverwellWorklistTabComponent implements OnInit {
     this.outboundApi.checkIfAlreadyCalled(row.eapiId ?? '', serviceId).subscribe({
       next: (res) => {
         // Old code read `response.isCompleted` off the WHOLE envelope (its extractData
-        // returned res.json()), i.e. a TOP-LEVEL field — kept verbatim, whatever shape the
-        // backend actually returns.
-        if ((res as { isCompleted?: boolean })?.isCompleted === true) {
+        // returned res.json()), i.e. a TOP-LEVEL field — kept verbatim. And the old guard
+        // only acted when the flag was PRESENT: true → alert, false → dial, absent →
+        // nothing at all (no dial). All three branches kept.
+        const isCompleted = (res as { isCompleted?: boolean } | null)?.isCompleted;
+        if (isCompleted == null) {
+          return;
+        }
+        if (isCompleted === true) {
           this.notify.alert('Call is already completed by agent', 'info');
           return;
         }
-        this.dialNumber(row);
+        this.dialService.dial(row.PrimaryNumber ?? '', ENCRYPTED_KEYS.isEverwellCall);
       },
       error: (err: { errorMessage?: string }) =>
         this.notify.alert(err?.errorMessage ?? 'Something went wrong', 'error'),
-    });
-  }
-
-  private dialNumber(row: EverwellRow): void {
-    this.cti.dialBeneficiary(row.PrimaryNumber ?? '').subscribe({
-      next: (res) => {
-        if (((res as { status?: string })?.status ?? '').toLowerCase() === 'fail') {
-          this.notify.alert('Something went wrong in calling', 'error');
-          return;
-        }
-        this.callStore.cli.set(row.PrimaryNumber ?? null);
-        this.callStore.setOnCall(true);
-        this.storage.setItem(ENCRYPTED_KEYS.isEverwellCall, 'yes');
-      },
-      error: (err: { errorMessage?: string }) =>
-        this.notify.alert(err?.errorMessage ?? 'Something went wrong in calling', 'error'),
     });
   }
 }

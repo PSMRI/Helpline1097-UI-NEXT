@@ -34,14 +34,11 @@ import { lucideEye, lucidePhoneOutgoing } from '@ng-icons/lucide';
 
 import { ZardInputDirective } from '@common-ui/ui/input';
 
+import { OutboundDialService } from './outbound-dial.service';
 import { formatWorklistDateTime } from './worklist-date';
-import { CtiService } from '@/app-modules/core/services/cti.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { OutboundApiService } from '@/app-modules/core/services/outbound-api.service';
-import {
-  ENCRYPTED_KEYS,
-  SessionStorageService,
-} from '@/app-modules/core/services/session-storage.service';
+import { ENCRYPTED_KEYS } from '@/app-modules/core/services/session-storage.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
@@ -145,9 +142,8 @@ interface GrievanceRow {
 })
 export class GrievanceWorklistComponent implements OnInit {
   private readonly outboundApi = inject(OutboundApiService);
-  private readonly cti = inject(CtiService);
+  private readonly dialService = inject(OutboundDialService);
   private readonly notify = inject(NotificationService);
-  private readonly storage = inject(SessionStorageService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
 
@@ -209,21 +205,9 @@ export class GrievanceWorklistComponent implements OnInit {
   /** Old `listBenDetailsOnPhoneNo` — stash the row, dial, set the grievance call flags. */
   protected dial(row: GrievanceRow): void {
     // Old quirk kept: the worklist stores `beneficiaryRegId` (lowercase d); downstream
-    // readers use `beneficiaryRegID` off the full row.
+    // readers check both casings off the full row.
     this.callStore.outboundBenRegID.set(row.beneficiaryRegId ?? null);
     this.callStore.outboundGrievanceData.set(row as Record<string, unknown>);
-    this.cti.dialBeneficiary(row.primaryNumber ?? '').subscribe({
-      next: (res) => {
-        if (((res as { status?: string })?.status ?? '').toLowerCase() === 'fail') {
-          this.notify.alert('Something went wrong in calling', 'error');
-          return;
-        }
-        this.callStore.cli.set(row.primaryNumber ?? null);
-        this.callStore.setOnCall(true);
-        this.storage.setItem(ENCRYPTED_KEYS.isGrievanceCall, 'yes');
-      },
-      error: (err: { errorMessage?: string }) =>
-        this.notify.alert(err?.errorMessage ?? 'Something went wrong in calling', 'error'),
-    });
+    this.dialService.dial(row.primaryNumber ?? '', ENCRYPTED_KEYS.isGrievanceCall);
   }
 }

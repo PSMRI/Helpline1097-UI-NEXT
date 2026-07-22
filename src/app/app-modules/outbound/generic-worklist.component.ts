@@ -34,9 +34,9 @@ import { lucidePhoneOutgoing } from '@ng-icons/lucide';
 
 import { ZardButtonComponent } from '@common-ui/ui/button';
 
+import { OutboundDialService } from './outbound-dial.service';
 import { formatWorklistDate } from './worklist-date';
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
-import { CtiService } from '@/app-modules/core/services/cti.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
@@ -125,7 +125,7 @@ interface OutboundRow {
 })
 export class GenericWorklistComponent implements OnInit {
   private readonly callApi = inject(CallApiService);
-  private readonly cti = inject(CtiService);
+  private readonly dialService = inject(OutboundDialService);
   private readonly notify = inject(NotificationService);
   private readonly router = inject(Router);
   private readonly sessionStore = inject(SessionStore);
@@ -136,11 +136,12 @@ export class GenericWorklistComponent implements OnInit {
 
   ngOnInit(): void {
     const serviceId = this.serviceId();
-    const userId = this.sessionStore.userId();
-    if (serviceId == null || userId == null) {
+    if (serviceId == null) {
       return;
     }
-    this.callApi.getAgentOutboundWorklist(serviceId, userId).subscribe({
+    // userId is optional like the old service — absent, the backend returns the
+    // service-wide list.
+    this.callApi.getAgentOutboundWorklist(serviceId, this.sessionStore.userId()).subscribe({
       next: (res) => this.rows.set(Array.isArray(res?.data) ? (res.data as OutboundRow[]) : []),
       error: (err: { errorMessage?: string }) =>
         this.notify.alert(err?.errorMessage ?? 'Failed to load the worklist', 'error'),
@@ -160,21 +161,7 @@ export class GenericWorklistComponent implements OnInit {
   protected dial(row: OutboundRow): void {
     this.callStore.outboundBenRegID.set(row.beneficiary?.beneficiaryID ?? null);
     this.callStore.outboundData.set(row as Record<string, unknown>);
-    const phone = row.beneficiary?.benPhoneMaps?.[0]?.phoneNo ?? '';
-    this.cti.dialBeneficiary(phone).subscribe({
-      next: (res) => {
-        if (((res as { status?: string })?.status ?? '').toLowerCase() === 'fail') {
-          this.notify.alert('Something went wrong in calling', 'error');
-          return;
-        }
-        // Old `callerNumber` was a memory field — set the signal WITHOUT persisting; the
-        // Accept event persists CLI/session via CallStore.startCall.
-        this.callStore.cli.set(phone);
-        this.callStore.setOnCall(true);
-      },
-      error: (err: { errorMessage?: string }) =>
-        this.notify.alert(err?.errorMessage ?? 'Something went wrong in calling', 'error'),
-    });
+    this.dialService.dial(row.beneficiary?.benPhoneMaps?.[0]?.phoneNo ?? '');
   }
 
   protected backToDashboard(): void {

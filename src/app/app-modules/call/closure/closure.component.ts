@@ -38,6 +38,7 @@ import { ZardSelectImports } from '@common-ui/ui/select';
 
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { OutboundApiService } from '@/app-modules/core/services/outbound-api.service';
 import {
   ENCRYPTED_KEYS,
   SessionStorageService,
@@ -201,6 +202,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
 export class ClosureComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly callApi = inject(CallApiService);
+  private readonly outboundApi = inject(OutboundApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
@@ -537,18 +539,48 @@ export class ClosureComponent implements OnInit {
       return;
     }
     this.busy.set(true);
-    // Old plain-OUTBOUND branch (7c): mark the worklist item completed FIRST, then close
-    // the call (`closeOutBoundCall(outBoundCallID, true)` → closeCall). Everwell/grievance
-    // closures have their own completion endpoints (Phase 8 / grievance slide).
-    if (campaign === 'OUTBOUND' && !this.isEverwell && !this.isGrievance) {
-      this.callApi.completeOutboundCall(this.callStore.outBoundCallID(), true).subscribe({
-        next: () => this.postCloseCall(request, kind, campaign),
-        error: (err: { status?: number }) => {
-          this.busy.set(false);
-          // Old handler alerted the bare HTTP status here (quirk kept).
-          this.notify.alert(String(err?.status ?? 'error'), 'error');
-        },
-      });
+    // Old OUTBOUND branch: each flavor completes its worklist item FIRST, then closes.
+    if (campaign === 'OUTBOUND') {
+      if (!this.isEverwell && !this.isGrievance) {
+        // Plain outbound: `closeOutBoundCall(outBoundCallID, true)` → closeCall.
+        this.callApi.completeOutboundCall(this.callStore.outBoundCallID(), true).subscribe({
+          next: () => this.postCloseCall(request, kind, campaign),
+          error: (err: { status?: number }) => {
+            this.busy.set(false);
+            // Old handler alerted the bare HTTP status here (quirk kept).
+            this.notify.alert(String(err?.status ?? 'error'), 'error');
+          },
+        });
+        return;
+      }
+      if (this.isGrievance) {
+        // Old grievance branch: completeGrievanceCall with this exact payload, then close.
+        const grievanceData = this.callStore.outboundGrievanceData() ?? {};
+        this.outboundApi
+          .completeGrievanceCall({
+            complaintID: grievanceData['complaintID'],
+            userID: this.sessionStore.userId(),
+            isCompleted: true,
+            beneficiaryRegID: grievanceData['beneficiaryRegID'] ?? grievanceData['beneficiaryRegId'],
+            callTypeID: request.callTypeID,
+            benCallID: request.benCallID,
+            providerServiceMapID: request.providerServiceMapID,
+            createdBy: this.sessionStore.user()?.userName,
+          })
+          .subscribe({
+            next: () => this.postCloseCall(request, kind, campaign),
+            error: (err: { status?: number }) => {
+              this.busy.set(false);
+              this.notify.alert(String(err?.status ?? 'error'), 'error');
+            },
+          });
+        return;
+      }
+      // Everwell: the old app only completed+closed when `everwellFeedbackCallData` (built
+      // by the Phase 8 support-action feedback flow) was non-empty — with no feedback the
+      // OUTBOUND branch fell through and NOTHING was posted (the documented silent no-op
+      // quirk). Until Phase 8 lands the feedback flow, that no-op is the faithful state.
+      this.busy.set(false);
       return;
     }
     this.postCloseCall(request, kind, campaign);

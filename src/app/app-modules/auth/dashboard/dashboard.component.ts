@@ -20,9 +20,8 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 
-import { CtiCallEventsService } from '@/app-modules/core/services/cti-call-events.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 import { ActivityPanelComponent } from './components/activity-panel.component';
@@ -87,14 +86,8 @@ import { RatingPanelComponent } from './components/rating-panel.component';
 })
 export class DashboardComponent {
   private readonly sessionStore = inject(SessionStore);
-  private readonly ctiEvents = inject(CtiCallEventsService);
-  private readonly destroyRef = inject(DestroyRef);
 
+  // The CZentrix call-event listener is attached once at SHELL level (CtiCallEventsService)
+  // so it covers this page and every other post-login page.
   protected readonly isSupervisor = computed(() => this.sessionStore.currentRole() === 'Supervisor');
-
-  constructor() {
-    // The CZentrix iframe announces calls via window.postMessage — old dashboard `listener`
-    // (shared with the outbound worklist hub; see CtiCallEventsService).
-    this.ctiEvents.attach(this.destroyRef);
-  }
 }

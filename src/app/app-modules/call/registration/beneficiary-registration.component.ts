@@ -45,13 +45,13 @@ import {
   BenPhoneMap,
   DistrictRow,
   RegistrationData,
-  StartCallRequest,
   TalukRow,
   VillageRow,
 } from '@/app-modules/core/models';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 import { numOrNull } from '@/app-modules/core/utils/select-value';
+import { buildStartCallRequest, captureStartCallResponse } from '../start-call.helpers';
 
 /**
  * Beneficiary registration — wizard slide 0 (old `beneficiary-registration`, ~1827 lines).
@@ -146,16 +146,19 @@ export class BeneficiaryRegistrationComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadRegistrationData();
-    if (this.callStore.callCategory() === 'OUTBOUND') {
+    // Old registration branched on `current_campaign` (the CAMPAIGN, memory-only — a
+    // mid-call reload reset it and fell into the inbound startNewCall path), NOT on the
+    // CTI event's call type.
+    if (this.callStore.currentCampaign() === 'OUTBOUND') {
       // Generic outbound (7c): open the call with the worklist row's beneficiary, then
       // load that beneficiary for selection (old `startOutBoundCall` → `outboundEvent`).
       this.startOutboundCall();
       return;
     }
     this.startCall();
-    // INBOUND: auto-search the caller's number (old `reloadCall`).
+    // Non-OUTBOUND campaign: auto-search the caller's number (old `reloadCall`).
     const cli = this.callStore.cli();
-    if (this.callStore.callCategory() !== 'OUTBOUND' && cli) {
+    if (cli) {
       this.searchId.setValue('');
       this.searchByPhone(cli);
     }
@@ -190,27 +193,18 @@ export class BeneficiaryRegistrationComponent implements OnInit {
    * being freshly set), storing `benCallID` for the later service/closure saves.
    */
   private startCall(): void {
-    if (this.callStore.callCategory() === 'OUTBOUND' || this.callStore.benCallID() != null) {
+    // Only guard on an already-open call — the campaign fork happened in ngOnInit (old
+    // `startNewCall` ran for the INBOUND campaign regardless of the event's call type).
+    if (this.callStore.benCallID() != null) {
       return;
     }
-    const request: StartCallRequest = {
-      callID: this.callStore.sessionId(),
-      createdBy: this.sessionStore.user()?.userName,
-      calledServiceID: this.providerServiceMapId() ?? undefined,
+    const request = buildStartCallRequest(this.sessionStore, this.callStore, {
       phoneNo: this.callStore.cli(),
-      agentID: this.sessionStore.agentId(),
-      callReceivedUserID: this.sessionStore.userId(),
-      receivedRoleName: this.sessionStore.currentRole() ?? undefined,
-      isOutbound: this.callStore.isOutbound(),
-    };
+    });
     this.startCallPending.set(true);
     this.callApi.startCall(request).subscribe({
       next: (res) => {
-        if (res?.data?.benCallID != null) {
-          this.callStore.benCallID.set(res.data.benCallID);
-          // Old `saved_data.callData = response` — kept whole for updatebeneficiaryincall.
-          this.callStore.callData.set(res.data as Record<string, unknown>);
-        }
+        captureStartCallResponse(res, this.callStore);
         this.startCallPending.set(false);
       },
       error: () => {
@@ -248,24 +242,14 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       this.searchOutboundBeneficiary(row);
       return;
     }
-    const request: StartCallRequest = {
-      callID: this.callStore.sessionId(),
-      createdBy: this.sessionStore.user()?.userName,
-      calledServiceID: this.providerServiceMapId() ?? undefined,
+    const request = buildStartCallRequest(this.sessionStore, this.callStore, {
       phoneNo: row.beneficiary?.benPhoneMaps?.[0]?.phoneNo ?? null,
-      agentID: this.sessionStore.agentId(),
-      callReceivedUserID: this.sessionStore.userId(),
-      receivedRoleName: this.sessionStore.currentRole() ?? undefined,
       beneficiaryRegID: row.beneficiary?.beneficiaryRegID ?? null,
-      isOutbound: this.callStore.isOutbound(),
-    };
+    });
     this.startCallPending.set(true);
     this.callApi.startCall(request).subscribe({
       next: (res) => {
-        if (res?.data?.benCallID != null) {
-          this.callStore.benCallID.set(res.data.benCallID);
-          this.callStore.callData.set(res.data as Record<string, unknown>);
-        }
+        captureStartCallResponse(res, this.callStore);
         this.startCallPending.set(false);
         // Old `outboundEvent`: search + outBoundCallID only after startCall succeeded.
         this.callStore.outBoundCallID.set(row.outboundCallReqID ?? null);

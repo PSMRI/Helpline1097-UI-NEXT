@@ -20,7 +20,14 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -34,6 +41,7 @@ import { ZardDialogService } from '@common-ui/ui/dialog';
 import { APP_VERSION } from '@/app-modules/core/app-version';
 import { AuthService } from '@/app-modules/core/auth/auth.service';
 import { ConfigService } from '@/app-modules/core/services/config.service';
+import { CtiCallEventsService } from '@/app-modules/core/services/cti-call-events.service';
 import { CtiService } from '@/app-modules/core/services/cti.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import {
@@ -70,6 +78,17 @@ export class ShellComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
+  private readonly ctiEvents = inject(CtiCallEventsService);
+  private readonly shellDestroyRef = inject(DestroyRef);
+
+  constructor() {
+    // The CZentrix call-event listener lives on the SHELL so it is active on every
+    // post-login page (dashboard, role selection, worklists, activity area) — the old
+    // app's dashboard listener LEAKED and was effectively alive everywhere after the first
+    // dashboard visit; this is the same coverage, attached deliberately and cleaned up.
+    // The call screen keeps its own listener too (old app ran both concurrently).
+    this.ctiEvents.attach(this.shellDestroyRef);
+  }
   private readonly cti = inject(CtiService);
   private readonly config = inject(ConfigService);
   private readonly dialog = inject(ZardDialogService);

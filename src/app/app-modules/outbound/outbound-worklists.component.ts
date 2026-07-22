@@ -20,14 +20,13 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 import { ZardTabComponent, ZardTabGroupComponent } from '@common-ui/ui/tabs';
 
 import { EverwellWorklistTabComponent } from './everwell-worklist-tab.component';
 import { GenericWorklistComponent } from './generic-worklist.component';
 import { GrievanceWorklistComponent } from './grievance-worklist.component';
-import { CtiCallEventsService } from '@/app-modules/core/services/cti-call-events.service';
 
 /**
  * Outbound worklists hub (old `OutboundCallWorklistsComponent`) — three tabs: the generic
@@ -35,10 +34,9 @@ import { CtiCallEventsService } from '@/app-modules/core/services/cti-call-event
  * here from the dashboard's "Outbound Worklist" link after switching to the OUTBOUND
  * campaign.
  *
- * Hosts the CZentrix call-event listener: after a dial, CZentrix posts the
- * `Accept|phone|session|OUTBOUND` event while the agent is still on this page, and the
- * listener opens the call screen. (The old app relied on the dashboard's LEAKED listener
- * for this — see CtiCallEventsService.)
+ * After a dial, CZentrix posts `Accept|phone|session|OUTBOUND` while the agent is still on
+ * this page — the SHELL-level CtiCallEventsService listener opens the call screen. (The
+ * old app relied on the dashboard's LEAKED listener for this.)
  */
 @Component({
   selector: 'app-outbound-worklists',
@@ -66,11 +64,4 @@ import { CtiCallEventsService } from '@/app-modules/core/services/cti-call-event
     </div>
   `,
 })
-export class OutboundWorklistsComponent {
-  private readonly ctiEvents = inject(CtiCallEventsService);
-  private readonly destroyRef = inject(DestroyRef);
-
-  constructor() {
-    this.ctiEvents.attach(this.destroyRef);
-  }
-}
+export class OutboundWorklistsComponent {}

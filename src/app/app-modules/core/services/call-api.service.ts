@@ -154,17 +154,21 @@ export class CallApiService {
 
   /**
    * POST call/outboundCallList — the agent's assigned generic (non-everwell/grievance)
-   * outbound follow-up calls (old `getOutboundCallList(serviceID, userID)`).
+   * outbound follow-up calls. Old `getOutboundCallList(serviceID, userID?)` treated the
+   * user id as OPTIONAL — without it the body omitted `assignedUserID` (service-wide list).
    */
   getAgentOutboundWorklist(
     providerServiceMapID: number,
-    assignedUserID: number | string,
+    assignedUserID?: number | string | null,
   ): Observable<ApiResponse> {
-    return this.http.post<ApiResponse>(`${this.config.commonBaseURL}call/outboundCallList`, {
-      providerServiceMapID,
-      assignedUserID,
-      is1097: true,
-    });
+    const request: Record<string, unknown> = { providerServiceMapID, is1097: true };
+    if (assignedUserID != null) {
+      request['assignedUserID'] = assignedUserID;
+    }
+    return this.http.post<ApiResponse>(
+      `${this.config.commonBaseURL}call/outboundCallList`,
+      request,
+    );
   }
 
   /** POST call/completeOutboundCall — mark an outbound work item completed. The old app
