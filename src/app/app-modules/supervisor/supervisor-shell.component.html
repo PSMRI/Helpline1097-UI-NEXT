@@ -83,6 +83,24 @@
       @case ('7') {
         <app-telephony-iframe query="reportUI" label="Telephony Reports" />
       }
+      @case ('12') {
+        <app-call-allocation flavor="generic" />
+      }
+      @case ('13') {
+        <app-call-reallocation flavor="generic" />
+      }
+      @case ('26') {
+        <app-call-allocation flavor="everwell" />
+      }
+      @case ('27') {
+        <app-call-reallocation flavor="everwell" />
+      }
+      @case ('29') {
+        <app-call-allocation flavor="grievance" />
+      }
+      @case ('30') {
+        <app-call-reallocation flavor="grievance" />
+      }
       @default {
         <!-- Not-yet-migrated pages land slice-by-slice (see PAGES map) -->
         <div class="flex min-h-[500px] items-center justify-center">
