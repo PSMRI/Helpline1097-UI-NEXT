@@ -36,6 +36,13 @@ export interface LanguageCountRow {
   [key: string]: unknown;
 }
 
+/** Parse a `YYYY-MM-DD` input value as LOCAL midnight (the old pickers produced local
+ * Dates; `new Date('YYYY-MM-DD')` would parse UTC and shift the day west of UTC). */
+export function localDate(value: string): Date {
+  const [y, m, d] = value.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 /**
  * Old app's UTC-offset-shifted day boundary strings (`toJSON().slice(0,10) + "T…Z"`) —
  * the exact query-window format every allocation screen posted.
@@ -110,13 +117,12 @@ export class AllocationApiService {
     );
   }
 
-  /** An agent's per-language counts (reallocation screens). */
+  /** An agent's per-language counts (reallocation screens). No date filters: the old
+   * pickers were `display:none` dead UI on ALL flavors, so none were ever sent. */
   countByAgent(
     flavor: AllocationFlavor,
     providerServiceMapID: number,
     userID: number | string,
-    filterStartDate?: string,
-    filterEndDate?: string,
   ): Observable<ApiResponse> {
     if (flavor === 'grievance') {
       return this.post('allocatedGrievanceRecordsCount', { providerServiceMapID, userID });
@@ -127,14 +133,7 @@ export class AllocationApiService {
         agentId: userID,
       });
     }
-    const body: Record<string, unknown> = { providerServiceMapID, assignedUserID: userID };
-    if (filterStartDate) {
-      body['filterStartDate'] = filterStartDate;
-    }
-    if (filterEndDate) {
-      body['filterEndDate'] = filterEndDate;
-    }
-    return this.post('call/outboundCallCount', body);
+    return this.post('call/outboundCallCount', { providerServiceMapID, assignedUserID: userID });
   }
 
   /**

@@ -38,7 +38,6 @@ import { ZardSelectImports } from '@common-ui/ui/select';
 import {
   AllocationApiService,
   AllocationFlavor,
-  dayBoundary,
   LanguageCountRow,
 } from './allocation-api.service';
 import {
@@ -64,8 +63,8 @@ interface AgentRow {
 /**
  * Reallocation screen shared by the generic (case 13), grievance (30) and everwell (27)
  * supervisor pages: role → agent → per-language counts, then reallocate to another agent
- * or move back to the unallocated bin. Only the generic flavor had usable date filters
- * (the everwell pickers were display:none dead UI; grievance had none).
+ * or move back to the unallocated bin. No date filters — the old pickers were
+ * display:none dead UI on every flavor and were never sent.
  */
 @Component({
   selector: 'app-call-reallocation',
@@ -96,16 +95,6 @@ interface AgentRow {
             }
           </z-select>
         </label>
-        @if (flavor() === 'generic') {
-          <label class="flex flex-col gap-1.5 text-sm">
-            <span>From</span>
-            <input z-input formControlName="startDate" type="date" (change)="onAgentSelected()" />
-          </label>
-          <label class="flex flex-col gap-1.5 text-sm">
-            <span>Till</span>
-            <input z-input formControlName="endDate" type="date" (change)="onAgentSelected()" />
-          </label>
-        }
       </form>
 
       @if (countRows().length) {
@@ -172,8 +161,6 @@ export class CallReallocationComponent implements OnInit {
   protected readonly form = this.fb.group({
     roleID: this.fb.control<string | null>(null),
     agentId: this.fb.control<string | null>(null),
-    startDate: this.fb.control<string | null>(null),
-    endDate: this.fb.control<string | null>(null),
   });
 
   ngOnInit(): void {
@@ -222,15 +209,8 @@ export class CallReallocationComponent implements OnInit {
     if (serviceId == null || !agentId) {
       return;
     }
-    const v = this.form.getRawValue();
     this.api
-      .countByAgent(
-        this.flavor(),
-        serviceId,
-        numOrNull(agentId) ?? agentId,
-        v.startDate ? dayBoundary(new Date(v.startDate), 'start') : undefined,
-        v.endDate ? dayBoundary(new Date(v.endDate), 'end999') : undefined,
-      )
+      .countByAgent(this.flavor(), serviceId, numOrNull(agentId) ?? agentId)
       .subscribe({
         next: (res) => {
           const rows = Array.isArray(res?.data) ? (res.data as LanguageCountRow[]) : [];
@@ -296,17 +276,10 @@ export class CallReallocationComponent implements OnInit {
     }
 
     // Generic/everwell: fetch the agent's records for the language, then reset by id.
-    const v = this.form.getRawValue();
     const body: Record<string, unknown> =
       this.flavor() === 'everwell'
         ? { providerServiceMapId: serviceId, agentId: userID, preferredLanguageName: row.language }
         : { providerServiceMapID: serviceId, assignedUserID: userID, preferredLanguageName: row.language, is1097: true };
-    if (this.flavor() === 'generic' && v.startDate) {
-      body['filterStartDate'] = dayBoundary(new Date(v.startDate), 'start');
-    }
-    if (this.flavor() === 'generic' && v.endDate) {
-      body['filterEndDate'] = dayBoundary(new Date(v.endDate), 'end999');
-    }
     this.api.listForBin(this.flavor(), body).subscribe({
       next: (res) => {
         const rows = Array.isArray(res?.data) ? (res.data as Record<string, unknown>[]) : [];

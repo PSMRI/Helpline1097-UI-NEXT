@@ -40,6 +40,7 @@ import {
   AllocationFlavor,
   dayBoundary,
   LanguageCountRow,
+  localDate,
 } from './allocation-api.service';
 import { AllocateRecordsComponent, AllocationContext } from './allocate-records.component';
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
@@ -158,10 +159,9 @@ export class CallAllocationComponent implements OnInit {
     const start = new Date();
     const end = new Date();
     end.setDate(end.getDate() + 7);
-    this.form.patchValue({
-      startDate: start.toISOString().slice(0, 10),
-      endDate: end.toISOString().slice(0, 10),
-    });
+    const asInput = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    this.form.patchValue({ startDate: asInput(start), endDate: asInput(end) });
     this.fetchCounts(dayBoundary(start, 'start'), dayBoundary(end, 'end'));
     this.callApi.getLanguages().subscribe({
       next: (res) => this.languages.set(Array.isArray(res?.data) ? res.data : []),
@@ -176,8 +176,8 @@ export class CallAllocationComponent implements OnInit {
     }
     this.allocationContext.set(null);
     this.fetchCounts(
-      dayBoundary(new Date(v.startDate), 'start'),
-      dayBoundary(new Date(v.endDate), 'end'),
+      dayBoundary(localDate(v.startDate), 'start'),
+      dayBoundary(localDate(v.endDate), 'end'),
       v.language || undefined,
     );
   }
@@ -198,10 +198,8 @@ export class CallAllocationComponent implements OnInit {
   protected startAllocation(row: LanguageCountRow): void {
     const v = this.form.getRawValue();
     this.allocationContext.set({
-      startDate: v.startDate ? new Date(v.startDate) : undefined,
-      endDate: v.endDate ? new Date(v.endDate) : undefined,
-      startDateBoundary: this.lastWindow?.start,
-      endDateBoundary: this.lastWindow?.end,
+      startDate: v.startDate ? localDate(v.startDate) : undefined,
+      endDate: v.endDate ? localDate(v.endDate) : undefined,
       language: row.language,
       noOfRecords: row.count,
       isAllocate: true,
@@ -210,8 +208,9 @@ export class CallAllocationComponent implements OnInit {
 
   protected refresh(): void {
     this.allocationContext.set(null);
+    // Old parents refetched WITHOUT the language filter after an allocation.
     if (this.lastWindow) {
-      this.fetchCounts(this.lastWindow.start, this.lastWindow.end, this.lastWindow.language);
+      this.fetchCounts(this.lastWindow.start, this.lastWindow.end);
     }
   }
 }

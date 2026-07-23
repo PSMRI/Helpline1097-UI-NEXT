@@ -44,12 +44,9 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
 
 /** Context handed down by the allocation/reallocation parents (old `outboundCallRequests`). */
 export interface AllocationContext {
-  /** Raw picker dates (allocation flavors that fetch a record list). */
+  /** Raw picker dates (the old app posted these instants on the grievance allocate too). */
   startDate?: Date;
   endDate?: Date;
-  /** Boundary strings for the grievance allocate payload. */
-  startDateBoundary?: string;
-  endDateBoundary?: string;
   language?: string;
   noOfRecords?: number;
   assignedUserID?: number | string;
@@ -183,9 +180,9 @@ export class AllocateRecordsComponent implements OnInit {
     this.recordList = [];
 
     if (this.flavor() === 'grievance') {
-      // The old grievance child never fetched a list — count comes with the context.
+      // The old grievance child never fetched a list — count comes with the context
+      // (allocateNo prefill happens on role change, like the old app).
       this.initialCount = ctx.noOfRecords ?? 0;
-      this.form.patchValue({ allocateNo: this.initialCount });
     } else if (serviceId != null) {
       this.fetchRecords(ctx, serviceId);
     }
@@ -208,8 +205,10 @@ export class AllocateRecordsComponent implements OnInit {
     this.api.listRecords(this.flavor(), serviceId, options).subscribe({
       next: (res) => {
         this.recordList = Array.isArray(res?.data) ? res.data : [];
-        this.initialCount = this.recordList.length;
-        this.form.patchValue({ allocateNo: this.initialCount });
+        // Old generic/everwell children never prefilled allocateNo from the fetch; and the
+        // old everwell child's upper clamp never fired (its initialCount read the envelope
+        // and stayed undefined), so everwell keeps no upper bound.
+        this.initialCount = this.flavor() === 'everwell' ? Infinity : this.recordList.length;
       },
       error: (err: { errorMessage?: string }) =>
         this.notify.alert(err?.errorMessage ?? 'Failed to load records', 'error'),
@@ -232,7 +231,12 @@ export class AllocateRecordsComponent implements OnInit {
 
   protected onRoleChange(): void {
     const roleID = this.form.controls.roleID.value;
-    this.form.patchValue({ agents: [], allocateNo: this.initialCount });
+    // Only the old grievance child prefilled allocateNo on role change.
+    if (this.flavor() === 'grievance') {
+      this.form.patchValue({ agents: [], allocateNo: this.context().noOfRecords ?? 0 });
+    } else {
+      this.form.patchValue({ agents: [] });
+    }
     if (roleID) {
       this.loadAgents(roleID, this.context().language);
     }
@@ -258,23 +262,38 @@ export class AllocateRecordsComponent implements OnInit {
     });
   }
 
-  /** Old `OnSelectChange` — split the pool evenly across the selected agents. */
+  /** Old `OnSelectChange` — split the pool evenly across the selected agents. Deselecting
+   * all resets to the full pool (old grievance branch; the old generic/everwell divided by
+   * zero here — declared non-replication). */
   protected onAgentsChange(): void {
     const selected = this.form.controls.agents.value ?? [];
+    const pool =
+      this.flavor() === 'grievance' ? (this.context().noOfRecords ?? 0) : this.recordList.length;
     if (selected.length > 0) {
-      const pool = this.flavor() === 'grievance' ? (this.context().noOfRecords ?? 0) : this.recordList.length;
       const share = Math.floor(pool / selected.length);
       this.initialCount = share;
       this.form.patchValue({ allocateNo: share });
+    } else {
+      this.form.patchValue({ allocateNo: pool });
     }
   }
 
-  /** Old `validate` — below 1 clears the field, above the pool clamps to it. */
+  /** Old `validate` — flavor-specific: grievance resets any out-of-range value to 0;
+   * generic clears below 1 and clamps above the pool; everwell only clears below 1. */
   protected clampAllocateNo(): void {
     const value = this.form.controls.allocateNo.value;
-    if (value != null && value < 1) {
+    if (value == null) {
+      return;
+    }
+    if (this.flavor() === 'grievance') {
+      if (value < 1 || value > this.initialCount) {
+        this.form.patchValue({ allocateNo: 0 });
+      }
+      return;
+    }
+    if (value < 1) {
       this.form.patchValue({ allocateNo: null });
-    } else if (value != null && value > this.initialCount) {
+    } else if (value > this.initialCount) {
       this.form.patchValue({ allocateNo: this.initialCount });
     }
   }
@@ -289,8 +308,9 @@ export class AllocateRecordsComponent implements OnInit {
       this.flavor() === 'grievance'
         ? this.api.allocateGrievance(
             {
-              startDate: ctx.startDateBoundary,
-              endDate: ctx.endDateBoundary,
+              // Old app posted the RAW picker instants, not the count-query boundaries.
+              startDate: ctx.startDate?.toJSON(),
+              endDate: ctx.endDate?.toJSON(),
               providerServiceMapId: this.serviceId(),
               language: ctx.language,
               fromUserId: ctx.assignedUserID,
@@ -321,10 +341,16 @@ export class AllocateRecordsComponent implements OnInit {
         this.form.reset({ agents: [] });
         this.allocated.emit();
       },
-      error: (err: { status?: number }) => {
+      error: (err: { status?: number; errorMessage?: string }) => {
         this.saving.set(false);
-        // Old handlers alerted the bare HTTP status (quirk).
-        this.notify.alert(String(err?.status ?? 'error'), 'error');
+        // Old generic/grievance handlers alerted the bare HTTP status; everwell alerted
+        // the error message.
+        this.notify.alert(
+          this.flavor() === 'everwell'
+            ? (err?.errorMessage ?? 'error')
+            : String(err?.status ?? 'error'),
+          'error',
+        );
       },
     });
   }
