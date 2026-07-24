@@ -81,7 +81,7 @@ interface AgentRow {
       <form class="flex flex-wrap items-end gap-3" [formGroup]="form">
         <label class="flex min-w-44 flex-col gap-1.5 text-sm">
           <span>Role <span class="text-destructive">*</span></span>
-          <z-select formControlName="roleID" zPlaceholder="Select role" (zValueChange)="onRoleChange()">
+          <z-select formControlName="roleID" zPlaceholder="Select role" (zValueChange)="onRoleChange($event)">
             @for (r of roles(); track r.roleID) {
               <z-select-item [zValue]="r.roleID + ''">{{ r.roleName }}</z-select-item>
             }
@@ -89,7 +89,7 @@ interface AgentRow {
         </label>
         <label class="flex min-w-52 flex-col gap-1.5 text-sm">
           <span>Agent <span class="text-destructive">*</span></span>
-          <z-select formControlName="agentId" zPlaceholder="Select agent" (zValueChange)="onAgentSelected()">
+          <z-select formControlName="agentId" zPlaceholder="Select agent" (zValueChange)="onAgentSelected($event)">
             @for (a of agents(); track a.userID) {
               <z-select-item [zValue]="a.userID + ''">{{ a.firstName }} {{ a.lastName }}</z-select-item>
             }
@@ -184,9 +184,11 @@ export class CallReallocationComponent implements OnInit {
     });
   }
 
-  protected onRoleChange(): void {
+  // Handlers take the emitted value: z-select fires zValueChange BEFORE its CVA writes the
+  // form control, so reading the control here would see the previous selection.
+  protected onRoleChange(value: string | string[]): void {
     const serviceId = this.serviceId();
-    const roleID = this.form.controls.roleID.value;
+    const roleID = value as string;
     this.agents.set([]);
     this.countRows.set([]);
     this.reallocationContext.set(null);
@@ -202,9 +204,9 @@ export class CallReallocationComponent implements OnInit {
     });
   }
 
-  protected onAgentSelected(): void {
+  protected onAgentSelected(value: string | string[]): void {
     const serviceId = this.serviceId();
-    const agentId = this.form.controls.agentId.value;
+    const agentId = value as string;
     this.reallocationContext.set(null);
     if (serviceId == null || !agentId) {
       return;
@@ -303,6 +305,6 @@ export class CallReallocationComponent implements OnInit {
 
   protected refresh(): void {
     this.reallocationContext.set(null);
-    this.onAgentSelected();
+    this.onAgentSelected(this.form.controls.agentId.value ?? '');
   }
 }

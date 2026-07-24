@@ -90,7 +90,7 @@ interface AgentRow {
       }
       <label class="flex min-w-44 flex-col gap-1.5 text-sm">
         <span>Role <span class="text-destructive">*</span></span>
-        <z-select formControlName="roleID" zPlaceholder="Select role" (zValueChange)="onRoleChange()">
+        <z-select formControlName="roleID" zPlaceholder="Select role" (zValueChange)="onRoleChange($event)">
           @for (r of roles(); track r.roleID) {
             <z-select-item [zValue]="r.roleID + ''">{{ r.roleName }}</z-select-item>
           }
@@ -98,7 +98,7 @@ interface AgentRow {
       </label>
       <label class="flex min-w-52 flex-col gap-1.5 text-sm">
         <span>Agents <span class="text-destructive">*</span></span>
-        <z-select formControlName="agents" [zMultiple]="true" zPlaceholder="Select agents" (zValueChange)="onAgentsChange()">
+        <z-select formControlName="agents" [zMultiple]="true" zPlaceholder="Select agents" (zValueChange)="onAgentsChange($event)">
           @for (a of agents(); track a.userID) {
             <z-select-item [zValue]="a.userID + ''">{{ a.firstName }} {{ a.lastName }}</z-select-item>
           }
@@ -229,8 +229,10 @@ export class AllocateRecordsComponent implements OnInit {
     return d.toJSON();
   }
 
-  protected onRoleChange(): void {
-    const roleID = this.form.controls.roleID.value;
+  // Handlers take the emitted value: z-select fires zValueChange BEFORE its CVA writes the
+  // form control, so reading the control here would see the previous selection.
+  protected onRoleChange(value: string | string[]): void {
+    const roleID = value as string;
     // Only the old grievance child prefilled allocateNo on role change.
     if (this.flavor() === 'grievance') {
       this.form.patchValue({ agents: [], allocateNo: this.context().noOfRecords ?? 0 });
@@ -265,8 +267,8 @@ export class AllocateRecordsComponent implements OnInit {
   /** Old `OnSelectChange` — split the pool evenly across the selected agents. Deselecting
    * all resets to the full pool (old grievance branch; the old generic/everwell divided by
    * zero here — declared non-replication). */
-  protected onAgentsChange(): void {
-    const selected = this.form.controls.agents.value ?? [];
+  protected onAgentsChange(value: string | string[]): void {
+    const selected = Array.isArray(value) ? value : [];
     const pool =
       this.flavor() === 'grievance' ? (this.context().noOfRecords ?? 0) : this.recordList.length;
     if (selected.length > 0) {
