@@ -323,12 +323,14 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     this.mode.set(this.mode() === 'search' ? 'register' : 'search');
   }
 
-  protected onStateChange(): void {
+  // Handlers take the emitted value: z-select fires zValueChange BEFORE its CVA writes the
+  // form control, so reading the control here would see the previous selection.
+  protected onStateChange(value: string | string[]): void {
     this.districts.set([]);
     this.taluks.set([]);
     this.villages.set([]);
     this.form.patchValue({ district: null, taluk: null, village: null });
-    const state = numOrNull(this.form.controls.state.value);
+    const state = numOrNull(value as string);
     if (state == null) {
       return;
     }
@@ -338,11 +340,11 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     });
   }
 
-  protected onDistrictChange(): void {
+  protected onDistrictChange(value: string | string[]): void {
     this.taluks.set([]);
     this.villages.set([]);
     this.form.patchValue({ taluk: null, village: null });
-    const district = numOrNull(this.form.controls.district.value);
+    const district = numOrNull(value as string);
     if (district == null) {
       return;
     }
@@ -352,10 +354,10 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     });
   }
 
-  protected onTalukChange(): void {
+  protected onTalukChange(value: string | string[]): void {
     this.villages.set([]);
     this.form.patchValue({ village: null });
-    const taluk = numOrNull(this.form.controls.taluk.value);
+    const taluk = numOrNull(value as string);
     if (taluk == null) {
       return;
     }

@@ -166,7 +166,7 @@
 
         <label class="flex flex-col gap-1.5 text-sm">
           <span>State <span class="text-destructive">*</span></span>
-          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange()">
+          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange($event)">
             @for (s of states(); track s.stateID) {
               <z-select-item [zValue]="s.stateID + ''">{{ s.stateName }}</z-select-item>
             }
@@ -174,7 +174,7 @@
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>District <span class="text-destructive">*</span></span>
-          <z-select formControlName="district" zPlaceholder="Select district" (zValueChange)="onDistrictChange()">
+          <z-select formControlName="district" zPlaceholder="Select district" (zValueChange)="onDistrictChange($event)">
             @for (d of districts(); track d.districtID) {
               <z-select-item [zValue]="d.districtID + ''">{{ d.districtName }}</z-select-item>
             }
@@ -182,7 +182,7 @@
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Taluk</span>
-          <z-select formControlName="taluk" zPlaceholder="Select taluk" (zValueChange)="onTalukChange()">
+          <z-select formControlName="taluk" zPlaceholder="Select taluk" (zValueChange)="onTalukChange($event)">
             @for (t of taluks(); track t.talukID) {
               <z-select-item [zValue]="t.talukID + ''">{{ t.talukName }}</z-select-item>
             }

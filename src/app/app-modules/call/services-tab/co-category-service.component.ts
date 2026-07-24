@@ -59,7 +59,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
       <form [formGroup]="form" class="flex flex-wrap items-end gap-3">
         <label class="flex min-w-48 flex-col gap-1.5 text-sm">
           <span>Category <span class="text-destructive">*</span></span>
-          <z-select formControlName="categoryId" zPlaceholder="Select category" (zValueChange)="onCategoryChange()">
+          <z-select formControlName="categoryId" zPlaceholder="Select category" (zValueChange)="onCategoryChange($event)">
             @for (c of categories(); track c.categoryID) {
               <z-select-item [zValue]="c.categoryID + ''">{{ c.categoryName }}</z-select-item>
             }
@@ -185,10 +185,12 @@ export class CoCategoryServiceComponent implements OnInit {
     });
   }
 
-  protected onCategoryChange(): void {
+  // Takes the emitted value: z-select fires zValueChange BEFORE its CVA writes the form
+  // control, so reading the control here would see the previous selection.
+  protected onCategoryChange(value: string | string[]): void {
     this.subCategories.set([]);
     this.form.patchValue({ subCategoryId: null });
-    const categoryId = this.form.controls.categoryId.value;
+    const categoryId = value as string;
     if (!categoryId) {
       return;
     }

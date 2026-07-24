@@ -65,7 +65,7 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
       <form [formGroup]="form" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <label class="flex flex-col gap-1.5 text-sm">
           <span>State <span class="text-destructive">*</span></span>
-          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange()">
+          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange($event)">
             @for (s of states(); track s.stateID) {
               <z-select-item [zValue]="s.stateID + ''">{{ s.stateName }}</z-select-item>
             }
@@ -73,7 +73,7 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>District <span class="text-destructive">*</span></span>
-          <z-select formControlName="district" zPlaceholder="Select district" (zValueChange)="onDistrictChange()">
+          <z-select formControlName="district" zPlaceholder="Select district" (zValueChange)="onDistrictChange($event)">
             @for (d of districts(); track d.districtID) {
               <z-select-item [zValue]="d.districtID + ''">{{ d.districtName }}</z-select-item>
             }
@@ -89,7 +89,7 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Directory <span class="text-destructive">*</span></span>
-          <z-select formControlName="directory" zPlaceholder="Select directory" (zValueChange)="onDirectoryChange()">
+          <z-select formControlName="directory" zPlaceholder="Select directory" (zValueChange)="onDirectoryChange($event)">
             @for (d of directories(); track d.instituteDirectoryID) {
               <z-select-item [zValue]="d.instituteDirectoryID + ''">{{ d.instituteDirectoryName }}</z-select-item>
             }
@@ -191,11 +191,13 @@ export class CoReferralComponent implements OnInit {
     this.loadHistory();
   }
 
-  protected onStateChange(): void {
+  // Handlers take the emitted value: z-select fires zValueChange BEFORE its CVA writes the
+  // form control, so reading the control here would see the previous selection.
+  protected onStateChange(value: string | string[]): void {
     this.districts.set([]);
     this.taluks.set([]);
     this.form.patchValue({ district: null, taluk: null });
-    const state = this.form.controls.state.value;
+    const state = value as string;
     if (!state) {
       return;
     }
@@ -205,10 +207,10 @@ export class CoReferralComponent implements OnInit {
     });
   }
 
-  protected onDistrictChange(): void {
+  protected onDistrictChange(value: string | string[]): void {
     this.taluks.set([]);
     this.form.patchValue({ taluk: null });
-    const district = this.form.controls.district.value;
+    const district = value as string;
     if (!district) {
       return;
     }
@@ -218,10 +220,10 @@ export class CoReferralComponent implements OnInit {
     });
   }
 
-  protected onDirectoryChange(): void {
+  protected onDirectoryChange(value: string | string[]): void {
     this.subDirectories.set([]);
     this.form.patchValue({ subDirectory: null });
-    const directory = this.form.controls.directory.value;
+    const directory = value as string;
     if (!directory) {
       return;
     }

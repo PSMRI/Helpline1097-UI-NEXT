@@ -74,7 +74,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
       <form [formGroup]="form" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Call Type <span class="text-destructive">*</span></span>
-          <z-select formControlName="callType" zPlaceholder="Select call type" (zValueChange)="onCallTypeChange()">
+          <z-select formControlName="callType" zPlaceholder="Select call type" (zValueChange)="onCallTypeChange($event)">
             @for (g of callGroups(); track g) {
               <z-select-item [zValue]="g">{{ g }}</z-select-item>
             }
@@ -82,7 +82,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Call Sub-Type <span class="text-destructive">*</span></span>
-          <z-select formControlName="callSubType" zPlaceholder="Select sub-type" (zValueChange)="onSubTypeChange()">
+          <z-select formControlName="callSubType" zPlaceholder="Select sub-type" (zValueChange)="onSubTypeChange($event)">
             @for (st of subTypes(); track st.callTypeID) {
               <z-select-item [zValue]="subTypeValue(st)">{{ st.callType }}</z-select-item>
             }
@@ -92,7 +92,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
         @if (transferValid()) {
           <label class="flex flex-col gap-1.5 text-sm">
             <span>Transfer Campaign <span class="text-destructive">*</span></span>
-            <z-select formControlName="campaignName" zPlaceholder="Select campaign" (zValueChange)="onCampaignChange()">
+            <z-select formControlName="campaignName" zPlaceholder="Select campaign" (zValueChange)="onCampaignChange($event)">
               @for (c of campaigns(); track c) {
                 <z-select-item [zValue]="c">{{ c }}</z-select-item>
               }
@@ -361,8 +361,10 @@ export class ClosureComponent implements OnInit {
     return `${st.callTypeID},${st.fitToBlock ?? ''},${st.fitForFollowUp ?? ''}`;
   }
 
-  protected onCallTypeChange(): void {
-    const group = this.form.controls.callType.value;
+  // Handlers take the emitted value: z-select fires zValueChange BEFORE its CVA writes the
+  // form control, so reading the control here would see the previous selection.
+  protected onCallTypeChange(value: string | string[]): void {
+    const group = value as string;
     this.form.patchValue({ callSubType: null });
     this.subTypes.set([]);
     this.showFollowUp.set(false);
@@ -424,8 +426,8 @@ export class ClosureComponent implements OnInit {
   }
 
   /** Old `sliderVisibility` — follow-up shows when the sub-type's fitForFollowUp is "true". */
-  protected onSubTypeChange(): void {
-    const value = this.form.controls.callSubType.value ?? '';
+  protected onSubTypeChange(subType: string | string[]): void {
+    const value = (subType as string) ?? '';
     const fitForFollowUp = value.split(',')[2];
     this.showFollowUp.set(fitForFollowUp === 'true');
     // A hidden checkbox left the old form entirely (`isFollowupRequired == undefined` →
@@ -436,10 +438,10 @@ export class ClosureComponent implements OnInit {
     this.syncFollowUpValidators();
   }
 
-  protected onCampaignChange(): void {
+  protected onCampaignChange(value: string | string[]): void {
     this.skills.set([]);
     this.form.patchValue({ campaignSkill: null });
-    const name = this.form.controls.campaignName.value;
+    const name = value as string;
     if (!name) {
       return;
     }
