@@ -35,7 +35,13 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
-import { ReportsApiService, saveBlob, yesterday } from './reports-api.service';
+import {
+  clampReportEnd,
+  maxReportDay,
+  ReportsApiService,
+  reportDatesValidator,
+  saveBlob,
+} from './reports-api.service';
 import { dayBoundary, localDate } from '../allocation/allocation-api.service';
 import { BeneficiaryApiService } from '@/app-modules/core/services/beneficiary-api.service';
 import { LocationApiService } from '@/app-modules/core/services/location-api.service';
@@ -149,12 +155,12 @@ const REPORTS: Record<DistributionReportKind, ReportConfig> = {
             formControlName="endDate"
             type="date"
             [min]="form.controls.startDate.value"
-            [max]="maxDay"
+            [max]="maxEndDay()"
           />
         </label>
         <label class="flex min-w-44 flex-col gap-1.5 text-sm">
           <span>State</span>
-          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange()">
+          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange($event)">
             @for (s of states(); track s.stateID) {
               <z-select-item [zValue]="s.stateName + ''">{{ s.stateName }}</z-select-item>
             }
@@ -199,20 +205,25 @@ export class DistributionReportComponent implements OnInit {
   protected readonly options = signal<DimensionOption[]>([]);
   protected readonly downloading = signal(false);
 
-  protected readonly maxDay = (() => {
-    const y = yesterday();
-    return `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
-  })();
+  protected readonly maxDay = maxReportDay();
+  protected readonly maxEndDay = signal(this.maxDay);
 
-  protected readonly form = this.fb.group({
-    startDate: this.fb.control<string | null>(null, Validators.required),
-    endDate: this.fb.control<string | null>(null, Validators.required),
-    state: this.fb.control<string | null>(null),
-    district: this.fb.control<string | null>(null),
-    dimension: this.fb.control<string | null>(null, Validators.required),
-  });
+  protected readonly form = this.fb.group(
+    {
+      startDate: this.fb.control<string | null>(null, Validators.required),
+      endDate: this.fb.control<string | null>(null, Validators.required),
+      state: this.fb.control<string | null>(null),
+      district: this.fb.control<string | null>(null),
+      dimension: this.fb.control<string | null>(null, Validators.required),
+    },
+    { validators: reportDatesValidator(this.maxDay, () => this.maxEndDay()) },
+  );
 
   ngOnInit(): void {
+    // Old caller-age-report hardcoded its buckets in ngOnInit, independent of any API call.
+    if (this.kind() === 'age') {
+      this.options.set(AGE_GROUPS);
+    }
     const serviceId = this.sessionStore.currentServiceId();
     if (serviceId == null) {
       return;
@@ -229,36 +240,29 @@ export class DistributionReportComponent implements OnInit {
     });
   }
 
-  /** Old `endDateChange` — the window ends at yesterday and spans at most 31 days. */
   protected onStartDateChange(): void {
     const start = this.form.controls.startDate.value;
     if (!start) {
       return;
     }
-    const startDay = localDate(start);
-    const spanDays = Math.ceil((yesterday().getTime() - startDay.getTime()) / 86400000);
-    const end = new Date(startDay);
-    if (spanDays > 31) {
-      end.setDate(end.getDate() + 30);
-    } else {
-      end.setTime(yesterday().getTime());
-    }
-    this.form.patchValue({
-      endDate: `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`,
-    });
+    const end = clampReportEnd(start);
+    this.maxEndDay.set(end);
+    this.form.patchValue({ endDate: end });
   }
 
-  protected onStateChange(): void {
+  // Takes the emitted value: z-select fires zValueChange BEFORE its CVA writes the form
+  // control, so reading the control here would see the previous selection.
+  protected onStateChange(value: string | string[]): void {
     this.districts.set([]);
     this.form.patchValue({ district: null });
-    const stateName = this.form.controls.state.value;
-    const state = this.states().find((s) => s.stateName === stateName);
+    const state = this.states().find((s) => s.stateName === (value as string));
     if (state?.stateID == null) {
       return;
     }
     this.locationApi.getDistricts(state.stateID).subscribe({
       next: (res) => this.districts.set(res?.data ?? []),
-      error: () => this.districts.set([]),
+      error: (err: { errorMessage?: string }) =>
+        this.notify.alert(err?.errorMessage ?? 'Failed to load districts', 'error'),
     });
   }
 

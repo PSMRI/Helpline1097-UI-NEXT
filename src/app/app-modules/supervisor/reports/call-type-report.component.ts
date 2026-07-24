@@ -23,6 +23,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   OnInit,
   signal,
@@ -33,7 +34,13 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
-import { ReportsApiService, saveBlob, yesterday } from './reports-api.service';
+import {
+  clampReportEnd,
+  maxReportDay,
+  ReportsApiService,
+  reportDatesValidator,
+  saveBlob,
+} from './reports-api.service';
 import { dayBoundary, localDate } from '../allocation/allocation-api.service';
 import { BeneficiaryApiService } from '@/app-modules/core/services/beneficiary-api.service';
 import { LocationApiService } from '@/app-modules/core/services/location-api.service';
@@ -65,12 +72,12 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
             formControlName="endDate"
             type="date"
             [min]="form.controls.startDate.value"
-            [max]="maxDay"
+            [max]="maxEndDay()"
           />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Call Type</span>
-          <z-select formControlName="callType" zPlaceholder="Select call type" (zValueChange)="onCallTypeChange()">
+          <z-select formControlName="callType" zPlaceholder="Select call type" (zValueChange)="onCallTypeChange($event)">
             @for (g of callGroups(); track g) {
               <z-select-item [zValue]="g">{{ g }}</z-select-item>
             }
@@ -86,7 +93,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>State</span>
-          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange()">
+          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange($event)">
             @for (s of states(); track s.stateID) {
               <z-select-item [zValue]="s.stateName + ''">{{ s.stateName }}</z-select-item>
             }
@@ -141,8 +148,12 @@ export class CallTypeReportComponent implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
 
-  private callTypeGroups: CallTypeGroup[] = [];
-  protected readonly callGroups = signal<string[]>([]);
+  private readonly callTypeGroups = signal<CallTypeGroup[]>([]);
+  protected readonly callGroups = computed(() =>
+    this.callTypeGroups()
+      .map((g) => g.callGroupType ?? '')
+      .filter(Boolean),
+  );
   protected readonly subTypes = signal<CallType[]>([]);
   protected readonly states = signal<NonNullable<RegistrationData['states']>>([]);
   protected readonly districts = signal<DistrictRow[]>([]);
@@ -151,22 +162,23 @@ export class CallTypeReportComponent implements OnInit {
   protected readonly orientations = signal<NonNullable<RegistrationData['sexualOrientations']>>([]);
   protected readonly downloading = signal(false);
 
-  protected readonly maxDay = (() => {
-    const y = yesterday();
-    return `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
-  })();
+  protected readonly maxDay = maxReportDay();
+  protected readonly maxEndDay = signal(this.maxDay);
 
-  protected readonly form = this.fb.group({
-    startDate: this.fb.control<string | null>(null, Validators.required),
-    endDate: this.fb.control<string | null>(null, Validators.required),
-    callType: this.fb.control<string | null>(null),
-    callSubType: this.fb.control<string | null>(null),
-    state: this.fb.control<string | null>(null),
-    district: this.fb.control<string | null>(null),
-    gender: this.fb.control<string | null>(null),
-    language: this.fb.control<string | null>(null),
-    sexuality: this.fb.control<string | null>(null),
-  });
+  protected readonly form = this.fb.group(
+    {
+      startDate: this.fb.control<string | null>(null, Validators.required),
+      endDate: this.fb.control<string | null>(null, Validators.required),
+      callType: this.fb.control<string | null>(null),
+      callSubType: this.fb.control<string | null>(null),
+      state: this.fb.control<string | null>(null),
+      district: this.fb.control<string | null>(null),
+      gender: this.fb.control<string | null>(null),
+      language: this.fb.control<string | null>(null),
+      sexuality: this.fb.control<string | null>(null),
+    },
+    { validators: reportDatesValidator(this.maxDay, () => this.maxEndDay()) },
+  );
 
   ngOnInit(): void {
     const serviceId = this.sessionStore.currentServiceId();
@@ -174,10 +186,7 @@ export class CallTypeReportComponent implements OnInit {
       return;
     }
     this.api.getCallTypes(serviceId).subscribe({
-      next: (res) => {
-        this.callTypeGroups = res?.data ?? [];
-        this.callGroups.set(this.callTypeGroups.map((g) => g.callGroupType ?? '').filter(Boolean));
-      },
+      next: (res) => this.callTypeGroups.set(res?.data ?? []),
       error: (err: { errorMessage?: string }) =>
         this.notify.alert(err?.errorMessage ?? 'Failed to load call types', 'error'),
     });
@@ -200,37 +209,31 @@ export class CallTypeReportComponent implements OnInit {
     if (!start) {
       return;
     }
-    const startDay = localDate(start);
-    const spanDays = Math.ceil((yesterday().getTime() - startDay.getTime()) / 86400000);
-    const end = new Date(startDay);
-    if (spanDays > 31) {
-      end.setDate(end.getDate() + 30);
-    } else {
-      end.setTime(yesterday().getTime());
-    }
-    this.form.patchValue({
-      endDate: `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`,
-    });
+    const end = clampReportEnd(start);
+    this.maxEndDay.set(end);
+    this.form.patchValue({ endDate: end });
   }
 
-  protected onCallTypeChange(): void {
-    this.form.patchValue({ callSubType: null });
-    const group = this.form.controls.callType.value;
+  // Handlers take the emitted value: z-select fires zValueChange BEFORE its CVA writes the
+  // form control, so reading the control here would see the previous selection.
+  protected onCallTypeChange(value: string | string[]): void {
+    // Old getCallSubType never cleared the chosen sub-type — a stale one stays in the payload.
     this.subTypes.set(
-      this.callTypeGroups.find((g) => g.callGroupType === group)?.callTypes ?? [],
+      this.callTypeGroups().find((g) => g.callGroupType === (value as string))?.callTypes ?? [],
     );
   }
 
-  protected onStateChange(): void {
+  protected onStateChange(value: string | string[]): void {
     this.districts.set([]);
     this.form.patchValue({ district: null });
-    const state = this.states().find((s) => s.stateName === this.form.controls.state.value);
+    const state = this.states().find((s) => s.stateName === (value as string));
     if (state?.stateID == null) {
       return;
     }
     this.locationApi.getDistricts(state.stateID).subscribe({
       next: (res) => this.districts.set(res?.data ?? []),
-      error: () => this.districts.set([]),
+      error: (err: { errorMessage?: string }) =>
+        this.notify.alert(err?.errorMessage ?? 'Failed to load districts', 'error'),
     });
   }
 
