@@ -296,7 +296,9 @@ export class ClosureComponent implements OnInit {
     if (serviceId == null) {
       return;
     }
-    const campaign = this.callStore.currentCampaign();
+    // currentCampaign is memory-only and lost on a mid-call reload; fall back to the persisted
+    // call direction (old app persisted current_campaign, so it never lost inbound/outbound).
+    const campaign = this.callStore.currentCampaign() ?? this.callStore.callCategory();
     this.callApi.getCallTypes(serviceId, campaign).subscribe({
       next: (res) => this.populateCallTypes(res?.data ?? []),
       error: (err: { errorMessage?: string }) =>
