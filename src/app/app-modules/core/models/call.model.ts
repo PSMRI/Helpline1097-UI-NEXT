@@ -99,9 +99,11 @@ export interface DistrictRow {
   districtID?: number;
   districtName?: string;
 }
+// `location/taluks/{districtId}` returns block rows (keyed blockID/blockName); the taluk
+// dropdown's selected blockID is what `location/village/{blockId}` needs.
 export interface TalukRow {
-  talukID?: number;
-  talukName?: string;
+  blockID?: number;
+  blockName?: string;
 }
 export interface VillageRow {
   districtBranchID?: number;

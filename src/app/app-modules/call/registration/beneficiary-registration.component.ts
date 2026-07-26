@@ -400,7 +400,9 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       firstName: v.firstName,
       lastName: v.lastName,
       genderID: numOrNull(v.genderID),
-      dOB: v.dOB ?? undefined,
+      // Backend deserializes dOB to a timestamp and 500s on a bare date; old app sent
+      // `<yyyy-MM-dd>T00:00:00.000Z` (the date input's value is already local yyyy-MM-dd).
+      dOB: v.dOB ? `${v.dOB}T00:00:00.000Z` : undefined,
       maritalStatusID: numOrNull(v.maritalStatusID),
       benPhoneMaps: phoneMaps,
       i_bendemographics: {

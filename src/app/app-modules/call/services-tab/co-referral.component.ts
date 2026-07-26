@@ -82,8 +82,8 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Taluk</span>
           <z-select formControlName="taluk" zPlaceholder="Select taluk">
-            @for (t of taluks(); track t.talukID) {
-              <z-select-item [zValue]="t.talukID + ''">{{ t.talukName }}</z-select-item>
+            @for (t of taluks(); track t.blockID) {
+              <z-select-item [zValue]="t.blockID + ''">{{ t.blockName }}</z-select-item>
             }
           </z-select>
         </label>
