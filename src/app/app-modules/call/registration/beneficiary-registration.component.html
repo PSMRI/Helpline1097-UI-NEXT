@@ -122,16 +122,16 @@
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Date of Birth</span>
-          <input z-input formControlName="dOB" type="date" />
+          <input z-input formControlName="dOB" type="date" (change)="onDobChange()" />
         </label>
         <div class="flex gap-2">
           <label class="flex flex-1 flex-col gap-1.5 text-sm">
             <span>Age</span>
-            <input z-input formControlName="age" type="number" min="0" max="150" placeholder="Age" />
+            <input z-input formControlName="age" type="number" min="0" max="150" placeholder="Age" (input)="onAgeChange()" />
           </label>
           <label class="flex flex-1 flex-col gap-1.5 text-sm">
             <span>Unit</span>
-            <z-select formControlName="ageUnit" zPlaceholder="Unit">
+            <z-select formControlName="ageUnit" zPlaceholder="Unit" (zValueChange)="onAgeChange()">
               @for (u of ageUnits; track u) {
                 <z-select-item [zValue]="u">{{ u }}</z-select-item>
               }

@@ -92,9 +92,19 @@ export class BeneficiaryRegistrationComponent implements OnInit {
 
   private readonly providerServiceMapId = computed(() => this.sessionStore.currentServiceId());
 
+  /** Old `vanID` = the service master id (previlegeObj[0].roles[0]...m_ServiceMaster.serviceID). */
+  private readonly vanId = computed(
+    () =>
+      this.sessionStore.privileges()?.[0]?.roles?.[0]?.serviceRoleScreenMappings?.[0]
+        ?.providerServiceMapping?.m_ServiceMaster?.serviceID ?? null,
+  );
+
   // View state
   protected readonly mode = signal<'search' | 'register'>('search');
   protected readonly results = signal<BeneficiaryRecord[]>([]);
+  /** Old `ParentBenRegID`: the family head on the calling number, taken from the first CLI
+   * search result — a new registration on that number joins the family via this id. */
+  private readonly parentBenRegID = signal<number | string | null>(null);
   protected readonly searching = signal(false);
   protected readonly submitting = signal(false);
   /**
@@ -283,7 +293,9 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     this.searching.set(true);
     source.subscribe({
       next: (res) => {
-        this.results.set(Array.isArray(res?.data) ? res.data : []);
+        const rows = Array.isArray(res?.data) ? res.data : [];
+        this.results.set(rows);
+        this.parentBenRegID.set(rows[0]?.benPhoneMaps?.[0]?.parentBenRegID ?? null);
         this.searching.set(false);
       },
       error: (err: { errorMessage?: string }) => {
@@ -367,6 +379,73 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     });
   }
 
+  /**
+   * Old `onAgeEntered` / `onAgeUnitEntered`: DOB = today minus the entered age in the chosen
+   * unit (Years capped at 120). `emitEvent:false` so it doesn't feed back into the DOB→age sync.
+   */
+  protected onAgeChange(): void {
+    const raw = this.form.controls.age.value;
+    const unit = this.form.controls.ageUnit.value;
+    if (raw == null || raw === '') {
+      this.form.patchValue({ dOB: null }, { emitEvent: false });
+      return;
+    }
+    const age = Number(raw);
+    if (isNaN(age) || age < 0) {
+      return;
+    }
+    if (unit === 'Years' && age > 120) {
+      this.form.patchValue({ age: null }, { emitEvent: false });
+      return;
+    }
+    const d = new Date();
+    if (unit === 'Months') {
+      d.setMonth(d.getMonth() - age);
+    } else if (unit === 'Days') {
+      d.setDate(d.getDate() - age);
+    } else {
+      d.setFullYear(d.getFullYear() - age);
+    }
+    this.form.patchValue({ dOB: this.toDateInput(d) }, { emitEvent: false });
+  }
+
+  /**
+   * Old `dobChangeByCalender`: derive age + unit from DOB — whole years if ≥1, else months,
+   * else days (a same-day DOB becomes 1 Day).
+   */
+  protected onDobChange(): void {
+    const dobStr = this.form.controls.dOB.value;
+    if (!dobStr) {
+      this.form.patchValue({ age: null }, { emitEvent: false });
+      return;
+    }
+    const dob = new Date(dobStr);
+    const today = new Date();
+    let years = today.getFullYear() - dob.getFullYear();
+    const monthDelta = today.getMonth() - dob.getMonth();
+    if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < dob.getDate())) {
+      years--;
+    }
+    if (years > 0) {
+      this.form.patchValue({ age: String(years), ageUnit: 'Years' }, { emitEvent: false });
+      return;
+    }
+    let months = monthDelta + 12 * (today.getFullYear() - dob.getFullYear());
+    if (today.getDate() < dob.getDate()) {
+      months--;
+    }
+    if (months > 0) {
+      this.form.patchValue({ age: String(months), ageUnit: 'Months' }, { emitEvent: false });
+      return;
+    }
+    const days = Math.max(1, Math.floor((today.getTime() - dob.getTime()) / 86400000));
+    this.form.patchValue({ age: String(days), ageUnit: 'Days' }, { emitEvent: false });
+  }
+
+  private toDateInput(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
   /** Old `registerBeneficiary`: build the create payload, persist, then link to the call. */
   protected register(): void {
     if (this.form.invalid) {
@@ -376,9 +455,11 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     const v = this.form.getRawValue();
     const userName = this.sessionStore.user()?.userName;
     const relationshipId = numOrNull(v.beneficiaryRelationID);
+    // Old app linked every phone map of a new registration to the family head on the number.
+    const parentBenRegID = this.parentBenRegID();
     const phoneMaps: BenPhoneMap[] = [
       {
-        parentBenRegID: null,
+        parentBenRegID,
         benRelationshipID: relationshipId,
         phoneNo: this.callStore.cli() ?? '',
         createdBy: userName,
@@ -387,7 +468,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     ];
     if (v.alternateNumber1) {
       phoneMaps.push({
-        parentBenRegID: null,
+        parentBenRegID,
         benRelationshipID: relationshipId,
         phoneNo: v.alternateNumber1,
         createdBy: userName,
@@ -395,6 +476,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       });
     }
     const beneficiary: BeneficiaryRecord = {
+      vanID: this.vanId() ?? undefined,
       providerServiceMapID: this.providerServiceMapId() ?? undefined,
       titleId: numOrNull(v.titleId),
       firstName: v.firstName,
@@ -405,6 +487,9 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       dOB: v.dOB ? `${v.dOB}T00:00:00.000Z` : undefined,
       maritalStatusID: numOrNull(v.maritalStatusID),
       benPhoneMaps: phoneMaps,
+      // Old app hardcoded govtIdentityTypeID = 1 and sent an empty govtIdentityNo.
+      govtIdentityNo: '',
+      govtIdentityTypeID: 1,
       i_bendemographics: {
         communityID: numOrNull(v.community),
         stateID: numOrNull(v.state),

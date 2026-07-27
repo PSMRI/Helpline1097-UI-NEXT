@@ -39,7 +39,7 @@ import { ZardSelectImports } from '@common-ui/ui/select';
 import { CoServicesApiService } from '@/app-modules/core/services/co-services-api.service';
 import { LocationApiService } from '@/app-modules/core/services/location-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
-import { DistrictRow, RegistrationData, SubServiceType } from '@/app-modules/core/models';
+import { DistrictRow, RegistrationData, SubServiceType, TalukRow } from '@/app-modules/core/models';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 import { numOrNull } from '@/app-modules/core/utils/select-value';
@@ -66,9 +66,17 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>District <span class="text-destructive">*</span></span>
-        <z-select formControlName="district" zPlaceholder="Select district">
+        <z-select formControlName="district" zPlaceholder="Select district" (zValueChange)="onDistrictChange($event)">
           @for (d of districts(); track d.districtID) {
             <z-select-item [zValue]="d.districtID + ''">{{ d.districtName }}</z-select-item>
+          }
+        </z-select>
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Taluk</span>
+        <z-select formControlName="taluk" zPlaceholder="Select taluk">
+          @for (t of taluks(); track t.blockID) {
+            <z-select-item [zValue]="t.blockID + ''">{{ t.blockName }}</z-select-item>
           }
         </z-select>
       </label>
@@ -143,6 +151,7 @@ export class CoFeedbackComponent implements OnInit {
   );
 
   protected readonly districts = signal<DistrictRow[]>([]);
+  protected readonly taluks = signal<TalukRow[]>([]);
   protected readonly designations = signal<{ designationID?: number; designationName?: string }[]>([]);
   protected readonly feedbackTypes = signal<{ feedbackTypeID?: number; feedbackTypeName?: string }[]>([]);
   protected readonly severities = signal<{ severityID?: number; severityTypeName?: string }[]>([]);
@@ -151,6 +160,7 @@ export class CoFeedbackComponent implements OnInit {
   protected readonly form = this.fb.group({
     state: this.fb.control<string | null>(null, Validators.required),
     district: this.fb.control<string | null>(null, Validators.required),
+    taluk: this.fb.control<string | null>(null),
     designation: this.fb.control<string | null>(null, Validators.required),
     feedbackType: this.fb.control<string | null>(null, Validators.required),
     severity: this.fb.control<string | null>(null, Validators.required),
@@ -183,7 +193,8 @@ export class CoFeedbackComponent implements OnInit {
   // control, so reading the control here would see the previous selection.
   protected onStateChange(value: string | string[]): void {
     this.districts.set([]);
-    this.form.patchValue({ district: null });
+    this.taluks.set([]);
+    this.form.patchValue({ district: null, taluk: null });
     const state = value as string;
     if (!state) {
       return;
@@ -191,6 +202,19 @@ export class CoFeedbackComponent implements OnInit {
     this.locationApi.getDistricts(state).subscribe({
       next: (res) => this.districts.set(res?.data ?? []),
       error: () => this.districts.set([]),
+    });
+  }
+
+  protected onDistrictChange(value: string | string[]): void {
+    this.taluks.set([]);
+    this.form.patchValue({ taluk: null });
+    const district = value as string;
+    if (!district) {
+      return;
+    }
+    this.locationApi.getTaluks(district).subscribe({
+      next: (res) => this.taluks.set(res?.data ?? []),
+      error: () => this.taluks.set([]),
     });
   }
 
@@ -206,6 +230,7 @@ export class CoFeedbackComponent implements OnInit {
       .saveBenFeedback({
         stateID: numOrNull(v.state),
         districtID: numOrNull(v.district),
+        blockID: numOrNull(v.taluk),
         designationID: numOrNull(v.designation),
         feedbackTypeID: numOrNull(v.feedbackType),
         severityID: numOrNull(v.severity),

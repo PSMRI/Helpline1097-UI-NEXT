@@ -48,6 +48,9 @@ export interface CloseCallRequest {
   fitToBlock?: string;
   isFollowupRequired?: boolean;
   prefferedDateTime?: string;
+  /** Correctly-spelled null sent by the old app on the no-follow-up path (distinct from the
+   * misspelled `prefferedDateTime` used for the actual follow-up date). */
+  preferredDateTime?: string | null;
   endCall?: boolean;
   isCompleted?: boolean;
   callType?: string | null;
