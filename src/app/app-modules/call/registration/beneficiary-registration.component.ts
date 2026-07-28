@@ -151,6 +151,10 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     village: this.fb.control<string | null>(null),
     pincode: this.fb.control('', { validators: [Validators.minLength(6), Validators.maxLength(6)] }),
     alternateNumber1: this.fb.control(''),
+    alternateNumber2: this.fb.control(''),
+    alternateNumber3: this.fb.control(''),
+    alternateNumber4: this.fb.control(''),
+    alternateNumber5: this.fb.control(''),
     preferredLanguage: this.fb.control<string | null>(null, Validators.required),
   });
 
@@ -466,14 +470,23 @@ export class BeneficiaryRegistrationComponent implements OnInit {
         deleted: false,
       },
     ];
-    if (v.alternateNumber1) {
-      phoneMaps.push({
-        parentBenRegID,
-        benRelationshipID: relationshipId,
-        phoneNo: v.alternateNumber1,
-        createdBy: userName,
-        deleted: false,
-      });
+    // Old app appended up to 5 alternate numbers (each as its own phone map).
+    for (const alt of [
+      v.alternateNumber1,
+      v.alternateNumber2,
+      v.alternateNumber3,
+      v.alternateNumber4,
+      v.alternateNumber5,
+    ]) {
+      if (alt) {
+        phoneMaps.push({
+          parentBenRegID,
+          benRelationshipID: relationshipId,
+          phoneNo: alt,
+          createdBy: userName,
+          deleted: false,
+        });
+      }
     }
     const beneficiary: BeneficiaryRecord = {
       vanID: this.vanId() ?? undefined,

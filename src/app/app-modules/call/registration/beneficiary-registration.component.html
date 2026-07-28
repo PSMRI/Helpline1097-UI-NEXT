@@ -213,8 +213,29 @@
           <input z-input formControlName="pincode" type="text" maxlength="6" placeholder="6-digit pincode" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Alternate Number</span>
+          <span>Alternate Number 1</span>
           <input z-input formControlName="alternateNumber1" type="text" maxlength="10" placeholder="Alternate mobile" />
+        </label>
+        <!-- Old app: alternate numbers 2-5 unlock only once the previous one is filled. -->
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Alternate Number 2</span>
+          <input z-input formControlName="alternateNumber2" type="text" maxlength="10" placeholder="Alternate mobile"
+            [readonly]="!form.controls.alternateNumber1.value" />
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Alternate Number 3</span>
+          <input z-input formControlName="alternateNumber3" type="text" maxlength="10" placeholder="Alternate mobile"
+            [readonly]="!form.controls.alternateNumber2.value" />
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Alternate Number 4</span>
+          <input z-input formControlName="alternateNumber4" type="text" maxlength="10" placeholder="Alternate mobile"
+            [readonly]="!form.controls.alternateNumber3.value" />
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Alternate Number 5</span>
+          <input z-input formControlName="alternateNumber5" type="text" maxlength="10" placeholder="Alternate mobile"
+            [readonly]="!form.controls.alternateNumber4.value" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Preferred Language <span class="text-destructive">*</span></span>
