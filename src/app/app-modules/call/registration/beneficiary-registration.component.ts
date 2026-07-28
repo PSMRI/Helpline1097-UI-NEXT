@@ -105,6 +105,12 @@ export class BeneficiaryRegistrationComponent implements OnInit {
   protected readonly mode = signal<'search' | 'register'>('search');
   /** When set, the register form is editing this existing beneficiary (old edit/update mode). */
   protected readonly editingRecord = signal<BeneficiaryRecord | null>(null);
+  /**
+   * True while an edit-load is populating the form. It suppresses the age↔DOB sync so the
+   * z-selects/inputs firing on programmatic value-set can't recompute (and overwrite) the
+   * loaded DOB from age against today's date. Cleared on the first real user focus in the form.
+   */
+  private editLoading = false;
   protected readonly results = signal<BeneficiaryRecord[]>([]);
   /** Old `ParentBenRegID`: the family head on the calling number, taken from the first CLI
    * search result — a new registration on that number joins the family via this id. */
@@ -389,6 +395,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
 
   /** Old edit action (row `mode_edit`) — load the beneficiary into the register form to update it. */
   protected editBeneficiary(beneficiary: BeneficiaryRecord): void {
+    this.editLoading = true;
     this.editingRecord.set(beneficiary);
     this.mode.set('register');
     const demo = beneficiary.i_bendemographics ?? {};
@@ -459,6 +466,8 @@ export class BeneficiaryRegistrationComponent implements OnInit {
   }
 
   protected toggleMode(): void {
+    // Fresh (non-edit) register: the age↔DOB sync must be live from the start.
+    this.editLoading = false;
     if (this.mode() === 'register') {
       this.mode.set('search');
       this.editingRecord.set(null);
@@ -468,6 +477,14 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       this.form.reset({ ageUnit: 'Years' });
       this.mode.set('register');
     }
+  }
+
+  /**
+   * First real user interaction with the register form releases the edit-load guard, so the
+   * age↔DOB sync resumes for genuine edits (the programmatic edit-load has settled by then).
+   */
+  protected onFormInteract(): void {
+    this.editLoading = false;
   }
 
   // Handlers take the emitted value: z-select fires zValueChange BEFORE its CVA writes the
@@ -519,6 +536,12 @@ export class BeneficiaryRegistrationComponent implements OnInit {
    * unit (Years capped at 120). `emitEvent:false` so it doesn't feed back into the DOB→age sync.
    */
   protected onAgeChange(): void {
+    // Edit-load populates age + DOB together; the ageUnit z-select emits zValueChange on that
+    // programmatic set and would otherwise recompute (and corrupt) the loaded DOB from age
+    // against today. Suppress until the user actually interacts with the form.
+    if (this.editLoading) {
+      return;
+    }
     const raw = this.form.controls.age.value;
     const unit = this.form.controls.ageUnit.value;
     if (raw == null || raw === '') {
@@ -549,6 +572,9 @@ export class BeneficiaryRegistrationComponent implements OnInit {
    * else days (a same-day DOB becomes 1 Day).
    */
   protected onDobChange(): void {
+    if (this.editLoading) {
+      return;
+    }
     const dobStr = this.form.controls.dOB.value;
     if (!dobStr) {
       this.form.patchValue({ age: null }, { emitEvent: false });

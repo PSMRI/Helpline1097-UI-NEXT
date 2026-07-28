@@ -168,7 +168,7 @@
     </div>
   } @else {
     <!-- Register-new form -->
-    <form [formGroup]="form" (ngSubmit)="register()" class="flex flex-col gap-4">
+    <form [formGroup]="form" (ngSubmit)="register()" (focusin)="onFormInteract()" class="flex flex-col gap-4">
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Title</span>
