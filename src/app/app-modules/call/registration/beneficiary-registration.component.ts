@@ -40,6 +40,7 @@ import { BeneficiaryApiService } from '@/app-modules/core/services/beneficiary-a
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { LocationApiService } from '@/app-modules/core/services/location-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { SmsApiService } from '@/app-modules/core/services/sms-api.service';
 import {
   BeneficiaryRecord,
   BenPhoneMap,
@@ -84,6 +85,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
   private readonly callApi = inject(CallApiService);
   private readonly locationApi = inject(LocationApiService);
   private readonly notify = inject(NotificationService);
+  private readonly smsApi = inject(SmsApiService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
 
@@ -663,7 +665,19 @@ export class BeneficiaryRegistrationComponent implements OnInit {
               `Beneficiary registered with ID ${created.beneficiaryID ?? ''}`,
               'success',
             );
-            this.linkBeneficiaryToCall(created);
+            // Old post-create dialog offered to text the beneficiary; then the wizard advances.
+            this.notify
+              .confirm(
+                `Beneficiary registered with ID ${created.beneficiaryID ?? ''}. Send a registration SMS?`,
+                'Send SMS',
+                { okText: 'Send SMS', cancelText: 'Skip' },
+              )
+              .subscribe((ok) => {
+                if (ok) {
+                  this.sendRegistrationSms(created.beneficiaryRegID);
+                }
+                this.linkBeneficiaryToCall(created);
+              });
           } else {
             this.notify.alert(res?.errorMessage ?? 'Registration failed', 'error');
           }
@@ -706,6 +720,55 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       error: (err: { errorMessage?: string }) => {
         this.submitting.set(false);
         this.notify.alert(err?.errorMessage ?? 'Update failed', 'error');
+      },
+    });
+  }
+
+  /**
+   * Old `sendSMS` — resolve the "Registration SMS" type, take its first live template, and send.
+   * Fire-and-forget so it never blocks the wizard advancing.
+   */
+  private sendRegistrationSms(beneficiaryRegID?: number | string): void {
+    const serviceId = this.providerServiceMapId();
+    if (serviceId == null || beneficiaryRegID == null) {
+      return;
+    }
+    const userName = this.sessionStore.user()?.userName;
+    this.smsApi.getSmsTypes(serviceId).subscribe({
+      next: (res) => {
+        const smsTypeID = (res?.data ?? []).find(
+          (t) => t.smsType?.toLowerCase() === 'registration sms',
+        )?.smsTypeID;
+        if (smsTypeID == null) {
+          return;
+        }
+        this.smsApi.getSmsTemplates(serviceId, smsTypeID).subscribe({
+          next: (tRes) => {
+            const smsTemplateID = (tRes?.data ?? []).find((t) => t.deleted === false)?.smsTemplateID;
+            this.smsApi
+              .sendSms([
+                {
+                  alternateNo: null,
+                  beneficiaryRegID,
+                  createdBy: userName,
+                  is1097: true,
+                  providerServiceMapID: serviceId,
+                  smsTemplateID,
+                  smsTemplateTypeID: smsTypeID,
+                },
+              ])
+              .subscribe({
+                next: () => this.notify.alert('Registration SMS sent', 'success'),
+                error: () => this.notify.alert('Registration SMS could not be sent', 'error'),
+              });
+          },
+          error: () => {
+            // Old app only logged template-fetch failures.
+          },
+        });
+      },
+      error: () => {
+        // Old app only logged sms-type-fetch failures.
       },
     });
   }
