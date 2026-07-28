@@ -38,10 +38,67 @@
       </div>
       <button z-button type="button" (click)="search()" [zLoading]="searching()">Search</button>
       <button z-button zType="outline" type="button" (click)="retrieveAll()">Retrieve All</button>
+      <button z-button zType="outline" type="button" (click)="toggleAdvanced()">
+        Advanced Search
+      </button>
       <button z-button zType="ghost" type="button" class="ml-auto" (click)="toggleMode()">
         + Register New
       </button>
     </div>
+
+    <!-- Advanced-search panel (old `isAdvancedSearch`): name/father/gender + location cascade -->
+    @if (advancedMode()) {
+      <div [formGroup]="advForm" class="grid gap-3 rounded-md border border-border bg-muted/30 p-3 sm:grid-cols-2 lg:grid-cols-4">
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>First Name</span>
+          <input z-input formControlName="firstName" type="text" maxlength="25" placeholder="First name" />
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Last Name</span>
+          <input z-input formControlName="lastName" type="text" maxlength="25" placeholder="Last name" />
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Father / Husband Name</span>
+          <input z-input formControlName="fatherName" type="text" maxlength="25" placeholder="Father / husband name" />
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Gender</span>
+          <z-select formControlName="genderID" zPlaceholder="Select gender">
+            @for (g of genders(); track g.genderID) {
+              <z-select-item [zValue]="g.genderID + ''">{{ g.genderName }}</z-select-item>
+            }
+          </z-select>
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>State</span>
+          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="advOnStateChange($event)">
+            @for (s of states(); track s.stateID) {
+              <z-select-item [zValue]="s.stateID + ''">{{ s.stateName }}</z-select-item>
+            }
+          </z-select>
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>District</span>
+          <z-select formControlName="district" zPlaceholder="Select district" (zValueChange)="advOnDistrictChange($event)">
+            @for (d of advDistricts(); track d.districtID) {
+              <z-select-item [zValue]="d.districtID + ''">{{ d.districtName }}</z-select-item>
+            }
+          </z-select>
+        </label>
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Taluk</span>
+          <z-select formControlName="taluk" zPlaceholder="Select taluk">
+            @for (t of advTaluks(); track t.blockID) {
+              <z-select-item [zValue]="t.blockID + ''">{{ t.blockName }}</z-select-item>
+            }
+          </z-select>
+        </label>
+        <div class="flex items-end gap-2">
+          <button z-button type="button" (click)="runAdvancedSearch()" [zLoading]="searching()">Search</button>
+          <button z-button zType="outline" type="button" (click)="advClear()">Clear</button>
+        </div>
+      </div>
+    }
 
     <!-- Results table -->
     <div class="overflow-x-auto rounded-md border border-border">

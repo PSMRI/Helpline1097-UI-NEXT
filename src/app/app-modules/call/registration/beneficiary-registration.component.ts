@@ -129,8 +129,24 @@ export class BeneficiaryRegistrationComponent implements OnInit {
   protected readonly villages = signal<VillageRow[]>([]);
   protected readonly ageUnits = ['Years', 'Months', 'Days'];
 
+  /** Advanced-search panel (old `isAdvancedSearch`) + its own location cascade. */
+  protected readonly advancedMode = signal(false);
+  protected readonly advDistricts = signal<DistrictRow[]>([]);
+  protected readonly advTaluks = signal<TalukRow[]>([]);
+
   /** Search-by-id control. */
   protected readonly searchId = this.fb.control('', { nonNullable: true });
+
+  /** Old advanced-search form (posted to beneficiary/searchBeneficiary). */
+  protected readonly advForm = this.fb.group({
+    firstName: this.fb.control(''),
+    lastName: this.fb.control(''),
+    fatherName: this.fb.control(''),
+    genderID: this.fb.control<string | null>(null),
+    state: this.fb.control<string | null>(null),
+    district: this.fb.control<string | null>(null),
+    taluk: this.fb.control<string | null>(null),
+  });
 
   // Form control values are strings (z-select emits strings); ID fields are coerced back to
   // numbers when the create payload is built.
@@ -307,6 +323,59 @@ export class BeneficiaryRegistrationComponent implements OnInit {
         this.notify.alert(err?.errorMessage ?? 'Search failed', 'error');
       },
     });
+  }
+
+  protected toggleAdvanced(): void {
+    this.advancedMode.update((v) => !v);
+  }
+
+  protected advClear(): void {
+    this.advForm.reset();
+    this.advDistricts.set([]);
+    this.advTaluks.set([]);
+  }
+
+  protected advOnStateChange(value: string | string[]): void {
+    this.advDistricts.set([]);
+    this.advTaluks.set([]);
+    this.advForm.patchValue({ district: null, taluk: null });
+    const state = numOrNull(value as string);
+    if (state == null) {
+      return;
+    }
+    this.locationApi.getDistricts(state).subscribe({
+      next: (res) => this.advDistricts.set(res?.data ?? []),
+      error: () => this.advDistricts.set([]),
+    });
+  }
+
+  protected advOnDistrictChange(value: string | string[]): void {
+    this.advTaluks.set([]);
+    this.advForm.patchValue({ taluk: null });
+    const district = numOrNull(value as string);
+    if (district == null) {
+      return;
+    }
+    this.locationApi.getTaluks(district).subscribe({
+      next: (res) => this.advTaluks.set(res?.data ?? []),
+      error: () => this.advTaluks.set([]),
+    });
+  }
+
+  /** Old `searchBeneficiary` — post the advanced-search criteria and show the matches. */
+  protected runAdvancedSearch(): void {
+    const v = this.advForm.getRawValue();
+    this.runSearch(
+      this.beneficiaryApi.advancedSearch({
+        firstName: v.firstName || undefined,
+        lastName: v.lastName || undefined,
+        fatherName: v.fatherName || undefined,
+        genderID: numOrNull(v.genderID),
+        stateID: numOrNull(v.state),
+        districtID: numOrNull(v.district),
+        blockID: numOrNull(v.taluk),
+      }),
+    );
   }
 
   /** Row select → link the beneficiary to the open call, then advance the wizard. */
