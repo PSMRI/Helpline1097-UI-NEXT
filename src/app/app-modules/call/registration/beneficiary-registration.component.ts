@@ -101,6 +101,8 @@ export class BeneficiaryRegistrationComponent implements OnInit {
 
   // View state
   protected readonly mode = signal<'search' | 'register'>('search');
+  /** When set, the register form is editing this existing beneficiary (old edit/update mode). */
+  protected readonly editingRecord = signal<BeneficiaryRecord | null>(null);
   protected readonly results = signal<BeneficiaryRecord[]>([]);
   /** Old `ParentBenRegID`: the family head on the calling number, taken from the first CLI
    * search result — a new registration on that number joins the family via this id. */
@@ -383,6 +385,56 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     this.linkBeneficiaryToCall(beneficiary);
   }
 
+  /** Old edit action (row `mode_edit`) — load the beneficiary into the register form to update it. */
+  protected editBeneficiary(beneficiary: BeneficiaryRecord): void {
+    this.editingRecord.set(beneficiary);
+    this.mode.set('register');
+    const demo = beneficiary.i_bendemographics ?? {};
+    // Phone maps: [0] is the primary (the CLI); [1..5] are the alternates.
+    const alts = (beneficiary.benPhoneMaps ?? []).slice(1).map((p) => p.phoneNo ?? '');
+    this.form.reset({ ageUnit: beneficiary.ageUnits || 'Years' });
+    this.form.patchValue({
+      titleId: beneficiary.titleId != null ? String(beneficiary.titleId) : null,
+      firstName: beneficiary.firstName ?? '',
+      lastName: beneficiary.lastName ?? '',
+      genderID: beneficiary.genderID != null ? String(beneficiary.genderID) : null,
+      dOB: beneficiary.dOB ? beneficiary.dOB.slice(0, 10) : null,
+      age: beneficiary.actualAge != null ? String(beneficiary.actualAge) : null,
+      maritalStatusID: beneficiary.maritalStatusID != null ? String(beneficiary.maritalStatusID) : null,
+      community: demo.communityID != null ? String(demo.communityID) : null,
+      state: demo.stateID != null ? String(demo.stateID) : null,
+      district: demo.districtID != null ? String(demo.districtID) : null,
+      taluk: demo.blockID != null ? String(demo.blockID) : null,
+      village: demo.districtBranchID != null ? String(demo.districtBranchID) : null,
+      pincode: demo.pinCode ?? '',
+      preferredLanguage: demo.preferredLangID != null ? String(demo.preferredLangID) : null,
+      alternateNumber1: alts[0] ?? '',
+      alternateNumber2: alts[1] ?? '',
+      alternateNumber3: alts[2] ?? '',
+      alternateNumber4: alts[3] ?? '',
+      alternateNumber5: alts[4] ?? '',
+    });
+    // Load the dependent dropdowns so the pre-filled state/district/taluk resolve to labels.
+    if (demo.stateID != null) {
+      this.locationApi.getDistricts(demo.stateID).subscribe({
+        next: (res) => this.districts.set(res?.data ?? []),
+        error: () => this.districts.set([]),
+      });
+    }
+    if (demo.districtID != null) {
+      this.locationApi.getTaluks(demo.districtID).subscribe({
+        next: (res) => this.taluks.set(res?.data ?? []),
+        error: () => this.taluks.set([]),
+      });
+    }
+    if (demo.blockID != null) {
+      this.locationApi.getVillages(demo.blockID).subscribe({
+        next: (res) => this.villages.set(res?.data ?? []),
+        error: () => this.villages.set([]),
+      });
+    }
+  }
+
   private linkBeneficiaryToCall(beneficiary: BeneficiaryRecord): void {
     // Store the beneficiary + derive the authoritative registration id (handles create's
     // top-level id and the various search-result shapes).
@@ -405,7 +457,15 @@ export class BeneficiaryRegistrationComponent implements OnInit {
   }
 
   protected toggleMode(): void {
-    this.mode.set(this.mode() === 'search' ? 'register' : 'search');
+    if (this.mode() === 'register') {
+      this.mode.set('search');
+      this.editingRecord.set(null);
+      this.form.reset({ ageUnit: 'Years' });
+    } else {
+      this.editingRecord.set(null);
+      this.form.reset({ ageUnit: 'Years' });
+      this.mode.set('register');
+    }
   }
 
   // Handlers take the emitted value: z-select fires zValueChange BEFORE its CVA writes the
@@ -557,7 +617,10 @@ export class BeneficiaryRegistrationComponent implements OnInit {
         });
       }
     }
+    const editing = this.editingRecord();
     const beneficiary: BeneficiaryRecord = {
+      // Editing preserves the loaded record's other fields (regID, occupation/education, etc.).
+      ...(editing ?? {}),
       vanID: this.vanId() ?? undefined,
       providerServiceMapID: this.providerServiceMapId() ?? undefined,
       titleId: numOrNull(v.titleId),
@@ -573,6 +636,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       govtIdentityNo: '',
       govtIdentityTypeID: 1,
       i_bendemographics: {
+        ...(editing?.i_bendemographics ?? {}),
         communityID: numOrNull(v.community),
         stateID: numOrNull(v.state),
         districtID: numOrNull(v.district),
@@ -587,23 +651,61 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     };
 
     this.submitting.set(true);
-    this.beneficiaryApi.createBeneficiary(beneficiary).subscribe({
+    if (editing) {
+      this.updateExisting(beneficiary, v.age, v.ageUnit);
+    } else {
+      this.beneficiaryApi.createBeneficiary(beneficiary).subscribe({
+        next: (res) => {
+          this.submitting.set(false);
+          const created = res?.data;
+          if (res?.statusCode === 200 && created) {
+            this.notify.alert(
+              `Beneficiary registered with ID ${created.beneficiaryID ?? ''}`,
+              'success',
+            );
+            this.linkBeneficiaryToCall(created);
+          } else {
+            this.notify.alert(res?.errorMessage ?? 'Registration failed', 'error');
+          }
+        },
+        error: (err: { errorMessage?: string }) => {
+          this.submitting.set(false);
+          this.notify.alert(err?.errorMessage ?? 'Registration failed', 'error');
+        },
+      });
+    }
+  }
+
+  /** Old `updateBeneficiary` — whole-object `beneficiary/update` with all change flags set. */
+  private updateExisting(beneficiary: BeneficiaryRecord, age: string | null, ageUnit: string): void {
+    const payload: BeneficiaryRecord = {
+      ...beneficiary,
+      actualAge: age != null && age !== '' ? Number(age) : undefined,
+      ageUnits: ageUnit,
+      changeInSelfDetails: true,
+      changeInAddress: true,
+      changeInContacts: true,
+      changeInIdentities: true,
+      changeInOtherDetails: true,
+      changeInFamilyDetails: true,
+      changeInAssociations: true,
+      changeInBankDetails: false,
+      changeInBenImage: false,
+    };
+    this.beneficiaryApi.updateBeneficiary(payload).subscribe({
       next: (res) => {
         this.submitting.set(false);
-        const created = res?.data;
-        if (res?.statusCode === 200 && created) {
-          this.notify.alert(
-            `Beneficiary registered with ID ${created.beneficiaryID ?? ''}`,
-            'success',
-          );
-          this.linkBeneficiaryToCall(created);
+        if (res?.statusCode === 200) {
+          this.notify.alert('Beneficiary updated', 'success');
+          this.editingRecord.set(null);
+          this.linkBeneficiaryToCall(res.data ?? payload);
         } else {
-          this.notify.alert(res?.errorMessage ?? 'Registration failed', 'error');
+          this.notify.alert(res?.errorMessage ?? 'Update failed', 'error');
         }
       },
       error: (err: { errorMessage?: string }) => {
         this.submitting.set(false);
-        this.notify.alert(err?.errorMessage ?? 'Registration failed', 'error');
+        this.notify.alert(err?.errorMessage ?? 'Update failed', 'error');
       },
     });
   }

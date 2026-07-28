@@ -134,16 +134,22 @@
               <td class="px-3 py-2">{{ b.i_bendemographics?.districtBranchName }}</td>
               <td class="px-3 py-2">{{ b.benPhoneMaps?.[0]?.benRelationshipType?.benRelationshipType }}</td>
               <td class="px-3 py-2 text-right">
-                <!-- Waits for startCall so the link never posts a null benCallID -->
-                <button
-                  z-button
-                  zSize="sm"
-                  type="button"
-                  [zDisabled]="startCallPending()"
-                  (click)="selectBeneficiary(b)"
-                >
-                  Select
-                </button>
+                <div class="flex items-center justify-end gap-2">
+                  <!-- Old row edit action (mode_edit) — load the beneficiary to update it -->
+                  <button z-button zType="outline" zSize="sm" type="button" (click)="editBeneficiary(b)">
+                    Edit
+                  </button>
+                  <!-- Waits for startCall so the link never posts a null benCallID -->
+                  <button
+                    z-button
+                    zSize="sm"
+                    type="button"
+                    [zDisabled]="startCallPending()"
+                    (click)="selectBeneficiary(b)"
+                  >
+                    Select
+                  </button>
+                </div>
               </td>
             </tr>
           } @empty {
@@ -305,6 +311,11 @@
       </div>
 
       <div class="flex items-center justify-end gap-3">
+        @if (editingRecord()) {
+          <span class="mr-auto text-sm font-medium text-muted-foreground">
+            Editing {{ editingRecord()?.firstName }} {{ editingRecord()?.lastName }} (ID {{ editingRecord()?.beneficiaryID }})
+          </span>
+        }
         <button z-button zType="outline" type="button" (click)="toggleMode()">Back to search</button>
         <button
           z-button
@@ -312,7 +323,7 @@
           [zDisabled]="form.invalid || startCallPending()"
           [zLoading]="submitting()"
         >
-          Register &amp; Continue
+          {{ editingRecord() ? 'Update' : 'Register' }} &amp; Continue
         </button>
       </div>
     </form>
