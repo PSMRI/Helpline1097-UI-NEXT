@@ -48,7 +48,7 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
  * Feedback service tab (old `co-feedback-services`, the largest tab). Captures a
  * feedback/complaint (location + designation + type + severity + date + description +
  * consent) and submits via `co/saveBenFeedback`. Deferred within Phase 6 (flagged): the
- * institution dropdown, the dual-mode history search (id/phone) and the status modal.
+ * dual-mode history search (id/phone) and the status modal.
  */
 @Component({
   selector: 'app-co-feedback',
@@ -81,6 +81,14 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
+        <span>Institution Name</span>
+        <z-select formControlName="institution" zPlaceholder="Select institution" (zValueChange)="onInstitutionChange($event)">
+          @for (i of institutes(); track i.institutionTypeID) {
+            <z-select-item [zValue]="i.institutionTypeID + ''">{{ i.institutionType }}</z-select-item>
+          }
+        </z-select>
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
         <span>Designation <span class="text-destructive">*</span></span>
         <z-select formControlName="designation" zPlaceholder="Select designation">
           @for (d of designations(); track d.designationID) {
@@ -106,7 +114,7 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Date of Incident</span>
-        <input z-input formControlName="serviceAvailDate" type="date" />
+        <input z-input formControlName="serviceAvailDate" type="date" [min]="minDate" [max]="today()" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm sm:col-span-2 lg:col-span-3">
         <span>Description <span class="text-destructive">*</span></span>
@@ -152,15 +160,23 @@ export class CoFeedbackComponent implements OnInit {
 
   protected readonly districts = signal<DistrictRow[]>([]);
   protected readonly taluks = signal<TalukRow[]>([]);
+  protected readonly institutes = signal<{ institutionTypeID?: number; institutionType?: string }[]>([]);
+  /** Captured on institution select — the old app posted the institution NAME alongside its id. */
+  private instituteName: string | null = null;
   protected readonly designations = signal<{ designationID?: number; designationName?: string }[]>([]);
   protected readonly feedbackTypes = signal<{ feedbackTypeID?: number; feedbackTypeName?: string }[]>([]);
   protected readonly severities = signal<{ severityID?: number; severityTypeName?: string }[]>([]);
   protected readonly saving = signal(false);
 
+  /** Date-of-incident bounds (old app: min = 2014-12-01 fallback, max = today). */
+  protected readonly today = computed(() => this.toDateInput(new Date()));
+  protected readonly minDate = '2014-12-01';
+
   protected readonly form = this.fb.group({
     state: this.fb.control<string | null>(null, Validators.required),
     district: this.fb.control<string | null>(null, Validators.required),
     taluk: this.fb.control<string | null>(null),
+    institution: this.fb.control<string | null>(null),
     designation: this.fb.control<string | null>(null, Validators.required),
     feedbackType: this.fb.control<string | null>(null, Validators.required),
     severity: this.fb.control<string | null>(null, Validators.required),
@@ -187,6 +203,11 @@ export class CoFeedbackComponent implements OnInit {
       next: (res) => this.severities.set(Array.isArray(res?.data) ? res.data : []),
       error: () => this.severities.set([]),
     });
+    // Old app sent `{}` (commented-out providerServiceMapID) to institute/getInstituteTypes.
+    this.locationApi.getInstituteTypes().subscribe({
+      next: (res) => this.institutes.set(Array.isArray(res?.data) ? res.data : []),
+      error: () => this.institutes.set([]),
+    });
   }
 
   // Takes the emitted value: z-select fires zValueChange BEFORE its CVA writes the form
@@ -203,6 +224,16 @@ export class CoFeedbackComponent implements OnInit {
       next: (res) => this.districts.set(res?.data ?? []),
       error: () => this.districts.set([]),
     });
+  }
+
+  private toDateInput(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  protected onInstitutionChange(value: string | string[]): void {
+    const id = value as string;
+    const match = this.institutes().find((i) => String(i.institutionTypeID) === id);
+    this.instituteName = match?.institutionType ?? null;
   }
 
   protected onDistrictChange(value: string | string[]): void {
@@ -226,8 +257,14 @@ export class CoFeedbackComponent implements OnInit {
     const v = this.form.getRawValue();
     const serviceId = this.serviceId();
     this.saving.set(true);
+    // Old app: full UTC-midnight ISO of the picked date, and the key is OMITTED when no date.
+    const serviceAvailDate = v.serviceAvailDate
+      ? `${v.serviceAvailDate}T00:00:00.000Z`
+      : undefined;
     this.api
       .saveBenFeedback({
+        instituteTypeID: numOrNull(v.institution),
+        instituteName: this.instituteName,
         stateID: numOrNull(v.state),
         districtID: numOrNull(v.district),
         blockID: numOrNull(v.taluk),
@@ -236,7 +273,7 @@ export class CoFeedbackComponent implements OnInit {
         severityID: numOrNull(v.severity),
         feedback: v.feedback.trim() || null,
         beneficiaryRegID: this.callStore.beneficiaryRegId(),
-        serviceAvailDate: v.serviceAvailDate ?? null,
+        serviceAvailDate,
         serviceID: serviceId,
         subServiceID: this.subServiceId(),
         userID: this.sessionStore.userId(),
@@ -254,6 +291,7 @@ export class CoFeedbackComponent implements OnInit {
             'success',
           );
           this.form.reset({ beneficiaryConsent: false });
+          this.instituteName = null;
           this.serviceProvided.emit();
         },
         error: (err: { errorMessage?: string }) => {

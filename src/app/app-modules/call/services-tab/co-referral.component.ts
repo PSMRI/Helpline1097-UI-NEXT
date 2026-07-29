@@ -155,10 +155,12 @@ export class CoReferralComponent implements OnInit {
   readonly serviceProvided = output<void>();
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
+  // Old app defaulted subServiceID to 3 and only overrode it on a "REFE" name match, so a
+  // missing REFE entry still sent 3 (not null).
   private readonly subServiceId = computed(
     () =>
       this.serviceTypes().find((t) => t.subServiceName?.toUpperCase().includes('REFE'))
-        ?.subServiceID ?? null,
+        ?.subServiceID ?? 3,
   );
 
   protected readonly districts = signal<DistrictRow[]>([]);
