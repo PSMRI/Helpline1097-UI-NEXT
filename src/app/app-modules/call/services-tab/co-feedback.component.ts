@@ -31,6 +31,7 @@ import {
   signal,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { ZardButtonComponent } from '@common-ui/ui/button';
@@ -307,6 +308,8 @@ export class CoFeedbackComponent implements OnInit {
   protected readonly loadingHistory = signal(false);
   protected readonly searchType = signal<SearchType>('FeedbackID');
   protected readonly searchTerm = this.fb.control('', { nonNullable: true });
+  // FormControl.value is not signal-reactive; mirror it so searchValid recomputes as you type.
+  private readonly searchTermValue = toSignal(this.searchTerm.valueChanges, { initialValue: '' });
 
   // Client-side pagination for the history list (old md2Data rowsPerPage).
   protected readonly pageSize = 5;
@@ -330,7 +333,7 @@ export class CoFeedbackComponent implements OnInit {
 
   /** Old search validity: Feedback ID 1–30 chars; Mobile Number exactly 10 digits. */
   protected readonly searchValid = computed(() => {
-    const term = this.searchTerm.value.trim();
+    const term = this.searchTermValue().trim();
     return this.searchType() === 'MobileNumber'
       ? /^\d{10}$/.test(term)
       : term.length >= 1 && term.length <= 30;
