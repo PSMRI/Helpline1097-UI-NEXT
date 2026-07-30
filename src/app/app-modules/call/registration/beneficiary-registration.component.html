@@ -26,18 +26,30 @@
     <div class="flex flex-wrap items-end gap-3">
       <div class="flex flex-col gap-1.5">
         <label for="benId" class="text-sm font-medium">Beneficiary ID</label>
-        <input
-          z-input
-          id="benId"
-          [formControl]="searchId"
-          type="text"
-          maxlength="12"
-          placeholder="Search by beneficiary ID"
-          class="w-56"
-        />
+        <div class="relative w-56">
+          <input
+            z-input
+            id="benId"
+            [formControl]="searchId"
+            type="text"
+            maxlength="12"
+            placeholder="Search by beneficiary ID"
+            class="w-full pr-8"
+          />
+          @if (searchId.value) {
+            <button
+              type="button"
+              (click)="clearSearchId()"
+              aria-label="Clear beneficiary ID"
+              title="Clear"
+              class="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <ng-icon name="lucideX" class="text-sm" />
+            </button>
+          }
+        </div>
       </div>
       <button z-button type="button" (click)="search()" [zLoading]="searching()">Search</button>
-      <button z-button zType="outline" type="button" (click)="retrieveAll()">Retrieve All</button>
       <button z-button zType="outline" type="button" (click)="toggleAdvanced()">
         Advanced Search
       </button>
@@ -50,7 +62,7 @@
     @if (advancedMode()) {
       <div [formGroup]="advForm" class="grid gap-3 rounded-md border border-border bg-muted/30 p-3 sm:grid-cols-2 lg:grid-cols-4">
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>First Name</span>
+          <span>First Name <span class="text-destructive">*</span></span>
           <input z-input formControlName="firstName" type="text" maxlength="25" placeholder="First name" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
@@ -62,7 +74,7 @@
           <input z-input formControlName="fatherName" type="text" maxlength="25" placeholder="Father / husband name" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Gender</span>
+          <span>Gender <span class="text-destructive">*</span></span>
           <z-select formControlName="genderID" zPlaceholder="Select gender">
             @for (g of genders(); track g.genderID) {
               <z-select-item [zValue]="g.genderID + ''">{{ g.genderName }}</z-select-item>
@@ -70,7 +82,7 @@
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>State</span>
+          <span>State <span class="text-destructive">*</span></span>
           <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="advOnStateChange($event)">
             @for (s of states(); track s.stateID) {
               <z-select-item [zValue]="s.stateID + ''">{{ s.stateName }}</z-select-item>
@@ -78,7 +90,7 @@
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>District</span>
+          <span>District <span class="text-destructive">*</span></span>
           <z-select formControlName="district" zPlaceholder="Select district" (zValueChange)="advOnDistrictChange($event)">
             @for (d of advDistricts(); track d.districtID) {
               <z-select-item [zValue]="d.districtID + ''">{{ d.districtName }}</z-select-item>
@@ -94,7 +106,7 @@
           </z-select>
         </label>
         <div class="flex items-end gap-2">
-          <button z-button type="button" (click)="runAdvancedSearch()" [zLoading]="searching()">Search</button>
+          <button z-button type="button" (click)="runAdvancedSearch()" [zDisabled]="advForm.invalid || searching()" [zLoading]="searching()">Search</button>
           <button z-button zType="outline" type="button" (click)="advClear()">Clear</button>
         </div>
       </div>
@@ -118,7 +130,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (b of results(); track b.beneficiaryRegID) {
+          @for (b of pagedResults(); track b.beneficiaryRegID) {
             <tr class="border-t border-border hover:bg-accent/50">
               <td class="px-3 py-2">{{ b.beneficiaryID }}</td>
               <td class="px-3 py-2">{{ b.firstName }} {{ b.lastName }}</td>
@@ -166,6 +178,28 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Pagination (old md2-pagination) — shown only when results exceed one page -->
+    @if (results().length > pageSize) {
+      <div class="flex items-center justify-end gap-3 text-sm">
+        <span class="text-muted-foreground">
+          Page {{ pageIndex() + 1 }} of {{ pageCount() }} ({{ results().length }} records)
+        </span>
+        <button z-button zType="outline" zSize="sm" type="button" [zDisabled]="pageIndex() === 0" (click)="prevPage()">
+          Previous
+        </button>
+        <button
+          z-button
+          zType="outline"
+          zSize="sm"
+          type="button"
+          [zDisabled]="pageIndex() >= pageCount() - 1"
+          (click)="nextPage()"
+        >
+          Next
+        </button>
+      </div>
+    }
   } @else {
     <!-- Register-new form -->
     <form [formGroup]="form" (ngSubmit)="register()" (focusin)="onFormInteract()" class="flex flex-col gap-4">
@@ -197,7 +231,7 @@
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Date of Birth</span>
-          <input z-input formControlName="dOB" type="date" (change)="onDobChange()" />
+          <input z-input formControlName="dOB" type="date" class="w-full cursor-pointer" (change)="onDobChange()" />
         </label>
         <div class="flex gap-2">
           <label class="flex flex-1 flex-col gap-1.5 text-sm">

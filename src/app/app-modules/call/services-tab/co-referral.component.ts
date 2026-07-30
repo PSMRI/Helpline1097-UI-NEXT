@@ -105,7 +105,7 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
         </label>
         <div class="flex items-end">
           <button z-button type="button" [zDisabled]="form.invalid" [zLoading]="saving()" (click)="provideReferral()">
-            Provide Referral
+            Get Details
           </button>
         </div>
       </form>

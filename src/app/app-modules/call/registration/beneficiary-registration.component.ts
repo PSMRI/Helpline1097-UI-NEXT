@@ -30,6 +30,8 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
 
 import { ZardButtonComponent } from '@common-ui/ui/button';
 import { cardImports } from '@common-ui/ui/card';
@@ -73,9 +75,11 @@ import { buildStartCallRequest, captureStartCallResponse } from '../start-call.h
     ReactiveFormsModule,
     ZardButtonComponent,
     ZardInputDirective,
+    NgIcon,
     ...ZardSelectImports,
     ...cardImports,
   ],
+  viewProviders: [provideIcons({ lucideX })],
   templateUrl: './beneficiary-registration.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -112,6 +116,15 @@ export class BeneficiaryRegistrationComponent implements OnInit {
    */
   private editLoading = false;
   protected readonly results = signal<BeneficiaryRecord[]>([]);
+  /** Client-side pagination for the search-results list (old md2Data rowsPerPage). */
+  protected readonly pageSize = 5;
+  protected readonly pageIndex = signal(0);
+  protected readonly pageCount = computed(() =>
+    Math.max(1, Math.ceil(this.results().length / this.pageSize)),
+  );
+  protected readonly pagedResults = computed(() =>
+    this.results().slice(this.pageIndex() * this.pageSize, (this.pageIndex() + 1) * this.pageSize),
+  );
   /** Old `ParentBenRegID`: the family head on the calling number, taken from the first CLI
    * search result — a new registration on that number joins the family via this id. */
   private readonly parentBenRegID = signal<number | string | null>(null);
@@ -149,12 +162,12 @@ export class BeneficiaryRegistrationComponent implements OnInit {
 
   /** Old advanced-search form (posted to beneficiary/searchBeneficiary). */
   protected readonly advForm = this.fb.group({
-    firstName: this.fb.control(''),
+    firstName: this.fb.control('', Validators.required),
     lastName: this.fb.control(''),
     fatherName: this.fb.control(''),
-    genderID: this.fb.control<string | null>(null),
-    state: this.fb.control<string | null>(null),
-    district: this.fb.control<string | null>(null),
+    genderID: this.fb.control<string | null>(null, Validators.required),
+    state: this.fb.control<string | null>(null, Validators.required),
+    district: this.fb.control<string | null>(null, Validators.required),
     taluk: this.fb.control<string | null>(null),
   });
 
@@ -307,12 +320,17 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     }
   }
 
-  /** Old "Retrieve All" — re-run the CLI search. */
+  /** Old "Retrieve All" — re-run the CLI search (still used by the empty-id search + CLI auto-load). */
   protected retrieveAll(): void {
     const cli = this.callStore.cli();
     if (cli) {
       this.searchByPhone(cli);
     }
+  }
+
+  /** Clear-icon (×) on the beneficiary-id search input. */
+  protected clearSearchId(): void {
+    this.searchId.setValue('');
   }
 
   private searchByPhone(phone: string): void {
@@ -325,6 +343,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       next: (res) => {
         const rows = Array.isArray(res?.data) ? res.data : [];
         this.results.set(rows);
+        this.pageIndex.set(0);
         this.parentBenRegID.set(rows[0]?.benPhoneMaps?.[0]?.parentBenRegID ?? null);
         this.searching.set(false);
       },
@@ -333,6 +352,14 @@ export class BeneficiaryRegistrationComponent implements OnInit {
         this.notify.alert(err?.errorMessage ?? 'Search failed', 'error');
       },
     });
+  }
+
+  protected prevPage(): void {
+    this.pageIndex.update((i) => Math.max(0, i - 1));
+  }
+
+  protected nextPage(): void {
+    this.pageIndex.update((i) => Math.min(this.pageCount() - 1, i + 1));
   }
 
   protected toggleAdvanced(): void {
