@@ -254,9 +254,16 @@ export class CoReferralComponent implements OnInit {
         blockID: numOrNull(v.taluk),
       })
       .subscribe({
-        next: () => {
+        next: (res) => {
           this.saving.set(false);
-          this.notify.alert('Referral recorded', 'success');
+          // Old SetReferralDetails: response holds the matched institution list. Empty → the
+          // old app alerts "No data found" (the institution-list render itself is still deferred).
+          const rows = Array.isArray(res?.data) ? res.data : [];
+          if (rows.length > 0) {
+            this.notify.alert('Referral recorded', 'success');
+          } else {
+            this.notify.alert('No data found', 'info');
+          }
           this.serviceProvided.emit();
           this.loadHistory();
         },
