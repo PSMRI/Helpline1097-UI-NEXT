@@ -81,7 +81,7 @@
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Call Sub Type <span class="text-destructive">*</span></span>
-        <z-select formControlName="callSubType" zPlaceholder="Select" [zDisabled]="isAll()">
+        <z-select formControlName="callSubType" zPlaceholder="Select" [zDisabled]="form.controls.callSubType.disabled">
           @for (st of callSubTypes(); track st.callTypeID) {
             <z-select-item [zValue]="st.callTypeID + ''">{{ st.callType }}</z-select-item>
           }
@@ -118,7 +118,7 @@
         <tbody>
           @for (rec of records(); track $index) {
             <tr class="border-t border-border">
-              <td class="px-3 py-2">{{ (pageNo() - 1) * 5 + $index + 1 }}</td>
+              <td class="px-3 py-2">{{ $index + 1 }}</td>
               <td class="px-3 py-2">{{ rec.benCallID }}</td>
               <td class="px-3 py-2">{{ rec.callTime | date: 'dd/MM/yyyy hh:mm a' : 'UTC' }}</td>
               <td class="px-3 py-2">{{ rec.beneficiaryID }}</td>

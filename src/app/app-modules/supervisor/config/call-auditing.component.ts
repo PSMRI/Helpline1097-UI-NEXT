@@ -132,7 +132,8 @@ export class CallAuditingComponent implements OnInit {
     agent: this.fb.control<string>('', { nonNullable: true }),
     benPhoneNo: this.fb.control<string>('', { nonNullable: true }),
     callType: this.fb.control<string>('', { nonNullable: true, validators: [Validators.required] }),
-    callSubType: this.fb.control<string>('', { nonNullable: true }),
+    // Required, but disabled (⇒ excluded from validation) when Call Type is "All" — faithful.
+    callSubType: this.fb.control<string>('', { nonNullable: true, validators: [Validators.required] }),
   });
 
   ngOnInit(): void {
@@ -209,10 +210,13 @@ export class CallAuditingComponent implements OnInit {
     const serviceId = this.serviceId();
     this.agents.set(this.allAgents);
     this.form.patchValue({ agent: '' });
-    if (serviceId == null || !value) {
+    // The Role select binds the role NAME (for the receivedRoleName filter), so resolve its
+    // numeric roleID for the agent lookup rather than Number(name), which would be NaN → null.
+    const roleId = this.roles().find((r) => r.roleName === value)?.roleID;
+    if (serviceId == null || roleId == null) {
       return;
     }
-    this.api.getAgentByRoleID(serviceId, Number(value)).subscribe({
+    this.api.getAgentByRoleID(serviceId, roleId).subscribe({
       next: (res) => this.agents.set(Array.isArray(res?.data) ? (res.data as AgentRow[]) : []),
       error: () => {},
     });
@@ -222,9 +226,13 @@ export class CallAuditingComponent implements OnInit {
     this.form.patchValue({ callSubType: '' });
     const group = this.callGroups().find((g) => g.callGroupType === value);
     this.callSubTypes.set(group?.callTypes ?? []);
+    // "All" has no sub-types — disable so the required sub-type is excluded from validation.
+    if (value === 'All') {
+      this.form.controls.callSubType.disable();
+    } else {
+      this.form.controls.callSubType.enable();
+    }
   }
-
-  protected readonly isAll = computed(() => this.form.controls.callType.value === 'All');
 
   /** Local Date at start/end of a yyyy-MM-dd, then the codebase's fake-UTC shift. */
   private boundary(dateStr: string, edge: 'start' | 'end'): string {
@@ -289,7 +297,8 @@ export class CallAuditingComponent implements OnInit {
         filterEndDate: this.boundary(v.endDate, 'end'),
         receivedRoleName: v.role || null,
         phoneNo: v.benPhoneNo || null,
-        agentID: v.agent || null,
+        // Old md-select bound the numeric agentID; keep it a number, not the option string.
+        agentID: v.agent ? Number(v.agent) : null,
         inboundOutbound: v.inboundOutbound || null,
         is1097: true,
         pageNo: page,
