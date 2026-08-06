@@ -107,7 +107,12 @@
     <form class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" [formGroup]="form">
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Office(s) <span class="text-destructive">*</span></span>
-        <z-select formControlName="offices" [zMultiple]="true" zPlaceholder="Select office(s)">
+        <z-select
+          formControlName="offices"
+          [zMultiple]="true"
+          zPlaceholder="Select office(s)"
+          [zDisabled]="form.controls.offices.disabled"
+        >
           @for (o of offices(); track o.pSAddMapID) {
             <z-select-item [zValue]="o.pSAddMapID + ''">{{ o.locationName }}</z-select-item>
           }

@@ -111,7 +111,12 @@
     <form class="grid gap-3 sm:grid-cols-2" [formGroup]="form">
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Role(s) <span class="text-destructive">*</span></span>
-        <z-select formControlName="roles" [zMultiple]="true" zPlaceholder="Select role(s)">
+        <z-select
+          formControlName="roles"
+          [zMultiple]="true"
+          zPlaceholder="Select role(s)"
+          [zDisabled]="form.controls.roles.disabled"
+        >
           @for (r of roles(); track r.roleID) {
             <z-select-item [zValue]="r.roleID + ''">{{ r.roleName }}</z-select-item>
           }
@@ -147,7 +152,7 @@
       </label>
 
       <div class="flex items-center gap-3 sm:col-span-2">
-        <button z-button type="button" [zDisabled]="form.invalid || saving()" (click)="save()">
+        <button z-button type="button" [zDisabled]="form.invalid || saving() || reading()" (click)="save()">
           {{ editing() ? 'Update' : 'Create' }}
         </button>
         <button z-button zType="outline" type="button" (click)="cancelForm()">Cancel</button>

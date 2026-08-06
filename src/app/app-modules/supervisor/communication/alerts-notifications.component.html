@@ -119,7 +119,11 @@
     <form class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" [formGroup]="form">
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Type <span class="text-destructive">*</span></span>
-        <z-select formControlName="notificationType" zPlaceholder="Select type">
+        <z-select
+          formControlName="notificationType"
+          zPlaceholder="Select type"
+          [zDisabled]="form.controls.notificationType.disabled"
+        >
           @for (t of types(); track t.notificationTypeID) {
             <z-select-item [zValue]="t.notificationTypeID + ''">{{ t.notificationType }}</z-select-item>
           }
@@ -127,7 +131,12 @@
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Role</span>
-        <z-select formControlName="role" zPlaceholder="All" (zValueChange)="onRoleChange($event)">
+        <z-select
+          formControlName="role"
+          zPlaceholder="All"
+          [zDisabled]="form.controls.role.disabled"
+          (zValueChange)="onRoleChange($event)"
+        >
           <z-select-item zValue="">All</z-select-item>
           @for (r of roles(); track r.roleID) {
             <z-select-item [zValue]="r.roleID + ''">{{ r.roleName }}</z-select-item>
@@ -140,8 +149,7 @@
           formControlName="offices"
           [zMultiple]="true"
           zPlaceholder="All offices"
-          [class.pointer-events-none]="!form.controls.role.value || form.controls.role.disabled"
-          [class.opacity-50]="!form.controls.role.value || form.controls.role.disabled"
+          [zDisabled]="!form.controls.role.value || form.controls.role.disabled"
         >
           @for (o of offices(); track o.pSAddMapID) {
             <z-select-item [zValue]="o.pSAddMapID + ''">{{ o.locationName }}</z-select-item>

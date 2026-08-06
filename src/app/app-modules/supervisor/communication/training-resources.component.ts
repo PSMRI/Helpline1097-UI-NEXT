@@ -103,6 +103,7 @@ export class TrainingResourcesComponent implements OnInit {
   protected readonly saving = signal(false);
   protected readonly pendingFile = signal<PendingFile | null>(null);
   protected readonly fileError = signal<string | null>(null);
+  protected readonly reading = signal(false);
 
   protected readonly pageCount = computed(() =>
     Math.max(1, Math.ceil(this.rows().length / ROWS_PER_PAGE)),
@@ -224,7 +225,15 @@ export class TrainingResourcesComponent implements OnInit {
         fileExtension: '.' + parts[1],
         fileContent: dataUrl.split(',')[1] ?? '',
       });
+      this.reading.set(false);
     };
+    reader.onerror = () => {
+      this.reading.set(false);
+      this.fileError.set('Could not read the file');
+    };
+    // Guard the async read: Save stays disabled until the base64 content is ready, else a
+    // quick submit would post the record with no file attached.
+    this.reading.set(true);
     reader.readAsDataURL(file);
   }
 

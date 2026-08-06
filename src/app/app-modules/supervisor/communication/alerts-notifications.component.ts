@@ -229,7 +229,7 @@ export class AlertsNotificationsComponent implements OnInit {
       `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     this.form.reset({
       notificationType: String(row.notificationTypeID),
-      role: row.role?.RoleName ?? 'All',
+      role: row.roleID != null ? String(row.roleID) : '',
       offices: [],
       startDate: inputDay(from),
       startTime: hhmm(from),
@@ -263,14 +263,16 @@ export class AlertsNotificationsComponent implements OnInit {
     });
   }
 
-  /** Same-day start-time ≥ end-time is invalid (old `invalidTimeFlag`, day-granularity). */
-  protected readonly timeInvalid = computed(() => {
+  /** Same-day start-time ≥ end-time is invalid (old `invalidTimeFlag`, day-granularity). A
+   * plain method (not a computed) so it re-evaluates on every event-driven CD as the user
+   * types — a computed over `form.getRawValue()` captures no signals and would freeze. */
+  protected timeInvalid(): boolean {
     const v = this.form.getRawValue();
     if (!v.startDate || !v.endDate || v.startDate !== v.endDate || !v.startTime || !v.endTime) {
       return false;
     }
     return v.startTime >= v.endTime;
-  });
+  }
 
   protected save(): void {
     if (this.form.invalid || this.timeInvalid()) {

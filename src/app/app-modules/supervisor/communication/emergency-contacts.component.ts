@@ -254,13 +254,14 @@ export class EmergencyContactsComponent implements OnInit {
       return;
     }
     const v = this.editForm.getRawValue();
+    // Old edit mutated only these four fields on the row and re-posted it — name is sent raw
+    // (no trim), and no `modifiedBy` is added (unlike the notification-update screens).
     const body: Record<string, unknown> = {
       ...row,
-      emergContactName: v.name.trim() || null,
+      emergContactName: v.name,
       designationID: Number(v.designation),
       emergContactNo: v.contactNumber.trim() || null,
       location: v.location.trim() || null,
-      modifiedBy: this.sessionStore.user()?.userName,
     };
     this.saving.set(true);
     this.api.updateEmergencyContacts(body).subscribe({
@@ -290,12 +291,9 @@ export class EmergencyContactsComponent implements OnInit {
         if (!ok) {
           return;
         }
+        // Old app mutated only `deleted` on the row and re-posted it (no `modifiedBy`).
         this.api
-          .updateEmergencyContacts({
-            ...row,
-            deleted: next,
-            modifiedBy: this.sessionStore.user()?.userName,
-          })
+          .updateEmergencyContacts({ ...row, deleted: next })
           .subscribe({
             next: () => {
               this.notify.alert('Updated successfully', 'success');
