@@ -339,7 +339,7 @@ export class FeedbackTrackingComponent implements OnInit {
   protected saveUpdate(): void {
     const row = this.selected();
     const serviceId = this.serviceId();
-    if (!row || serviceId == null || this.detailForm.invalid || this.fileError()) {
+    if (!row || serviceId == null || this.detailForm.invalid || this.fileError() || this.reading()) {
       this.detailForm.markAllAsTouched();
       return;
     }
