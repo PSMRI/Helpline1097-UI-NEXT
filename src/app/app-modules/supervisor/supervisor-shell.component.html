@@ -116,6 +116,18 @@
       @case ('30') {
         <app-call-reallocation flavor="grievance" />
       }
+      @case ('19') {
+        <app-alerts-notifications />
+      }
+      @case ('20') {
+        <app-location-messages />
+      }
+      @case ('21') {
+        <app-training-resources />
+      }
+      @case ('22') {
+        <app-emergency-contacts />
+      }
       @default {
         <!-- Not-yet-migrated pages land slice-by-slice (see PAGES map) -->
         <div class="flex min-h-[500px] items-center justify-center">

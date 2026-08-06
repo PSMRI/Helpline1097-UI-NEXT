@@ -30,6 +30,10 @@ import { menuImports } from '@common-ui/ui/menu';
 
 import { CallAllocationComponent } from './allocation/call-allocation.component';
 import { CallReallocationComponent } from './allocation/call-reallocation.component';
+import { AlertsNotificationsComponent } from './communication/alerts-notifications.component';
+import { EmergencyContactsComponent } from './communication/emergency-contacts.component';
+import { LocationMessagesComponent } from './communication/location-messages.component';
+import { TrainingResourcesComponent } from './communication/training-resources.component';
 import { CallTypeReportComponent } from './reports/call-type-report.component';
 import { DistributionReportComponent } from './reports/distribution-report.component';
 import { TelephonyIframeComponent } from './telephony-iframe.component';
@@ -67,10 +71,10 @@ const PAGES: Record<string, SupervisorPage> = {
   '16': { label: 'Sexual Orientation Report' },
   '17': { label: 'Language Distribution Report' },
   '18': { label: 'Gender Distribution Report' },
-  '19': { label: 'Alerts and Notifications', arrives: 'Phase 7f' },
-  '20': { label: 'Location Messages', arrives: 'Phase 7f' },
-  '21': { label: 'Training Resource', arrives: 'Phase 7f' },
-  '22': { label: 'Emergency Contacts', arrives: 'Phase 7f' },
+  '19': { label: 'Alerts and Notifications' },
+  '20': { label: 'Location Messages' },
+  '21': { label: 'Training Resource' },
+  '22': { label: 'Emergency Contacts' },
   '23': { label: 'Force Logout', arrives: 'Phase 7g' },
   '24': { label: 'SMS Templates', arrives: 'Phase 7g' },
   '26': { label: 'Everwell Call Allocation' },
@@ -149,6 +153,10 @@ const CONFIGURATIONS_MENU: MenuEntry[] = [
     TelephonyIframeComponent,
     CallAllocationComponent,
     CallReallocationComponent,
+    AlertsNotificationsComponent,
+    EmergencyContactsComponent,
+    LocationMessagesComponent,
+    TrainingResourcesComponent,
     CallTypeReportComponent,
     DistributionReportComponent,
     ...menuImports,
