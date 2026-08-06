@@ -35,8 +35,10 @@ import { EmergencyContactsComponent } from './communication/emergency-contacts.c
 import { LocationMessagesComponent } from './communication/location-messages.component';
 import { TrainingResourcesComponent } from './communication/training-resources.component';
 import { BlacklistNumberComponent } from './config/blacklist-number.component';
+import { CallAuditingComponent } from './config/call-auditing.component';
 import { ForceLogoutComponent } from './config/force-logout.component';
 import { KnowledgeManagementComponent } from './config/knowledge-management.component';
+import { SmsTemplatesComponent } from './config/sms-templates.component';
 import { CallTypeReportComponent } from './reports/call-type-report.component';
 import { DistributionReportComponent } from './reports/distribution-report.component';
 import { TelephonyIframeComponent } from './telephony-iframe.component';
@@ -61,7 +63,7 @@ const PAGES: Record<string, SupervisorPage> = {
   '2': { label: 'Agent Status' },
   '3': { label: 'Blacklist a Number' },
   '4': { label: 'Dial Beneficiary', arrives: 'a later phase (menu-less in the old app)' },
-  '5': { label: 'Call Auditing', arrives: 'Phase 7g' },
+  '5': { label: 'Call Auditing' },
   '6': { label: 'Supervisor Notifications', arrives: 'a later phase (menu-less in the old app)' },
   '7': { label: 'Telephony Reports' },
   '8': { label: 'Supervisor Configurations', arrives: 'a later phase (menu-less in the old app)' },
@@ -79,7 +81,7 @@ const PAGES: Record<string, SupervisorPage> = {
   '21': { label: 'Training Resource' },
   '22': { label: 'Emergency Contacts' },
   '23': { label: 'Force Logout' },
-  '24': { label: 'SMS Templates', arrives: 'Phase 7g' },
+  '24': { label: 'SMS Templates' },
   '26': { label: 'Everwell Call Allocation' },
   '27': { label: 'Everwell Call Re-Allocation' },
   '28': { label: 'Everwell Guidelines Upload', arrives: 'Phase 8' },
@@ -161,8 +163,10 @@ const CONFIGURATIONS_MENU: MenuEntry[] = [
     LocationMessagesComponent,
     TrainingResourcesComponent,
     BlacklistNumberComponent,
+    CallAuditingComponent,
     ForceLogoutComponent,
     KnowledgeManagementComponent,
+    SmsTemplatesComponent,
     CallTypeReportComponent,
     DistributionReportComponent,
     ...menuImports,

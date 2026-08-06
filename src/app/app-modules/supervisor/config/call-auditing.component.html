@@ -1,0 +1,224 @@
+<!--
+  AMRIT – Accessible Medical Records via Integrated Technologies
+  Integrated EHR (Electronic Health Records) Solution
+
+  Copyright (C) "Piramal Swasthya Management and Research Institute"
+
+  This file is part of AMRIT.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see https://www.gnu.org/licenses/.
+-->
+
+@if (!caseSheet()) {
+  <div class="flex flex-col gap-4">
+    <h2 class="text-base font-semibold">Call Auditing</h2>
+
+    <form class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" [formGroup]="form">
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Start Date <span class="text-destructive">*</span></span>
+        <input z-input formControlName="startDate" type="date" [max]="maxDay" (change)="onStartDateChange()" />
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>End Date <span class="text-destructive">*</span></span>
+        <input z-input formControlName="endDate" type="date" [min]="form.controls.startDate.value" [max]="maxDay" />
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Service Line <span class="text-destructive">*</span></span>
+        <z-select formControlName="serviceLine" zPlaceholder="Select">
+          @for (s of serviceLines(); track s.serviceID) {
+            <z-select-item [zValue]="s.serviceID + ''">{{ s.serviceName }}</z-select-item>
+          }
+        </z-select>
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Role</span>
+        <z-select formControlName="role" zPlaceholder="All" (zValueChange)="onRoleChange($event)">
+          <z-select-item zValue="">All</z-select-item>
+          @for (r of roles(); track r.roleID) {
+            <z-select-item [zValue]="r.roleName + ''">{{ r.roleName }}</z-select-item>
+          }
+        </z-select>
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Inbound / Outbound</span>
+        <z-select formControlName="inboundOutbound" zPlaceholder="All">
+          <z-select-item zValue="">All</z-select-item>
+          <z-select-item zValue="inbound">Inbound</z-select-item>
+          <z-select-item zValue="outbound">Outbound</z-select-item>
+        </z-select>
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Agent</span>
+        <z-select formControlName="agent" zPlaceholder="All">
+          <z-select-item zValue="">All</z-select-item>
+          @for (a of agents(); track a.agentID) {
+            <z-select-item [zValue]="a.agentID + ''">{{ a.agentID }}</z-select-item>
+          }
+        </z-select>
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Beneficiary Phone No</span>
+        <input z-input formControlName="benPhoneNo" inputmode="numeric" maxlength="10" />
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Call Type <span class="text-destructive">*</span></span>
+        <z-select formControlName="callType" zPlaceholder="Select" (zValueChange)="onCallTypeChange($event)">
+          @for (g of callGroups(); track g.callGroupType) {
+            <z-select-item [zValue]="g.callGroupType + ''">{{ g.callGroupType }}</z-select-item>
+          }
+        </z-select>
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Call Sub Type <span class="text-destructive">*</span></span>
+        <z-select formControlName="callSubType" zPlaceholder="Select" [zDisabled]="isAll()">
+          @for (st of callSubTypes(); track st.callTypeID) {
+            <z-select-item [zValue]="st.callTypeID + ''">{{ st.callType }}</z-select-item>
+          }
+        </z-select>
+      </label>
+      <div class="flex items-end">
+        <button
+          z-button
+          type="button"
+          [zDisabled]="form.invalid || searching() || form.controls.endDate.value < form.controls.startDate.value"
+          (click)="search()"
+        >
+          Search
+        </button>
+      </div>
+    </form>
+
+    <div class="overflow-x-auto rounded-md border border-border">
+      <table class="w-full text-sm">
+        <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+          <tr>
+            <th class="px-3 py-2">S.No</th>
+            <th class="px-3 py-2">Call Id</th>
+            <th class="px-3 py-2">Call Date &amp; Time</th>
+            <th class="px-3 py-2">Beneficiary Id</th>
+            <th class="px-3 py-2">Beneficiary Name</th>
+            <th class="px-3 py-2">Phone No</th>
+            <th class="px-3 py-2">Remarks</th>
+            <th class="px-3 py-2">Call Type</th>
+            <th class="px-3 py-2">Case Sheet</th>
+            <th class="px-3 py-2">Voice Record</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rec of records(); track $index) {
+            <tr class="border-t border-border">
+              <td class="px-3 py-2">{{ (pageNo() - 1) * 5 + $index + 1 }}</td>
+              <td class="px-3 py-2">{{ rec.benCallID }}</td>
+              <td class="px-3 py-2">{{ rec.callTime | date: 'dd/MM/yyyy hh:mm a' : 'UTC' }}</td>
+              <td class="px-3 py-2">{{ rec.beneficiaryID }}</td>
+              <td class="px-3 py-2">{{ rec.name }}</td>
+              <td class="px-3 py-2">{{ rec.phoneNo }}</td>
+              <td class="px-3 py-2">{{ rec.remarks }}</td>
+              <td class="px-3 py-2">{{ rec.callType }}</td>
+              <td class="px-3 py-2">
+                <button class="text-primary underline" type="button" (click)="openCaseSheet(rec)">
+                  View
+                </button>
+              </td>
+              <td class="px-3 py-2">
+                @if (audioRowIndex() === $index && audioUrl()) {
+                  <audio controls autoplay preload="none">
+                    <source [src]="audioUrl()" type="audio/ogg" />
+                    <source [src]="audioUrl()" type="audio/mpeg" />
+                  </audio>
+                } @else {
+                  <button class="text-primary underline" type="button" (click)="playAudio(rec, $index)">
+                    Play
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="10" class="px-3 py-6 text-center text-muted-foreground">No Records Found</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (pageCount() > 0) {
+      <div class="flex items-center justify-end gap-3 text-sm">
+        <span class="text-muted-foreground">Page {{ pageNo() }} of {{ pageCount() }}</span>
+        <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="pageNo() === 1" (click)="prevPage()">
+          Prev
+        </button>
+        <button
+          z-button
+          zSize="sm"
+          zType="outline"
+          type="button"
+          [zDisabled]="pageNo() >= pageCount()"
+          (click)="nextPage()"
+        >
+          Next
+        </button>
+      </div>
+    }
+  </div>
+} @else {
+  <!-- Read-only case-sheet summary (old inline panel + browser print) -->
+  <div class="flex flex-col gap-4">
+    <div class="flex items-center justify-between gap-3 print:hidden">
+      <h2 class="text-base font-semibold">Case Sheet</h2>
+      <div class="flex gap-2">
+        <button z-button type="button" (click)="print()">Print</button>
+        <button z-button zType="outline" type="button" (click)="closeCaseSheet()">Back</button>
+      </div>
+    </div>
+
+    @if (caseSheetBen(); as ben) {
+      <div class="rounded-md border border-border p-3 text-sm">
+        <h3 class="mb-2 font-semibold">Beneficiary</h3>
+        <div class="grid gap-2 sm:grid-cols-3">
+          <div><span class="text-muted-foreground">Beneficiary ID:</span> {{ ben.beneficiaryID }}</div>
+          <div><span class="text-muted-foreground">Name:</span> {{ ben.name }}</div>
+          <div><span class="text-muted-foreground">Phone:</span> {{ ben.phoneNo }}</div>
+          <div><span class="text-muted-foreground">Call ID:</span> {{ ben.benCallID }}</div>
+          <div>
+            <span class="text-muted-foreground">Call Time:</span>
+            {{ ben.callTime | date: 'dd/MM/yyyy hh:mm a' : 'UTC' }}
+          </div>
+          <div><span class="text-muted-foreground">Call Type:</span> {{ ben.callType }}</div>
+        </div>
+      </div>
+    }
+
+    @if (caseSheet(); as cs) {
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div class="rounded-md border border-border p-3 text-sm">
+          <h3 class="mb-1 font-semibold">Information Services</h3>
+          <p class="text-muted-foreground">{{ cs.informations?.length ?? 0 }} record(s)</p>
+        </div>
+        <div class="rounded-md border border-border p-3 text-sm">
+          <h3 class="mb-1 font-semibold">Counselling Services</h3>
+          <p class="text-muted-foreground">{{ cs.counsellings?.length ?? 0 }} record(s)</p>
+        </div>
+        <div class="rounded-md border border-border p-3 text-sm">
+          <h3 class="mb-1 font-semibold">Feedback Services</h3>
+          <p class="text-muted-foreground">{{ cs.feedbacks?.length ?? 0 }} record(s)</p>
+        </div>
+        <div class="rounded-md border border-border p-3 text-sm">
+          <h3 class="mb-1 font-semibold">Referral Services</h3>
+          <p class="text-muted-foreground">{{ cs.referrals?.length ?? 0 }} record(s)</p>
+        </div>
+      </div>
+    }
+  </div>
+}
