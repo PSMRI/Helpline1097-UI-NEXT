@@ -112,6 +112,7 @@
           [zMultiple]="true"
           zPlaceholder="Select office(s)"
           [zDisabled]="form.controls.offices.disabled"
+          (zValueChange)="onOfficesChange($event)"
         >
           @for (o of offices(); track o.pSAddMapID) {
             <z-select-item [zValue]="o.pSAddMapID + ''">{{ o.locationName }}</z-select-item>
@@ -143,7 +144,12 @@
       </label>
 
       <div class="flex items-center gap-3 sm:col-span-2 lg:col-span-3">
-        <button z-button type="button" [zDisabled]="form.invalid || saving()" (click)="save()">
+        <button
+          z-button
+          type="button"
+          [zDisabled]="form.invalid || saving() || (!editing() && officesSelected().length === 0)"
+          (click)="save()"
+        >
           {{ editing() ? 'Update' : 'Create' }}
         </button>
         <button z-button zType="outline" type="button" (click)="cancelForm()">Cancel</button>

@@ -150,6 +150,7 @@
           [zMultiple]="true"
           zPlaceholder="All offices"
           [zDisabled]="!form.controls.role.value || form.controls.role.disabled"
+          (zValueChange)="onOfficesChange($event)"
         >
           @for (o of offices(); track o.pSAddMapID) {
             <z-select-item [zValue]="o.pSAddMapID + ''">{{ o.locationName }}</z-select-item>

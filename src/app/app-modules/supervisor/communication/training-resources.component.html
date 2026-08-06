@@ -116,6 +116,7 @@
           [zMultiple]="true"
           zPlaceholder="Select role(s)"
           [zDisabled]="form.controls.roles.disabled"
+          (zValueChange)="onRolesChange($event)"
         >
           @for (r of roles(); track r.roleID) {
             <z-select-item [zValue]="r.roleID + ''">{{ r.roleName }}</z-select-item>
@@ -152,7 +153,12 @@
       </label>
 
       <div class="flex items-center gap-3 sm:col-span-2">
-        <button z-button type="button" [zDisabled]="form.invalid || saving() || reading()" (click)="save()">
+        <button
+          z-button
+          type="button"
+          [zDisabled]="form.invalid || saving() || reading() || (!editing() && rolesSelected().length === 0)"
+          (click)="save()"
+        >
           {{ editing() ? 'Update' : 'Create' }}
         </button>
         <button z-button zType="outline" type="button" (click)="cancelForm()">Cancel</button>

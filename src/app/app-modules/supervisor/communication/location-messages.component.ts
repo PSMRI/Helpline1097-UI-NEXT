@@ -62,6 +62,11 @@ function boundary(dateStr: string, edge: 'start' | 'end'): Date {
 
 const ROWS_PER_PAGE = 3;
 
+/** Coerce a z-select value to an array (see alerts-notifications for the CVA caveat). */
+function asArray(value: string | string[]): string[] {
+  return Array.isArray(value) ? value : value ? [value] : [];
+}
+
 /**
  * Location Messages (supervisor case 21 in the old menu / case 20 here). Audience = offices
  * from `m/location/getAlllocationNew`. Search posts `workingLocationIDs` (plural — every
@@ -95,6 +100,8 @@ export class LocationMessagesComponent implements OnInit {
   protected readonly editing = signal<LocationRow | null>(null);
   protected readonly offices = signal<OfficeRow[]>([]);
   protected readonly rows = signal<LocationRow[]>([]);
+  /** The full office multi-selection (the reactive control alone is unreliable in multi-mode). */
+  protected readonly officesSelected = signal<string[]>([]);
   protected readonly pageIndex = signal(0);
   protected readonly searching = signal(false);
   protected readonly saving = signal(false);
@@ -113,7 +120,9 @@ export class LocationMessagesComponent implements OnInit {
   });
 
   protected readonly form = this.fb.group({
-    offices: this.fb.control<string[]>([], { nonNullable: true, validators: [Validators.required] }),
+    // Office selection is tracked via `officesSelected` (multi-mode CVA is unreliable); the
+    // control remains only to drive the disabled state in edit mode.
+    offices: this.fb.control<string[]>([], { nonNullable: true }),
     startDate: this.fb.control<string>('', { nonNullable: true, validators: [Validators.required] }),
     endDate: this.fb.control<string>('', { nonNullable: true, validators: [Validators.required] }),
     subject: this.fb.control<string>('', {
@@ -192,13 +201,19 @@ export class LocationMessagesComponent implements OnInit {
   // ---- create / edit -------------------------------------------------------
   protected startCreate(): void {
     this.editing.set(null);
+    this.officesSelected.set([]);
     this.form.reset({ offices: [], startDate: '', endDate: '', subject: '', message: '' });
     this.form.controls.offices.enable();
     this.mode.set('form');
   }
 
+  protected onOfficesChange(value: string | string[]): void {
+    this.officesSelected.set(asArray(value));
+  }
+
   protected startEdit(row: LocationRow): void {
     this.editing.set(row);
+    this.officesSelected.set([]);
     const from = row.validFrom ? new Date(row.validFrom) : new Date();
     const till = row.validTill ? new Date(row.validTill) : new Date();
     this.form.reset({
@@ -231,11 +246,11 @@ export class LocationMessagesComponent implements OnInit {
   }
 
   protected save(): void {
-    if (this.form.invalid) {
+    const editing = this.editing();
+    if (this.form.invalid || (!editing && this.officesSelected().length === 0)) {
       this.form.markAllAsTouched();
       return;
     }
-    const editing = this.editing();
     if (editing) {
       this.update(editing);
     } else {
@@ -258,7 +273,10 @@ export class LocationMessagesComponent implements OnInit {
       validFrom: tzShift(boundary(v.startDate, 'start')),
       validTill: tzShift(boundary(v.endDate, 'end')),
     };
-    const requestArray = (v.offices ?? []).map((o) => ({ ...base, workingLocationID: Number(o) }));
+    const requestArray = this.officesSelected().map((o) => ({
+      ...base,
+      workingLocationID: Number(o),
+    }));
     this.saving.set(true);
     this.api.createNotification(requestArray).subscribe({
       next: () => {

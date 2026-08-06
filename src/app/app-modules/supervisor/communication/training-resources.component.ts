@@ -58,6 +58,11 @@ const ALLOWED_EXT = ['msg', 'pdf', 'png', 'jpeg', 'jpg', 'doc', 'docx', 'xlsx', 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ROWS_PER_PAGE = 3;
 
+/** Coerce a z-select value to an array (see alerts-notifications for the CVA caveat). */
+function asArray(value: string | string[]): string[] {
+  return Array.isArray(value) ? value : value ? [value] : [];
+}
+
 /** Local Date at start-of-day (00:00:00). */
 function startOfDay(d: Date): Date {
   const c = new Date(d);
@@ -99,6 +104,8 @@ export class TrainingResourcesComponent implements OnInit {
   protected readonly editing = signal<TrainingRow | null>(null);
   protected readonly roles = signal<ProviderRole[]>([]);
   protected readonly rows = signal<TrainingRow[]>([]);
+  /** The full role multi-selection (the reactive control alone is unreliable in multi-mode). */
+  protected readonly rolesSelected = signal<string[]>([]);
   protected readonly pageIndex = signal(0);
   protected readonly saving = signal(false);
   protected readonly pendingFile = signal<PendingFile | null>(null);
@@ -114,7 +121,9 @@ export class TrainingResourcesComponent implements OnInit {
   });
 
   protected readonly form = this.fb.group({
-    roles: this.fb.control<string[]>([], { nonNullable: true, validators: [Validators.required] }),
+    // Role selection is tracked via `rolesSelected` (multi-mode CVA is unreliable); the
+    // control remains only to drive the disabled state in edit mode.
+    roles: this.fb.control<string[]>([], { nonNullable: true }),
     subject: this.fb.control<string>('', {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(5), Validators.maxLength(200)],
@@ -238,10 +247,15 @@ export class TrainingResourcesComponent implements OnInit {
   }
 
   // ---- create / edit -------------------------------------------------------
+  protected onRolesChange(value: string | string[]): void {
+    this.rolesSelected.set(asArray(value));
+  }
+
   protected startCreate(): void {
     this.editing.set(null);
     this.pendingFile.set(null);
     this.fileError.set(null);
+    this.rolesSelected.set([]);
     this.form.reset({ roles: [], subject: '', message: '' });
     this.form.controls.roles.enable();
     this.mode.set('form');
@@ -251,6 +265,7 @@ export class TrainingResourcesComponent implements OnInit {
     this.editing.set(row);
     this.pendingFile.set(null);
     this.fileError.set(null);
+    this.rolesSelected.set(row.roleID != null ? [String(row.roleID)] : []);
     this.form.reset({
       roles: row.roleID != null ? [String(row.roleID)] : [],
       subject: row.notification ?? '',
@@ -283,11 +298,11 @@ export class TrainingResourcesComponent implements OnInit {
   }
 
   protected save(): void {
-    if (this.form.invalid) {
+    const editing = this.editing();
+    if (this.form.invalid || (!editing && this.rolesSelected().length === 0)) {
       this.form.markAllAsTouched();
       return;
     }
-    const editing = this.editing();
     if (editing) {
       this.update(editing);
     } else {
@@ -314,7 +329,7 @@ export class TrainingResourcesComponent implements OnInit {
       validTill,
       kmFileManager: km,
     };
-    const requestArray = (v.roles ?? []).map((r) => ({ ...base, roleID: Number(r) }));
+    const requestArray = this.rolesSelected().map((r) => ({ ...base, roleID: Number(r) }));
     this.saving.set(true);
     this.api.createNotification(requestArray).subscribe({
       next: () => {

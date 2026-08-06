@@ -74,6 +74,13 @@ function dateAt(dateStr: string, time: string | null, fallback: [number, number,
 
 const ROWS_PER_PAGE = 3;
 
+/** Coerce a z-select value to an array. In multiple mode ZardSelect's CVA writes the
+ * last-toggled scalar to the form control (not the full selection), so the reliable source
+ * of the whole multi-selection is the `zValueChange` output, captured into a signal. */
+function asArray(value: string | string[]): string[] {
+  return Array.isArray(value) ? value : value ? [value] : [];
+}
+
 /**
  * Alerts & Notifications (supervisor case 19). List-first: a type/date search over
  * `getSupervisorNotification`, plus a create/edit form that posts an ARRAY to
@@ -109,6 +116,8 @@ export class AlertsNotificationsComponent implements OnInit {
   protected readonly roles = signal<ProviderRole[]>([]);
   protected readonly offices = signal<OfficeRow[]>([]);
   protected readonly rows = signal<NotificationRow[]>([]);
+  /** The full office multi-selection (see `asArray` — the form control alone is unreliable). */
+  protected readonly officesSelected = signal<string[]>([]);
   protected readonly pageIndex = signal(0);
   protected readonly searching = signal(false);
   protected readonly saving = signal(false);
@@ -215,10 +224,15 @@ export class AlertsNotificationsComponent implements OnInit {
   protected startCreate(): void {
     this.editing.set(null);
     this.offices.set([]);
+    this.officesSelected.set([]);
     this.form.reset({ notificationType: '', role: '', offices: [], startDate: '', startTime: '', endDate: '', endTime: '', subject: '', message: '' });
     this.form.controls.notificationType.enable();
     this.form.controls.role.enable();
     this.mode.set('form');
+  }
+
+  protected onOfficesChange(value: string | string[]): void {
+    this.officesSelected.set(asArray(value));
   }
 
   protected startEdit(row: NotificationRow): void {
@@ -253,6 +267,7 @@ export class AlertsNotificationsComponent implements OnInit {
     const serviceId = this.serviceId();
     const roleId = value ? Number(value) : undefined;
     this.form.controls.offices.setValue([]);
+    this.officesSelected.set([]);
     this.offices.set([]);
     if (serviceId == null || roleId === undefined) {
       return;
@@ -306,7 +321,7 @@ export class AlertsNotificationsComponent implements OnInit {
     if (roleId !== undefined) {
       base['roleID'] = roleId;
     }
-    const selectedOffices = v.offices ?? [];
+    const selectedOffices = this.officesSelected();
     const requestArray: Record<string, unknown>[] =
       selectedOffices.length > 0
         ? selectedOffices.map((o) => ({ ...base, workingLocationID: Number(o) }))
