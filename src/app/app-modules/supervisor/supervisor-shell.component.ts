@@ -39,6 +39,7 @@ import { CallAuditingComponent } from './config/call-auditing.component';
 import { ForceLogoutComponent } from './config/force-logout.component';
 import { KnowledgeManagementComponent } from './config/knowledge-management.component';
 import { SmsTemplatesComponent } from './config/sms-templates.component';
+import { FeedbackTrackingComponent } from './feedback/feedback-tracking.component';
 import { CallTypeReportComponent } from './reports/call-type-report.component';
 import { DistributionReportComponent } from './reports/distribution-report.component';
 import { TelephonyIframeComponent } from './telephony-iframe.component';
@@ -59,7 +60,7 @@ interface SupervisorPage {
  * cases 11/25 never existed.
  */
 const PAGES: Record<string, SupervisorPage> = {
-  '1': { label: 'Feedback Tracking', arrives: 'Phase 7h' },
+  '1': { label: 'Feedback Tracking' },
   '2': { label: 'Agent Status' },
   '3': { label: 'Blacklist a Number' },
   '4': { label: 'Dial Beneficiary', arrives: 'a later phase (menu-less in the old app)' },
@@ -167,6 +168,7 @@ const CONFIGURATIONS_MENU: MenuEntry[] = [
     ForceLogoutComponent,
     KnowledgeManagementComponent,
     SmsTemplatesComponent,
+    FeedbackTrackingComponent,
     CallTypeReportComponent,
     DistributionReportComponent,
     ...menuImports,
