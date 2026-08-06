@@ -34,6 +34,9 @@ import { AlertsNotificationsComponent } from './communication/alerts-notificatio
 import { EmergencyContactsComponent } from './communication/emergency-contacts.component';
 import { LocationMessagesComponent } from './communication/location-messages.component';
 import { TrainingResourcesComponent } from './communication/training-resources.component';
+import { BlacklistNumberComponent } from './config/blacklist-number.component';
+import { ForceLogoutComponent } from './config/force-logout.component';
+import { KnowledgeManagementComponent } from './config/knowledge-management.component';
 import { CallTypeReportComponent } from './reports/call-type-report.component';
 import { DistributionReportComponent } from './reports/distribution-report.component';
 import { TelephonyIframeComponent } from './telephony-iframe.component';
@@ -56,14 +59,14 @@ interface SupervisorPage {
 const PAGES: Record<string, SupervisorPage> = {
   '1': { label: 'Feedback Tracking', arrives: 'Phase 7h' },
   '2': { label: 'Agent Status' },
-  '3': { label: 'Blacklist a Number', arrives: 'Phase 7g' },
+  '3': { label: 'Blacklist a Number' },
   '4': { label: 'Dial Beneficiary', arrives: 'a later phase (menu-less in the old app)' },
   '5': { label: 'Call Auditing', arrives: 'Phase 7g' },
   '6': { label: 'Supervisor Notifications', arrives: 'a later phase (menu-less in the old app)' },
   '7': { label: 'Telephony Reports' },
   '8': { label: 'Supervisor Configurations', arrives: 'a later phase (menu-less in the old app)' },
   '9': { label: 'Call Type Report' },
-  '10': { label: 'Knowledge Management', arrives: 'Phase 7g' },
+  '10': { label: 'Knowledge Management' },
   '12': { label: 'Outbound Call List' },
   '13': { label: 'Outbound Call Re-Allocation' },
   '14': { label: 'Campaign Status' },
@@ -75,7 +78,7 @@ const PAGES: Record<string, SupervisorPage> = {
   '20': { label: 'Location Messages' },
   '21': { label: 'Training Resource' },
   '22': { label: 'Emergency Contacts' },
-  '23': { label: 'Force Logout', arrives: 'Phase 7g' },
+  '23': { label: 'Force Logout' },
   '24': { label: 'SMS Templates', arrives: 'Phase 7g' },
   '26': { label: 'Everwell Call Allocation' },
   '27': { label: 'Everwell Call Re-Allocation' },
@@ -157,6 +160,9 @@ const CONFIGURATIONS_MENU: MenuEntry[] = [
     EmergencyContactsComponent,
     LocationMessagesComponent,
     TrainingResourcesComponent,
+    BlacklistNumberComponent,
+    ForceLogoutComponent,
+    KnowledgeManagementComponent,
     CallTypeReportComponent,
     DistributionReportComponent,
     ...menuImports,

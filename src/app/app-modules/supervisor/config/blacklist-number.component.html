@@ -1,0 +1,174 @@
+<!--
+  AMRIT – Accessible Medical Records via Integrated Technologies
+  Integrated EHR (Electronic Health Records) Solution
+
+  Copyright (C) "Piramal Swasthya Management and Research Institute"
+
+  This file is part of AMRIT.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see https://www.gnu.org/licenses/.
+-->
+
+<div class="flex flex-col gap-4">
+  <h2 class="text-base font-semibold">Blacklist a Number</h2>
+
+  <div class="flex flex-wrap items-end gap-3">
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" (change)="toggleSearchByPhone($event)" />
+      <span>Search by phone number</span>
+    </label>
+    @if (searchByPhone()) {
+      <form class="flex items-end gap-3" [formGroup]="searchForm">
+        <label class="flex flex-col gap-1.5 text-sm">
+          <span>Phone Number</span>
+          <input z-input formControlName="phoneNumber" inputmode="numeric" maxlength="10" />
+        </label>
+        <button z-button type="button" [zDisabled]="searchForm.invalid || loading()" (click)="search()">
+          Search
+        </button>
+      </form>
+    }
+  </div>
+
+  <div class="overflow-x-auto rounded-md border border-border">
+    <table class="w-full text-sm">
+      <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+        <tr>
+          <th class="px-3 py-2">Phone Number</th>
+          <th class="px-3 py-2">Status</th>
+          <th class="px-3 py-2">Call Count</th>
+          <th class="px-3 py-2">Reason</th>
+          <th class="px-3 py-2">Blocked On</th>
+          <th class="px-3 py-2">Blocked Till</th>
+          <th class="px-3 py-2"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of pagedRows(); track row.phoneBlockID) {
+          <tr class="border-t border-border">
+            <td class="px-3 py-2">{{ row.phoneNo }}</td>
+            <td class="px-3 py-2">{{ row.isBlocked ? 'Blocked' : 'UnBlocked' }}</td>
+            <td class="px-3 py-2">
+              @if ((row.noOfNuisanceCall ?? 0) > 0) {
+                <button class="text-primary underline" type="button" (click)="showRecordings(row)">
+                  {{ row.noOfNuisanceCall }}
+                </button>
+              } @else {
+                0
+              }
+            </td>
+            <td class="px-3 py-2">Nuisance Call</td>
+            <td class="px-3 py-2">
+              {{ row.isBlocked ? (row.blockStartDate | date: 'dd/MM/yyyy hh:mm a' : 'UTC') : '—' }}
+            </td>
+            <td class="px-3 py-2">
+              {{ row.isBlocked ? (row.blockEndDate | date: 'dd/MM/yyyy hh:mm a' : 'UTC') : '—' }}
+            </td>
+            <td class="px-3 py-2 text-right">
+              @if (row.isBlocked) {
+                <button z-button zSize="sm" zType="outline" type="button" (click)="unblock(row)">
+                  Unblock
+                </button>
+              } @else {
+                <button z-button zSize="sm" type="button" (click)="block(row)">Block</button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="px-3 py-6 text-center text-muted-foreground">No records found</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (rows().length > 0) {
+    <div class="flex items-center justify-end gap-3 text-sm">
+      <span class="text-muted-foreground">Page {{ pageIndex() + 1 }} of {{ pageCount() }}</span>
+      <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="pageIndex() === 0" (click)="prevPage()">
+        Prev
+      </button>
+      <button
+        z-button
+        zSize="sm"
+        zType="outline"
+        type="button"
+        [zDisabled]="pageIndex() >= pageCount() - 1"
+        (click)="nextPage()"
+      >
+        Next
+      </button>
+    </div>
+  }
+
+  @if (recordingRows(); as recordings) {
+    <div class="flex flex-col gap-2">
+      <h3 class="text-sm font-semibold">Nuisance Call Recordings</h3>
+      <div class="overflow-x-auto rounded-md border border-border">
+        <table class="w-full text-sm">
+          <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+            <tr>
+              <th class="px-3 py-2">Beneficiary ID</th>
+              <th class="px-3 py-2">Beneficiary Name</th>
+              <th class="px-3 py-2">Age</th>
+              <th class="px-3 py-2">Phone Number</th>
+              <th class="px-3 py-2">Call Id</th>
+              <th class="px-3 py-2">Call Time</th>
+              <th class="px-3 py-2">Agent ID</th>
+              <th class="px-3 py-2">Remarks</th>
+              <th class="px-3 py-2">Audio Recording</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rec of recordings; track $index) {
+              <tr class="border-t border-border">
+                <td class="px-3 py-2">{{ rec.beneficiaryModel?.beneficiaryID }}</td>
+                <td class="px-3 py-2">
+                  {{ rec.beneficiaryModel?.firstName }} {{ rec.beneficiaryModel?.lastName }}
+                </td>
+                <td class="px-3 py-2">
+                  {{ rec.beneficiaryModel?.actualAge }} {{ rec.beneficiaryModel?.ageUnits }}
+                </td>
+                <td class="px-3 py-2">{{ rec.phoneNo }}</td>
+                <td class="px-3 py-2">{{ rec.benCallID }}</td>
+                <td class="px-3 py-2">{{ rec.callTime | date: 'dd/MM/yyyy hh:mm a' : 'UTC' }}</td>
+                <td class="px-3 py-2">{{ rec.agentID }}</td>
+                <td class="px-3 py-2">{{ rec.remarks }}</td>
+                <td class="px-3 py-2">
+                  @if (audioRowIndex() === $index && audioUrl()) {
+                    <audio controls autoplay preload="none">
+                      <source [src]="audioUrl()" type="audio/ogg" />
+                      <source [src]="audioUrl()" type="audio/mpeg" />
+                    </audio>
+                  } @else {
+                    <button class="text-primary underline" type="button" (click)="playAudio(rec, $index)">
+                      Play
+                    </button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="9" class="px-3 py-6 text-center text-muted-foreground">
+                  No recordings found
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
