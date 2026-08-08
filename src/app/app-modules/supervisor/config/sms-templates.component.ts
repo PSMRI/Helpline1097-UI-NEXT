@@ -40,6 +40,11 @@ interface SmsParameter {
   smsParameterType?: string;
   smsParameterName?: string;
 }
+/** getSMSParameters returns parameters grouped by type: [{smsParameterType, smsParameters[]}]. */
+interface SmsParameterGroup {
+  smsParameterType?: string;
+  smsParameters?: SmsParameter[];
+}
 interface SmsParameterMap {
   createdBy?: string;
   modifiedBy?: string;
@@ -91,7 +96,7 @@ export class SmsTemplatesComponent implements OnInit {
   protected readonly mode = signal<'list' | 'create' | 'view'>('list');
   protected readonly templates = signal<SmsTemplateRow[]>([]);
   protected readonly smsTypes = signal<SmsType[]>([]);
-  protected readonly smsParameters = signal<SmsParameter[]>([]);
+  protected readonly smsParameterGroups = signal<SmsParameterGroup[]>([]);
   protected readonly pendingParameters = signal<string[]>([]);
   private parameterCount = 0;
   protected readonly buffer = signal<SmsParameterMap[]>([]);
@@ -113,19 +118,12 @@ export class SmsTemplatesComponent implements OnInit {
     return this.templates().slice(start, start + ROWS_PER_PAGE);
   });
 
-  /** Distinct value-types available for mapping (the `valueType` select). */
-  protected readonly valueTypes = computed(() => {
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const p of this.smsParameters()) {
-      const t = p.smsParameterType ?? '';
-      if (t && !seen.has(t)) {
-        seen.add(t);
-        out.push(t);
-      }
-    }
-    return out;
-  });
+  /** The value-types available for mapping (the `valueType` select) — one per group. */
+  protected readonly valueTypes = computed(() =>
+    this.smsParameterGroups()
+      .map((g) => g.smsParameterType ?? '')
+      .filter(Boolean),
+  );
 
   protected readonly form = this.fb.group({
     templateName: this.fb.control<string>('', {
@@ -189,7 +187,7 @@ export class SmsTemplatesComponent implements OnInit {
     this.mapForm.reset({ parameter: '', valueType: '', value: '' });
     this.buffer.set([]);
     this.pendingParameters.set([]);
-    this.smsParameters.set([]);
+    this.smsParameterGroups.set([]);
     this.showParameters.set(false);
     this.parameterCount = 0;
     this.mode.set('create');
@@ -241,7 +239,7 @@ export class SmsTemplatesComponent implements OnInit {
     // Load the value lookups once for the mapping selects.
     this.api.getSMSParameters(SMS_SERVICE_ID).subscribe({
       next: (res) =>
-        this.smsParameters.set(Array.isArray(res?.data) ? (res.data as SmsParameter[]) : []),
+        this.smsParameterGroups.set(Array.isArray(res?.data) ? (res.data as SmsParameterGroup[]) : []),
       error: (err: { errorMessage?: string }) =>
         this.notify.alert(err?.errorMessage ?? 'Failed to load SMS parameters', 'error'),
     });
@@ -253,7 +251,7 @@ export class SmsTemplatesComponent implements OnInit {
 
   protected valueOptions(): SmsParameter[] {
     const type = this.mapForm.controls.valueType.value;
-    return this.smsParameters().filter((p) => p.smsParameterType === type);
+    return this.smsParameterGroups().find((g) => g.smsParameterType === type)?.smsParameters ?? [];
   }
 
   protected addMapping(): void {
@@ -262,7 +260,7 @@ export class SmsTemplatesComponent implements OnInit {
       this.notify.alert('Parameter, value type and value should be selected', 'info');
       return;
     }
-    const value = this.smsParameters().find((p) => String(p.smsParameterID) === m.value);
+    const value = this.valueOptions().find((p) => String(p.smsParameterID) === m.value);
     const userName = this.sessionStore.user()?.userName;
     this.buffer.update((rows) => [
       ...rows,
