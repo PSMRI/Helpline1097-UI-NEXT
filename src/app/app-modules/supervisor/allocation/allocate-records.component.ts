@@ -37,7 +37,7 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
-import { AllocationApiService, AllocationFlavor } from './allocation-api.service';
+import { AllocationApiService, AllocationFlavor, dayBoundary } from './allocation-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 import { numOrNull } from '@/app-modules/core/utils/select-value';
@@ -98,7 +98,7 @@ interface AgentRow {
       </label>
       <label class="flex min-w-52 flex-col gap-1.5 text-sm">
         <span>Agents <span class="text-destructive">*</span></span>
-        <z-select formControlName="agents" [zMultiple]="true" zPlaceholder="Select agents" (zValueChange)="onAgentsChange($event)">
+        <z-select formControlName="agents" [zMultiple]="true" zPlaceholder="Select agents" [zDisabled]="agents().length === 0" (zValueChange)="onAgentsChange($event)">
           @for (a of agents(); track a.userID) {
             <z-select-item [zValue]="a.userID + ''">{{ a.firstName }} {{ a.lastName }}</z-select-item>
           }
@@ -108,7 +108,7 @@ interface AgentRow {
         <span>No. to allocate <span class="text-destructive">*</span></span>
         <input z-input formControlName="allocateNo" type="number" (change)="clampAllocateNo()" />
       </label>
-      <button z-button type="button" [zDisabled]="form.invalid" [zLoading]="saving()" (click)="allocate()">
+      <button z-button type="button" [zDisabled]="form.invalid || agentsSelected().length === 0" [zLoading]="saving()" (click)="allocate()">
         Allocate
       </button>
       @if (noAgents()) {
@@ -132,6 +132,9 @@ export class AllocateRecordsComponent implements OnInit {
   protected readonly agents = signal<AgentRow[]>([]);
   protected readonly noAgents = signal(false);
   protected readonly saving = signal(false);
+  /** The full agents multi-selection. The pinned Common-UI writes only the last-clicked
+   * scalar to the form control, so `(zValueChange)` is the reliable source for the array. */
+  protected readonly agentsSelected = signal<string[]>([]);
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
   private recordList: unknown[] = [];
@@ -139,7 +142,9 @@ export class AllocateRecordsComponent implements OnInit {
 
   protected readonly form = this.fb.group({
     roleID: this.fb.control<string | null>(null, Validators.required),
-    agents: this.fb.control<string[]>([], Validators.required),
+    // Selection is tracked via `agentsSelected` (multi-mode CVA is unreliable); the control
+    // stays for display/reset, and the Allocate button gates on the signal length instead.
+    agents: this.fb.control<string[]>([]),
     allocateNo: this.fb.control<number | null>(null, Validators.required),
   });
 
@@ -175,6 +180,7 @@ export class AllocateRecordsComponent implements OnInit {
     const ctx = this.context();
     const serviceId = this.serviceId();
     this.form.reset({ agents: [] });
+    this.agentsSelected.set([]);
     this.agents.set([]);
     this.noAgents.set(false);
     this.recordList = [];
@@ -197,11 +203,20 @@ export class AllocateRecordsComponent implements OnInit {
   private fetchRecords(ctx: AllocationContext, serviceId: number): void {
     const options: Parameters<AllocationApiService['listRecords']>[2] = ctx.assignedUserID
       ? { assignedUserID: ctx.assignedUserID, preferredLanguageName: ctx.language }
-      : {
-          filterStartDate: this.normalized(ctx.startDate, 'start'),
-          filterEndDate: this.normalized(ctx.endDate, 'end'),
-          preferredLanguageName: ctx.language,
-        };
+      : this.flavor() === 'everwell'
+        ? {
+            // Old everwell child used the tz-shifted day boundaries with a `.999Z` end (unlike
+            // generic, which posted the raw local-midnight instants) — this list becomes the
+            // allocate payload, so the window must match.
+            filterStartDate: ctx.startDate ? dayBoundary(ctx.startDate, 'start') : undefined,
+            filterEndDate: ctx.endDate ? dayBoundary(ctx.endDate, 'end999') : undefined,
+            preferredLanguageName: ctx.language,
+          }
+        : {
+            filterStartDate: this.normalized(ctx.startDate, 'start'),
+            filterEndDate: this.normalized(ctx.endDate, 'end'),
+            preferredLanguageName: ctx.language,
+          };
     this.api.listRecords(this.flavor(), serviceId, options).subscribe({
       next: (res) => {
         this.recordList = Array.isArray(res?.data) ? res.data : [];
@@ -233,6 +248,7 @@ export class AllocateRecordsComponent implements OnInit {
   // form control, so reading the control here would see the previous selection.
   protected onRoleChange(value: string | string[]): void {
     const roleID = value as string;
+    this.agentsSelected.set([]);
     // Only the old grievance child prefilled allocateNo on role change.
     if (this.flavor() === 'grievance') {
       this.form.patchValue({ agents: [], allocateNo: this.context().noOfRecords ?? 0 });
@@ -269,6 +285,7 @@ export class AllocateRecordsComponent implements OnInit {
    * zero here — declared non-replication). */
   protected onAgentsChange(value: string | string[]): void {
     const selected = Array.isArray(value) ? value : [];
+    this.agentsSelected.set(selected);
     const pool =
       this.flavor() === 'grievance' ? (this.context().noOfRecords ?? 0) : this.recordList.length;
     if (selected.length > 0) {
@@ -303,7 +320,7 @@ export class AllocateRecordsComponent implements OnInit {
   protected allocate(): void {
     const v = this.form.getRawValue();
     const ctx = this.context();
-    const agentIds = (v.agents ?? []).map((id) => numOrNull(id) ?? id);
+    const agentIds = this.agentsSelected().map((id) => numOrNull(id) ?? id);
     this.saving.set(true);
 
     const request$ =
