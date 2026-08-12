@@ -20,14 +20,7 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  OnInit,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePhoneOutgoing } from '@ng-icons/lucide';
@@ -36,6 +29,7 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 
 import { OutboundDialService } from './outbound-dial.service';
 import { formatWorklistDate } from './worklist-date';
+import { WorklistTable } from './worklist-table';
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
@@ -57,7 +51,8 @@ interface OutboundRow {
 }
 
 /** Generic outbound worklist tab (old `outbond-worklist`) — the agent's assigned
- * follow-up calls; dial rings via CZentrix and the shell CTI listener opens the screen. */
+ * follow-up calls; dial rings via CZentrix and the shell CTI listener opens the screen.
+ * Table reproduces the old md2DataTable: 4/page, sortable columns, serial number. */
 @Component({
   selector: 'app-generic-worklist',
   imports: [NgIcon, ZardButtonComponent],
@@ -75,17 +70,29 @@ interface OutboundRow {
         <table class="w-full text-sm">
           <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
-              <th class="px-3 py-2">Beneficiary ID</th>
-              <th class="px-3 py-2">Beneficiary Name</th>
-              <th class="px-3 py-2">Requested Date</th>
-              <th class="px-3 py-2">Requested Service</th>
-              <th class="px-3 py-2">Remarks</th>
+              <th class="px-3 py-2">S.No</th>
+              <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('id')">
+                Beneficiary ID {{ table.sortIndicator('id') }}
+              </th>
+              <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('name')">
+                Beneficiary Name {{ table.sortIndicator('name') }}
+              </th>
+              <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('date')">
+                Requested Date {{ table.sortIndicator('date') }}
+              </th>
+              <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('service')">
+                Requested Service {{ table.sortIndicator('service') }}
+              </th>
+              <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('remarks')">
+                Remarks {{ table.sortIndicator('remarks') }}
+              </th>
               <th class="px-3 py-2">Call</th>
             </tr>
           </thead>
           <tbody>
-            @for (row of rows(); track $index) {
+            @for (row of table.paged(); track $index) {
               <tr class="border-t border-border">
+                <td class="px-3 py-2">{{ table.serial($index) }}</td>
                 <td class="px-3 py-2">{{ row.beneficiary?.beneficiaryID }}</td>
                 <td class="px-3 py-2">
                   {{ row.beneficiary?.firstName }} {{ row.beneficiary?.lastName }}
@@ -107,7 +114,7 @@ interface OutboundRow {
               </tr>
             } @empty {
               <tr>
-                <td colspan="6" class="px-3 py-6 text-center text-muted-foreground">
+                <td colspan="7" class="px-3 py-6 text-center text-muted-foreground">
                   No Records Found
                 </td>
               </tr>
@@ -115,6 +122,27 @@ interface OutboundRow {
           </tbody>
         </table>
       </div>
+      @if (rows().length) {
+        <div class="flex items-center justify-between gap-3 text-sm">
+          <span class="text-muted-foreground">Total Count: {{ table.sorted().length }}</span>
+          <div class="flex items-center gap-3">
+            <span class="text-muted-foreground">Page {{ table.pageIndex() + 1 }} of {{ table.pageCount() }}</span>
+            <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="table.pageIndex() === 0" (click)="table.prev()">
+              Prev
+            </button>
+            <button
+              z-button
+              zSize="sm"
+              zType="outline"
+              type="button"
+              [zDisabled]="table.pageIndex() >= table.pageCount() - 1"
+              (click)="table.next()"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      }
     </div>
   `,
 })
@@ -127,7 +155,18 @@ export class GenericWorklistComponent implements OnInit {
   private readonly callStore = inject(CallStore);
 
   protected readonly rows = signal<OutboundRow[]>([]);
+  protected readonly table = new WorklistTable<OutboundRow>(4);
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
+
+  constructor() {
+    this.table.setAccessors({
+      id: (r) => r.beneficiary?.beneficiaryID,
+      name: (r) => `${r.beneficiary?.firstName ?? ''} ${r.beneficiary?.lastName ?? ''}`.trim(),
+      date: (r) => (r.prefferedDateTime != null ? Number(r.prefferedDateTime) : null),
+      service: (r) => r.requestedService?.subServiceName,
+      remarks: (r) => r.requestedFor,
+    });
+  }
 
   ngOnInit(): void {
     const serviceId = this.serviceId();
@@ -135,7 +174,11 @@ export class GenericWorklistComponent implements OnInit {
       return;
     }
     this.callApi.getAgentOutboundWorklist(serviceId, this.sessionStore.userId()).subscribe({
-      next: (res) => this.rows.set(Array.isArray(res?.data) ? (res.data as OutboundRow[]) : []),
+      next: (res) => {
+        const rows = Array.isArray(res?.data) ? (res.data as OutboundRow[]) : [];
+        this.rows.set(rows);
+        this.table.setRows(rows);
+      },
       error: (err: { errorMessage?: string }) =>
         this.notify.alert(err?.errorMessage ?? 'Failed to load the worklist', 'error'),
     });

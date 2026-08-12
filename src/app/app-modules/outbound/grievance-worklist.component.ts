@@ -20,22 +20,18 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  OnInit,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideEye, lucidePhoneOutgoing } from '@ng-icons/lucide';
 
+import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 
 import { OutboundDialService } from './outbound-dial.service';
 import { formatWorklistDateTime } from './worklist-date';
+import { WorklistTable } from './worklist-table';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { OutboundApiService } from '@/app-modules/core/services/outbound-api.service';
 import { ENCRYPTED_KEYS } from '@/app-modules/core/services/session-storage.service';
@@ -57,41 +53,63 @@ interface GrievanceRow {
 }
 
 /** Grievance outbound worklist tab (old `grievance-outbound-worklist`) — dial hands off to
- * the grievance-resolution slide via `outboundGrievanceData` + `isGrievanceCall`. */
+ * the grievance-resolution slide via `outboundGrievanceData` + `isGrievanceCall`. Table
+ * reproduces the old md2DataTable: 4/page, sortable columns, serial number. */
 @Component({
   selector: 'app-grievance-worklist',
-  imports: [NgIcon, ReactiveFormsModule, ZardInputDirective],
+  imports: [NgIcon, ReactiveFormsModule, ZardButtonComponent, ZardInputDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucideEye, lucidePhoneOutgoing })],
   template: `
     <div class="flex flex-col gap-3 py-3">
-      @if (rows().length) {
-        <input
-          z-input
-          type="text"
-          class="w-64"
-          placeholder="Search"
-          [formControl]="search"
-          (input)="filter()"
-        />
-      }
+      <div class="flex items-center justify-between gap-3">
+        @if (rows().length) {
+          <input
+            z-input
+            type="text"
+            class="w-64"
+            placeholder="Search"
+            [formControl]="search"
+            (input)="filter()"
+          />
+        } @else {
+          <span></span>
+        }
+        <button z-button zType="outline" type="button" (click)="backToDashboard()">
+          Back to Dashboard
+        </button>
+      </div>
       <div class="overflow-x-auto rounded-md border border-border">
         <table class="w-full text-sm">
           <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
-              <th class="px-3 py-2">Complaint ID</th>
-              <th class="px-3 py-2">Subject of Complaint</th>
-              <th class="px-3 py-2">State</th>
-              <th class="px-3 py-2">Severity</th>
-              <th class="px-3 py-2">Last Call</th>
-              <th class="px-3 py-2">Call Count</th>
+              <th class="px-3 py-2">S.No</th>
+              <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('complaintId')">
+                Complaint ID {{ table.sortIndicator('complaintId') }}
+              </th>
+              <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('subject')">
+                Subject of Complaint {{ table.sortIndicator('subject') }}
+              </th>
+              <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('state')">
+                State {{ table.sortIndicator('state') }}
+              </th>
+              <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('severity')">
+                Severity {{ table.sortIndicator('severity') }}
+              </th>
+              <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('lastCall')">
+                Last Call {{ table.sortIndicator('lastCall') }}
+              </th>
+              <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('callCount')">
+                Call Count {{ table.sortIndicator('callCount') }}
+              </th>
               <th class="px-3 py-2">View</th>
               <th class="px-3 py-2">Call</th>
             </tr>
           </thead>
           <tbody>
-            @for (row of filtered(); track $index) {
+            @for (row of table.paged(); track $index) {
               <tr class="border-t border-border">
+                <td class="px-3 py-2">{{ table.serial($index) }}</td>
                 <td class="px-3 py-2">{{ row.complaintID }}</td>
                 <td class="px-3 py-2">{{ row.subjectOfComplaint || 'N/A' }}</td>
                 <td class="px-3 py-2">{{ row.state }}</td>
@@ -123,7 +141,7 @@ interface GrievanceRow {
               </tr>
             } @empty {
               <tr>
-                <td colspan="8" class="px-3 py-6 text-center text-muted-foreground">
+                <td colspan="9" class="px-3 py-6 text-center text-muted-foreground">
                   No Records Found
                 </td>
               </tr>
@@ -131,7 +149,27 @@ interface GrievanceRow {
           </tbody>
         </table>
       </div>
-      <p class="text-xs text-muted-foreground">Total Count: {{ filtered().length }}</p>
+      <div class="flex items-center justify-between gap-3 text-sm">
+        <span class="text-muted-foreground">Total Count: {{ table.sorted().length }}</span>
+        @if (table.sorted().length) {
+          <div class="flex items-center gap-3">
+            <span class="text-muted-foreground">Page {{ table.pageIndex() + 1 }} of {{ table.pageCount() }}</span>
+            <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="table.pageIndex() === 0" (click)="table.prev()">
+              Prev
+            </button>
+            <button
+              z-button
+              zSize="sm"
+              zType="outline"
+              type="button"
+              [zDisabled]="table.pageIndex() >= table.pageCount() - 1"
+              (click)="table.next()"
+            >
+              Next
+            </button>
+          </div>
+        }
+      </div>
     </div>
   `,
 })
@@ -139,14 +177,26 @@ export class GrievanceWorklistComponent implements OnInit {
   private readonly outboundApi = inject(OutboundApiService);
   private readonly dialService = inject(OutboundDialService);
   private readonly notify = inject(NotificationService);
+  private readonly router = inject(Router);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
 
   protected readonly rows = signal<GrievanceRow[]>([]);
-  protected readonly filtered = signal<GrievanceRow[]>([]);
+  protected readonly table = new WorklistTable<GrievanceRow>(4);
   protected readonly search = new FormControl('', { nonNullable: true });
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
+
+  constructor() {
+    this.table.setAccessors({
+      complaintId: (r) => r.complaintID,
+      subject: (r) => r.subjectOfComplaint,
+      state: (r) => r.state,
+      severity: (r) => r.severety,
+      lastCall: (r) => (r.lastCall != null ? Number(r.lastCall) : null),
+      callCount: (r) => r.callCounter,
+    });
+  }
 
   ngOnInit(): void {
     const serviceId = this.serviceId();
@@ -158,7 +208,7 @@ export class GrievanceWorklistComponent implements OnInit {
       next: (res) => {
         const rows = Array.isArray(res?.data) ? (res.data as GrievanceRow[]) : [];
         this.rows.set(rows);
-        this.filtered.set(rows);
+        this.table.setRows(rows);
       },
       error: (err: { errorMessage?: string }) =>
         this.notify.alert(err?.errorMessage ?? 'Failed to load the worklist', 'error'),
@@ -174,10 +224,10 @@ export class GrievanceWorklistComponent implements OnInit {
   protected filter(): void {
     const term = this.search.value.trim().toLowerCase();
     if (!term) {
-      this.filtered.set(this.rows());
+      this.table.setRows(this.rows());
       return;
     }
-    this.filtered.set(
+    this.table.setRows(
       this.rows().filter((row) =>
         [row.complaintID, row.subjectOfComplaint, row.severety, row.state].some((v) =>
           String(v ?? '').toLowerCase().includes(term),
@@ -198,5 +248,9 @@ export class GrievanceWorklistComponent implements OnInit {
     this.callStore.outboundBenRegID.set(row.beneficiaryRegId ?? null);
     this.callStore.outboundGrievanceData.set(row as Record<string, unknown>);
     this.dialService.dial(row.primaryNumber ?? '', ENCRYPTED_KEYS.isGrievanceCall);
+  }
+
+  protected backToDashboard(): void {
+    this.router.navigate(['/MultiRoleScreenComponent/dashboard']);
   }
 }
