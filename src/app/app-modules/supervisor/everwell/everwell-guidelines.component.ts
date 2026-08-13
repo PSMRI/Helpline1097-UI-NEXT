@@ -264,9 +264,13 @@ export class EverwellGuidelinesComponent implements OnInit {
         this.saving.set(false);
         const data = (res?.data as { data?: { id?: unknown } } | undefined)?.data;
         if (data && data.id !== undefined) {
+          // Old app stayed on the form after a successful upload: reset the fields, clear the
+          // staged file, and do NOT refresh the list (its getGuidelines() call was commented
+          // out). Kept faithful — the list refreshes when the user clicks Back.
+          this.form.reset({ guidelineName: '', guidelineDesc: '', category: '' });
+          this.pendingFile.set(null);
+          this.fileError.set(null);
           this.notify.alert('File uploaded successfully', 'success');
-          this.mode.set('list');
-          this.loadList();
         } else {
           this.notify.alert(String(data ?? 'Failed to upload guideline'), 'error');
         }
