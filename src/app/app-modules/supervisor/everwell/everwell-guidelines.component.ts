@@ -242,9 +242,12 @@ export class EverwellGuidelinesComponent implements OnInit {
       return;
     }
     const v = this.form.getRawValue();
+    // Old app sent the RAW numeric uid and only null-substituted name/desc when the raw
+    // value was null/undefined — a whitespace-only value serialised as "" (kept faithful).
+    const userIdStr = this.sessionStore.userId();
     const body: Record<string, unknown> = {
-      guidelineName: v.guidelineName.trim() || null,
-      guidelineDesc: v.guidelineDesc.trim() || null,
+      guidelineName: v.guidelineName.trim(),
+      guidelineDesc: v.guidelineDesc.trim(),
       fileName: file.fileName,
       fileExtension: file.fileExtension,
       providerServiceMapID: serviceId,
@@ -252,7 +255,7 @@ export class EverwellGuidelinesComponent implements OnInit {
       createdBy: this.sessionStore.user()?.userName,
       validFrom: startOfDay().toISOString(),
       validTill: endOfDayPlusYears(20).toISOString(),
-      userID: this.sessionStore.userId(),
+      userID: userIdStr != null ? Number(userIdStr) : null,
       category: v.category,
     };
     this.saving.set(true);
