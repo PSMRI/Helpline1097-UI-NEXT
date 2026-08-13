@@ -176,10 +176,12 @@ export class EverwellGuidelinesComponent implements OnInit {
     this.mode.set('form');
   }
 
+  /** Old `go2table` (the form's Back button): clear the staged file, re-fetch, show the list. */
   protected cancelForm(): void {
     this.pendingFile.set(null);
     this.fileError.set(null);
     this.mode.set('list');
+    this.loadList();
   }
 
   // ---- file handling -------------------------------------------------------
