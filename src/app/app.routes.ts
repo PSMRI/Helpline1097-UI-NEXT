@@ -100,6 +100,20 @@ export const routes: Routes = [
         canActivate: [onCallGuard],
         data: { title: 'Call' },
       },
+      {
+        // Old `InnerpageComponent` — the Supervisor activity-area entry (same component,
+        // role fork inside, exactly like the old dual-route setup). The old route carried
+        // NO guard at all; a plain login check is kept here (declared deviation — the old
+        // AuthGuard would have passed a supervisor anyway, and the guard makes no backend
+        // call). NOT onCallGuard: a supervisor is never on a call.
+        path: 'InnerpageComponent',
+        loadComponent: () =>
+          import('./app-modules/call/innerpage/innerpage.component').then(
+            (m) => m.InnerpageComponent,
+          ),
+        canActivate: [authGuard, roleSelectedGuard],
+        data: { title: 'Activity Area' },
+      },
     ],
   },
 ];

@@ -22,7 +22,6 @@
 
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleHelp, lucidePhone, lucidePower, lucideUser, lucideUserX } from '@ng-icons/lucide';
@@ -70,7 +69,6 @@ import { VersionDialogComponent } from './version-dialog.component';
 export class ShellComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly sanitizer = inject(DomSanitizer);
   private readonly auth = inject(AuthService);
   private readonly cti = inject(CtiService);
   private readonly config = inject(ConfigService);
@@ -139,9 +137,7 @@ export class ShellComponent {
   protected readonly barMinimized = signal(true);
   /** `{telephonyServerURL}bar/cti_handler.php?e={agentID}` (iframe logs into CZentrix itself). */
   protected readonly ctiHandlerUrl = computed(() =>
-    this.sanitizer.bypassSecurityTrustResourceUrl(
-      `${this.config.telephonyServerURL}bar/cti_handler.php?e=${this.sessionStore.agentId()}`,
-    ),
+    this.config.trustedTelephonyUrl(`bar/cti_handler.php?e=${this.sessionStore.agentId()}`),
   );
 
   protected toggleBar(): void {

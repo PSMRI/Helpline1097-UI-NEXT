@@ -46,6 +46,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
 import { CallTypeGroup, CloseCallRequest } from '@/app-modules/core/models';
 
 import { CallWizardComponent } from '../wizard/call-wizard.component';
+import { SupervisorShellComponent } from '@/app-modules/supervisor/supervisor-shell.component';
 
 /**
  * Inner page — the call-handling screen's chrome (old `InnerpageComponent`): caller info
@@ -59,7 +60,7 @@ import { CallWizardComponent } from '../wizard/call-wizard.component';
  */
 @Component({
   selector: 'app-innerpage',
-  imports: [NgIcon, CallWizardComponent],
+  imports: [NgIcon, CallWizardComponent, SupervisorShellComponent],
   templateUrl: './innerpage.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucidePhoneCall, lucideMapPin, lucideClock, lucideUser })],
@@ -77,6 +78,11 @@ export class InnerpageComponent implements OnInit {
   protected readonly callerNumber = this.callStore.cli;
   protected readonly callCategory = this.callStore.callCategory;
   protected readonly isCO = computed(() => this.sessionStore.currentRole() === 'CO');
+  /** Old `app-1097` fork rendered the supervisor console ONLY for 'supervisor' — any other
+   * role (Admin) got an empty content area, so the fork must be explicit, not an @else. */
+  protected readonly isSupervisor = computed(
+    () => this.sessionStore.currentRole() === 'Supervisor',
+  );
 
   protected readonly zoneName = signal('');
   protected readonly callStatus = signal('');

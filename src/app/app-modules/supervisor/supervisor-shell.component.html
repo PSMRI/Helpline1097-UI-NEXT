@@ -1,0 +1,103 @@
+<!--
+  AMRIT – Accessible Medical Records via Integrated Technologies
+  Integrated EHR (Electronic Health Records) Solution
+
+  Copyright (C) "Piramal Swasthya Management and Research Institute"
+
+  This file is part of AMRIT.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see https://www.gnu.org/licenses/.
+-->
+
+<div class="flex min-h-full flex-col gap-3 p-3 md:p-4">
+  <!-- Navbar (old bootstrap navbar: Activities / Reports / Configurations + Back to Dashboard) -->
+  <nav
+    class="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background px-3 py-2"
+    aria-label="Supervisor activities"
+  >
+    <button z-button zType="ghost" type="button" [zMenuTriggerFor]="activitiesMenuRef">
+      Activities
+    </button>
+    <z-menu #activitiesMenuRef>
+      <ng-container *ngTemplateOutlet="menuEntries; context: { entries: activitiesMenu }" />
+    </z-menu>
+
+    <button z-button zType="ghost" type="button" [zMenuTriggerFor]="reportsMenuRef">
+      Reports
+    </button>
+    <z-menu #reportsMenuRef>
+      <ng-container *ngTemplateOutlet="menuEntries; context: { entries: reportsMenu }" />
+    </z-menu>
+
+    <button z-button zType="ghost" type="button" [zMenuTriggerFor]="configMenuRef">
+      Configurations
+    </button>
+    <z-menu #configMenuRef>
+      <ng-container *ngTemplateOutlet="menuEntries; context: { entries: configurationsMenu }" />
+    </z-menu>
+
+    <a z-button zType="outline" class="ml-auto" routerLink="/MultiRoleScreenComponent/dashboard">
+      Back to Dashboard
+    </a>
+  </nav>
+
+  <!-- Dropdown contents driven by the PAGES map (single source for labels) -->
+  <ng-template #menuEntries let-entries="entries">
+    @for (entry of entries; track $index) {
+      @switch (entry.kind) {
+        @case ('item') {
+          <button z-menu-item (click)="show(entry.page!)">{{ pages[entry.page!].label }}</button>
+        }
+        @case ('group') {
+          <div class="px-3 pb-0.5 pt-2 text-xs font-semibold uppercase text-muted-foreground">
+            {{ entry.label }}
+          </div>
+        }
+        @case ('divider') {
+          <div class="my-1 border-t border-border"></div>
+        }
+      }
+    }
+  </ng-template>
+
+  <!-- Active page (old [ngSwitch]="Activity_Number"; old container: min-height 570px, scrollable) -->
+  <div class="min-h-[570px] flex-1 overflow-y-auto rounded-lg border border-border bg-background p-3">
+    @switch (activityNumber()) {
+      @case ('2') {
+        <app-telephony-iframe query="agentStatus" label="Agent Status" />
+      }
+      @case ('14') {
+        <app-telephony-iframe query="campaignStatus" label="Campaign Status" />
+      }
+      @case ('7') {
+        <app-telephony-iframe query="reportUI" label="Telephony Reports" />
+      }
+      @default {
+        <!-- Not-yet-migrated pages land slice-by-slice (see PAGES map) -->
+        <div class="flex min-h-[500px] items-center justify-center">
+          <p class="max-w-md text-center text-sm text-muted-foreground">
+            {{ pages[activityNumber()]?.label ?? 'This screen' }} — arrives in
+            {{ pages[activityNumber()]?.arrives ?? 'a later slice' }}.
+          </p>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- Old hidden CZentrix SSO iframe (remote_login.php) — see component doc for the
+     key=undefined quirk kept from the old app -->
+<div [hidden]="true" aria-hidden="true">
+  <iframe [src]="ssoUrl" width="100%" height="700" title="CZentrix session sign-in"></iframe>
+</div>

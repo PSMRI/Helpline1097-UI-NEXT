@@ -88,8 +88,12 @@ export class CzentrixHttpService extends CtiService {
   private readonly sessionStore = inject(SessionStore);
   private readonly storage = inject(SessionStorageService);
 
-  private agentPayload(): { agent_id: number | string } {
-    return { agent_id: this.sessionStore.agentId() ?? '' };
+  private agentPayload(): { agent_id?: number | string } {
+    // Old app sent `{agent_id: dataService.cZentrixAgentID}` — for roles WITHOUT an agent
+    // id (Supervisor) that value was undefined, which JSON serialization DROPS, so the old
+    // body was `{}`. `?? undefined` keeps that byte-faithful; `?? ''` would post a new
+    // `{"agent_id":""}` shape the backend never saw.
+    return { agent_id: this.sessionStore.agentId() ?? undefined };
   }
 
   /**
