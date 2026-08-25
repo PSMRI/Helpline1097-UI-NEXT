@@ -32,6 +32,8 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideDownload } from '@ng-icons/lucide';
 
 import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardSelectImports } from '@common-ui/ui/select';
@@ -46,20 +48,23 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
  * Shared Information / Counselling service tab (old `co-information-services` +
  * `co-counselling-services`, which were near-clones). Parameterized by `serviceType`:
  * both pick their sub-service by name match (INFO / COUN), then Category → Sub-Category →
- * "Provide Service", which SAVES the mapping (old "Get Details" was a save, not a read) and
- * refreshes the history table. Counselling's save uses the `coCategoryID`/`coSubCategoryID`
- * keys and a different endpoint — handled by the API service.
+ * "Get Details", which SAVES the mapping AND returns the guidance documents (old "Get Details"
+ * was the save; there is no separate save button). Each returned `subCatFilePath` is shown as a
+ * link (bound raw — broken where the backend leaves `${KM_*}` unresolved, e.g. UAT; opens the
+ * real document in prod). Counselling's save uses the `coCategoryID`/`coSubCategoryID` keys and
+ * a different endpoint — handled by the API service.
  */
 @Component({
   selector: 'app-co-category-service',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, ZardButtonComponent, NgIcon, ...ZardSelectImports],
+  viewProviders: [provideIcons({ lucideDownload })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-4">
       <form [formGroup]="form" class="flex flex-wrap items-end gap-3">
         <label class="flex min-w-48 flex-col gap-1.5 text-sm">
           <span>Category <span class="text-destructive">*</span></span>
-          <z-select formControlName="categoryId" zPlaceholder="Select category" (zValueChange)="onCategoryChange()">
+          <z-select formControlName="categoryId" zPlaceholder="Select category" (zValueChange)="onCategoryChange($event)">
             @for (c of categories(); track c.categoryID) {
               <z-select-item [zValue]="c.categoryID + ''">{{ c.categoryName }}</z-select-item>
             }
@@ -80,16 +85,32 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
           [zLoading]="saving()"
           (click)="provideService()"
         >
-          Provide Service
+          Get Details
         </button>
       </form>
 
       @if (savedFiles().length) {
         <div class="rounded-md border border-border p-3 text-sm">
           <p class="mb-1 font-medium">Details</p>
-          <ul class="list-inside list-disc text-muted-foreground">
+          <ul class="flex flex-col gap-1">
             @for (f of savedFiles(); track f.subCategoryName) {
-              <li>{{ f.subCategoryName }} — {{ f.subCategoryDesc }}</li>
+              <li>
+                <!-- Old app: the returned document opens in a new tab; no path → not available.
+                     The KM path is bound raw (broken where KM_* is unresolved, e.g. UAT). -->
+                @if (f.subCatFilePath) {
+                  <a
+                    [href]="f.subCatFilePath"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1.5 text-primary hover:underline"
+                  >
+                    <ng-icon name="lucideDownload" class="text-base" />
+                    <span>{{ f.subCategoryName }}@if (f.subCategoryDesc) {: {{ f.subCategoryDesc }}}</span>
+                  </a>
+                } @else {
+                  <span class="text-muted-foreground">{{ f.subCategoryName }} — No document available</span>
+                }
+              </li>
             }
           </ul>
         </div>
@@ -185,10 +206,12 @@ export class CoCategoryServiceComponent implements OnInit {
     });
   }
 
-  protected onCategoryChange(): void {
+  // Takes the emitted value: z-select fires zValueChange BEFORE its CVA writes the form
+  // control, so reading the control here would see the previous selection.
+  protected onCategoryChange(value: string | string[]): void {
     this.subCategories.set([]);
     this.form.patchValue({ subCategoryId: null });
-    const categoryId = this.form.controls.categoryId.value;
+    const categoryId = value as string;
     if (!categoryId) {
       return;
     }

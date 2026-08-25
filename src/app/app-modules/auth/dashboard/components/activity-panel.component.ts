@@ -20,28 +20,38 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideGraduationCap } from '@ng-icons/lucide';
+import { lucideGraduationCap, lucidePhoneOutgoing } from '@ng-icons/lucide';
 import { switchMap } from 'rxjs/operators';
 
 import { cardImports } from '@common-ui/ui/card';
 
+import { CtiService } from '@/app-modules/core/services/cti.service';
 import { NotificationApiService } from '@/app-modules/core/services/notification-api.service';
+import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 const KM_TYPE = 'KM';
 
 /**
- * "Activity for this week" panel. Faithful to the old `activity-this-week`: shows the
- * count of Training Resources (KM docs) for the current role/service. The training-doc
- * dialog and the outbound-worklist link are deferred to later phases.
+ * "Activity for this week" panel (old `activity-this-week`): Training Resources count and
+ * the CO-on-OUTBOUND "Outbound Worklist" link. The training-doc dialog is a later phase.
  */
 @Component({
   selector: 'app-activity-panel',
   imports: [...cardImports, NgIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ lucideGraduationCap })],
+  viewProviders: [provideIcons({ lucideGraduationCap, lucidePhoneOutgoing })],
   template: `
     <z-card class="h-full shadow-sm transition-shadow hover:shadow-md">
       <z-card-header class="border-b pb-3">
@@ -51,6 +61,16 @@ const KM_TYPE = 'KM';
         </z-card-title>
       </z-card-header>
       <z-card-content class="pt-4">
+        @if (showOutboundLink()) {
+          <button
+            type="button"
+            class="mb-1 flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-primary hover:bg-accent"
+            (click)="openOutboundWorklist()"
+          >
+            <ng-icon name="lucidePhoneOutgoing" class="text-base" aria-hidden="true" />
+            Outbound Worklist
+          </button>
+        }
         @let c = trainingCount();
         <div class="flex items-center justify-between rounded-md px-2 py-2 hover:bg-accent">
           <span class="text-sm">Training Resources</span>
@@ -71,8 +91,34 @@ const KM_TYPE = 'KM';
 export class ActivityPanelComponent implements OnInit {
   private readonly notificationApi = inject(NotificationApiService);
   private readonly sessionStore = inject(SessionStore);
+  private readonly callStore = inject(CallStore);
+  private readonly cti = inject(CtiService);
+  private readonly notify = inject(NotificationService);
+  private readonly router = inject(Router);
 
   protected readonly trainingCount = signal(0);
+  protected readonly showOutboundLink = computed(
+    () =>
+      this.sessionStore.currentRole() === 'CO' &&
+      this.callStore.currentCampaign() === 'OUTBOUND',
+  );
+
+  /** Old `agentLoginStatus()` — the "already in MANUAL mode" error still navigates. */
+  protected openOutboundWorklist(): void {
+    this.cti.switchToOutbound().subscribe({
+      next: () => {
+        this.callStore.setCurrentCampaign('OUTBOUND');
+        this.router.navigate(['/MultiRoleScreenComponent/OutboundCallWorklistsComponent']);
+      },
+      error: (err: { errorMessage?: string }) => {
+        if ((err?.errorMessage ?? '').includes('already in MANUAL mode')) {
+          this.router.navigate(['/MultiRoleScreenComponent/OutboundCallWorklistsComponent']);
+        } else {
+          this.notify.alert(err?.errorMessage ?? 'Failed to switch to outbound', 'error');
+        }
+      },
+    });
+  }
 
   ngOnInit(): void {
     const serviceId = this.sessionStore.currentServiceId();

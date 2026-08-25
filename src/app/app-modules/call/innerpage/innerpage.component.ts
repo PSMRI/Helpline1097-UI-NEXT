@@ -78,6 +78,42 @@ export class InnerpageComponent implements OnInit {
   protected readonly callerNumber = this.callStore.cli;
   protected readonly callCategory = this.callStore.callCategory;
   protected readonly isCO = computed(() => this.sessionStore.currentRole() === 'CO');
+
+  /** Selected/registered beneficiary shown in the caller strip (old innerpage header). Names
+   * come from a search-result object; a freshly-created one may carry only ids until re-fetched. */
+  protected readonly beneficiaryInfo = computed(() => {
+    const b = this.callStore.beneficiary() as {
+      beneficiaryID?: string | number;
+      firstName?: string;
+      lastName?: string;
+      genderName?: string;
+      i_bendemographics?: {
+        stateName?: string;
+        districtName?: string;
+        blockName?: string;
+        preferredLangName?: string;
+        m_language?: { languageName?: string };
+      };
+    };
+    if (!b || b.beneficiaryID == null) {
+      return null;
+    }
+    const demo = b.i_bendemographics ?? {};
+    const location = [
+      demo.stateName,
+      demo.districtName,
+      demo.blockName,
+      demo.preferredLangName ?? demo.m_language?.languageName,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+    return {
+      benId: b.beneficiaryID,
+      name: `${b.firstName ?? ''} ${b.lastName ?? ''}`.trim(),
+      gender: b.genderName,
+      location,
+    };
+  });
   /** Old `app-1097` fork rendered the supervisor console ONLY for 'supervisor' — any other
    * role (Admin) got an empty content area, so the fork must be explicit, not an @else. */
   protected readonly isSupervisor = computed(

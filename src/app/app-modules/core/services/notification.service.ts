@@ -27,10 +27,12 @@ import { ZardDialogService } from '@common-ui/ui/dialog';
 
 export type AlertType = 'info' | 'success' | 'error' | 'warning';
 
-/** Optional overrides for the confirm dialog's button labels. */
+/** Optional overrides for the confirm dialog's button labels + width. */
 export interface ConfirmOptions {
   okText?: string;
   cancelText?: string;
+  /** CSS width for the dialog (e.g. '28rem'). Prevents a long message stretching it too wide. */
+  width?: string;
 }
 
 /**
@@ -59,6 +61,17 @@ export class NotificationService {
     }
   }
 
+  /** Modal info dialog (old display-only dialogs, e.g. the complaint description). */
+  info(message: string, title = 'Information'): void {
+    this.dialog.create<unknown, unknown>({
+      zTitle: title,
+      zContent: message,
+      zOkText: 'Close',
+      zCancelText: null,
+      zMaskClosable: true,
+    });
+  }
+
   confirm(message: string, title = 'Confirm', options?: ConfirmOptions): Observable<boolean> {
     return new Observable<boolean>((observer) => {
       this.dialog.create<unknown, unknown>({
@@ -66,6 +79,7 @@ export class NotificationService {
         zContent: message,
         zOkText: options?.okText ?? 'Yes',
         zCancelText: options?.cancelText ?? 'No',
+        zWidth: options?.width ?? '28rem',
         zMaskClosable: false,
         zOnOk: () => {
           observer.next(true);
