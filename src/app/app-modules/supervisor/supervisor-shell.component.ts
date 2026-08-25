@@ -28,6 +28,8 @@ import { RouterLink } from '@angular/router';
 import { ZardButtonComponent } from '@common-ui/ui/button';
 import { menuImports } from '@common-ui/ui/menu';
 
+import { CallAllocationComponent } from './allocation/call-allocation.component';
+import { CallReallocationComponent } from './allocation/call-reallocation.component';
 import { TelephonyIframeComponent } from './telephony-iframe.component';
 import { ConfigService } from '@/app-modules/core/services/config.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
@@ -56,8 +58,8 @@ const PAGES: Record<string, SupervisorPage> = {
   '8': { label: 'Supervisor Configurations', arrives: 'a later phase (menu-less in the old app)' },
   '9': { label: 'Call Type Report', arrives: 'Phase 7e' },
   '10': { label: 'Knowledge Management', arrives: 'Phase 7g' },
-  '12': { label: 'Outbound Call List', arrives: 'Phase 7d' },
-  '13': { label: 'Outbound Call Re-Allocation', arrives: 'Phase 7d' },
+  '12': { label: 'Outbound Call List' },
+  '13': { label: 'Outbound Call Re-Allocation' },
   '14': { label: 'Campaign Status' },
   '15': { label: 'Caller Age Report', arrives: 'Phase 7e' },
   '16': { label: 'Sexual Orientation Report', arrives: 'Phase 7e' },
@@ -69,11 +71,11 @@ const PAGES: Record<string, SupervisorPage> = {
   '22': { label: 'Emergency Contacts', arrives: 'Phase 7f' },
   '23': { label: 'Force Logout', arrives: 'Phase 7g' },
   '24': { label: 'SMS Templates', arrives: 'Phase 7g' },
-  '26': { label: 'Everwell Call Allocation', arrives: 'Phase 7d' },
-  '27': { label: 'Everwell Call Re-Allocation', arrives: 'Phase 7d' },
+  '26': { label: 'Everwell Call Allocation' },
+  '27': { label: 'Everwell Call Re-Allocation' },
   '28': { label: 'Everwell Guidelines Upload', arrives: 'Phase 8' },
-  '29': { label: 'Grievance Outbound Call Allocation', arrives: 'Phase 7d' },
-  '30': { label: 'Grievance Outbound Call Re-Allocation', arrives: 'Phase 7d' },
+  '29': { label: 'Grievance Outbound Call Allocation' },
+  '30': { label: 'Grievance Outbound Call Re-Allocation' },
 };
 
 /** A dropdown entry: a page item, a labeled group heading (old submenu), or a divider. */
@@ -138,7 +140,15 @@ const CONFIGURATIONS_MENU: MenuEntry[] = [
  */
 @Component({
   selector: 'app-supervisor-shell',
-  imports: [NgTemplateOutlet, RouterLink, ZardButtonComponent, TelephonyIframeComponent, ...menuImports],
+  imports: [
+    NgTemplateOutlet,
+    RouterLink,
+    ZardButtonComponent,
+    TelephonyIframeComponent,
+    CallAllocationComponent,
+    CallReallocationComponent,
+    ...menuImports,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './supervisor-shell.component.html',
 })
