@@ -30,6 +30,8 @@ import { menuImports } from '@common-ui/ui/menu';
 
 import { CallAllocationComponent } from './allocation/call-allocation.component';
 import { CallReallocationComponent } from './allocation/call-reallocation.component';
+import { CallTypeReportComponent } from './reports/call-type-report.component';
+import { DistributionReportComponent } from './reports/distribution-report.component';
 import { TelephonyIframeComponent } from './telephony-iframe.component';
 import { ConfigService } from '@/app-modules/core/services/config.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
@@ -56,15 +58,15 @@ const PAGES: Record<string, SupervisorPage> = {
   '6': { label: 'Supervisor Notifications', arrives: 'a later phase (menu-less in the old app)' },
   '7': { label: 'Telephony Reports' },
   '8': { label: 'Supervisor Configurations', arrives: 'a later phase (menu-less in the old app)' },
-  '9': { label: 'Call Type Report', arrives: 'Phase 7e' },
+  '9': { label: 'Call Type Report' },
   '10': { label: 'Knowledge Management', arrives: 'Phase 7g' },
   '12': { label: 'Outbound Call List' },
   '13': { label: 'Outbound Call Re-Allocation' },
   '14': { label: 'Campaign Status' },
-  '15': { label: 'Caller Age Report', arrives: 'Phase 7e' },
-  '16': { label: 'Sexual Orientation Report', arrives: 'Phase 7e' },
-  '17': { label: 'Language Distribution Report', arrives: 'Phase 7e' },
-  '18': { label: 'Gender Distribution Report', arrives: 'Phase 7e' },
+  '15': { label: 'Caller Age Report' },
+  '16': { label: 'Sexual Orientation Report' },
+  '17': { label: 'Language Distribution Report' },
+  '18': { label: 'Gender Distribution Report' },
   '19': { label: 'Alerts and Notifications', arrives: 'Phase 7f' },
   '20': { label: 'Location Messages', arrives: 'Phase 7f' },
   '21': { label: 'Training Resource', arrives: 'Phase 7f' },
@@ -147,6 +149,8 @@ const CONFIGURATIONS_MENU: MenuEntry[] = [
     TelephonyIframeComponent,
     CallAllocationComponent,
     CallReallocationComponent,
+    CallTypeReportComponent,
+    DistributionReportComponent,
     ...menuImports,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

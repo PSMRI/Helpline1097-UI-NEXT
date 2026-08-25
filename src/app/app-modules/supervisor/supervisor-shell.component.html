@@ -80,8 +80,23 @@
       @case ('14') {
         <app-telephony-iframe query="campaignStatus" label="Campaign Status" />
       }
+      @case ('15') {
+        <app-distribution-report kind="age" />
+      }
+      @case ('16') {
+        <app-distribution-report kind="sexualOrientation" />
+      }
+      @case ('17') {
+        <app-distribution-report kind="language" />
+      }
+      @case ('18') {
+        <app-distribution-report kind="gender" />
+      }
       @case ('7') {
         <app-telephony-iframe query="reportUI" label="Telephony Reports" />
+      }
+      @case ('9') {
+        <app-call-type-report />
       }
       @case ('12') {
         <app-call-allocation flavor="generic" />
