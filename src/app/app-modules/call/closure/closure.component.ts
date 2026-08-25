@@ -37,6 +37,7 @@ import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
+import { CtiService } from '@/app-modules/core/services/cti.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { OutboundApiService } from '@/app-modules/core/services/outbound-api.service';
 import {
@@ -202,6 +203,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
 export class ClosureComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly callApi = inject(CallApiService);
+  private readonly cti = inject(CtiService);
   private readonly outboundApi = inject(OutboundApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
@@ -215,6 +217,8 @@ export class ClosureComponent implements OnInit {
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
   protected readonly minDate = new Date().toISOString().slice(0, 10);
+  /** Old `ipAddress` — fetched via `cti/getAgentIPAddress` and sent in the closeCall payload. */
+  private readonly ipAddress = signal<string | undefined>(undefined);
 
   private callTypeGroups: CallTypeGroup[] = [];
   protected readonly callGroups = signal<string[]>([]);
@@ -296,11 +300,20 @@ export class ClosureComponent implements OnInit {
     if (serviceId == null) {
       return;
     }
-    const campaign = this.callStore.currentCampaign();
+    // currentCampaign is memory-only and lost on a mid-call reload; fall back to the persisted
+    // call direction (old app persisted current_campaign, so it never lost inbound/outbound).
+    const campaign = this.callStore.currentCampaign() ?? this.callStore.callCategory();
     this.callApi.getCallTypes(serviceId, campaign).subscribe({
       next: (res) => this.populateCallTypes(res?.data ?? []),
       error: (err: { errorMessage?: string }) =>
         this.notify.alert(err?.errorMessage ?? 'Failed to load call types', 'error'),
+    });
+    // Old innerpage fetched the agent IP (cti/getAgentIPAddress → data.agent_ip) for closeCall.
+    this.cti.getIpAddress().subscribe({
+      next: (res) => this.ipAddress.set((res?.data as { agent_ip?: string })?.agent_ip),
+      error: () => {
+        // Old app only logged this; closeCall still goes out (agentIPAddress stays undefined).
+      },
     });
     this.callApi.getLanguages().subscribe({
       next: (res) => {
@@ -516,6 +529,7 @@ export class ClosureComponent implements OnInit {
       // Old `values.isFeedback = this.isFeedbackRequiredFlag` — sent on EVERY close.
       isFeedback: v.isFeedback ?? false,
       isFollowupRequired: v.isFollowupRequired ?? false,
+      agentIPAddress: this.ipAddress(),
       endCall: kind === 'close',
       isTransfered: transfer,
       IsOutbound: campaign === 'OUTBOUND',
@@ -524,12 +538,15 @@ export class ClosureComponent implements OnInit {
       request.isCompleted = true;
     }
     // Old form dropped the hidden follow-up controls from `Form.value`, so the follow-up
-    // block was only sent while the checkbox was ticked.
+    // block was only sent while the checkbox was ticked (misspelled key = backend contract);
+    // otherwise the old app sent the correctly-spelled `preferredDateTime: null`.
     if (v.isFollowupRequired && v.prefferedDateTime) {
       request.prefferedDateTime = new Date(v.prefferedDateTime).toJSON();
       request.requestedServiceID = v.requestedServiceID ? Number(v.requestedServiceID) : null;
       request.requestedFor = v.requestedFor;
       request.preferredLanguageName = v.preferredLanguageName;
+    } else {
+      request.preferredDateTime = null;
     }
 
     if (this.callStore.benCallID() == null) {

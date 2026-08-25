@@ -82,8 +82,8 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Taluk</span>
           <z-select formControlName="taluk" zPlaceholder="Select taluk">
-            @for (t of taluks(); track t.talukID) {
-              <z-select-item [zValue]="t.talukID + ''">{{ t.talukName }}</z-select-item>
+            @for (t of taluks(); track t.blockID) {
+              <z-select-item [zValue]="t.blockID + ''">{{ t.blockName }}</z-select-item>
             }
           </z-select>
         </label>
@@ -105,7 +105,7 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
         </label>
         <div class="flex items-end">
           <button z-button type="button" [zDisabled]="form.invalid" [zLoading]="saving()" (click)="provideReferral()">
-            Provide Referral
+            Get Details
           </button>
         </div>
       </form>
@@ -155,10 +155,12 @@ export class CoReferralComponent implements OnInit {
   readonly serviceProvided = output<void>();
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
+  // Old app defaulted subServiceID to 3 and only overrode it on a "REFE" name match, so a
+  // missing REFE entry still sent 3 (not null).
   private readonly subServiceId = computed(
     () =>
       this.serviceTypes().find((t) => t.subServiceName?.toUpperCase().includes('REFE'))
-        ?.subServiceID ?? null,
+        ?.subServiceID ?? 3,
   );
 
   protected readonly districts = signal<DistrictRow[]>([]);
@@ -252,9 +254,16 @@ export class CoReferralComponent implements OnInit {
         blockID: numOrNull(v.taluk),
       })
       .subscribe({
-        next: () => {
+        next: (res) => {
           this.saving.set(false);
-          this.notify.alert('Referral recorded', 'success');
+          // Old SetReferralDetails: response holds the matched institution list. Empty → the
+          // old app alerts "No data found" (the institution-list render itself is still deferred).
+          const rows = Array.isArray(res?.data) ? res.data : [];
+          if (rows.length > 0) {
+            this.notify.alert('Referral recorded', 'success');
+          } else {
+            this.notify.alert('No data found', 'info');
+          }
           this.serviceProvided.emit();
           this.loadHistory();
         },

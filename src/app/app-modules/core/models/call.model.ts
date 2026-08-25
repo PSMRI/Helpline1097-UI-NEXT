@@ -48,6 +48,9 @@ export interface CloseCallRequest {
   fitToBlock?: string;
   isFollowupRequired?: boolean;
   prefferedDateTime?: string;
+  /** Correctly-spelled null sent by the old app on the no-follow-up path (distinct from the
+   * misspelled `prefferedDateTime` used for the actual follow-up date). */
+  preferredDateTime?: string | null;
   endCall?: boolean;
   isCompleted?: boolean;
   callType?: string | null;
@@ -99,9 +102,11 @@ export interface DistrictRow {
   districtID?: number;
   districtName?: string;
 }
+// `location/taluks/{districtId}` returns block rows (keyed blockID/blockName); the taluk
+// dropdown's selected blockID is what `location/village/{blockId}` needs.
 export interface TalukRow {
-  talukID?: number;
-  talukName?: string;
+  blockID?: number;
+  blockName?: string;
 }
 export interface VillageRow {
   districtBranchID?: number;
