@@ -39,6 +39,7 @@ import { CallAuditingComponent } from './config/call-auditing.component';
 import { ForceLogoutComponent } from './config/force-logout.component';
 import { KnowledgeManagementComponent } from './config/knowledge-management.component';
 import { SmsTemplatesComponent } from './config/sms-templates.component';
+import { EverwellGuidelinesComponent } from './everwell/everwell-guidelines.component';
 import { FeedbackTrackingComponent } from './feedback/feedback-tracking.component';
 import { CallTypeReportComponent } from './reports/call-type-report.component';
 import { DistributionReportComponent } from './reports/distribution-report.component';
@@ -85,7 +86,7 @@ const PAGES: Record<string, SupervisorPage> = {
   '24': { label: 'SMS Templates' },
   '26': { label: 'Everwell Call Allocation' },
   '27': { label: 'Everwell Call Re-Allocation' },
-  '28': { label: 'Everwell Guidelines Upload', arrives: 'Phase 8' },
+  '28': { label: 'Everwell Guidelines Upload' },
   '29': { label: 'Grievance Outbound Call Allocation' },
   '30': { label: 'Grievance Outbound Call Re-Allocation' },
 };
@@ -168,6 +169,7 @@ const CONFIGURATIONS_MENU: MenuEntry[] = [
     ForceLogoutComponent,
     KnowledgeManagementComponent,
     SmsTemplatesComponent,
+    EverwellGuidelinesComponent,
     FeedbackTrackingComponent,
     CallTypeReportComponent,
     DistributionReportComponent,
