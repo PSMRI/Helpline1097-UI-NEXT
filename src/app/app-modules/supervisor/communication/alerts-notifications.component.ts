@@ -316,7 +316,9 @@ export class AlertsNotificationsComponent implements OnInit {
       notification: v.subject.trim() || null,
       notificationDesc: v.message.trim() || null,
       validFrom: tzShift(dateAt(v.startDate, v.startTime || null, [0, 0, 0])),
-      validTill: tzShift(dateAt(v.endDate, v.endTime || null, [0, 0, 0])),
+      // Blank End Time falls back to end-of-day (old app set 23:59:59), NOT midnight —
+      // a midnight fallback would create an already-expired validity window.
+      validTill: tzShift(dateAt(v.endDate, v.endTime || null, [23, 59, 59])),
     };
     if (roleId !== undefined) {
       base['roleID'] = roleId;
