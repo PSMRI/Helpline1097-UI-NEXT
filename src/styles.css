@@ -176,4 +176,25 @@
   input::-ms-clear {
     display: none;
   }
+  /* Modernize native date inputs: brand-tinted calendar icon with a comfortable
+     hit-area, and the whole field opens the picker (paired with cursor-pointer). */
+  input[type='date'] {
+    color-scheme: light;
+  }
+  .dark input[type='date'] {
+    color-scheme: dark;
+  }
+  input[type='date']::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+    opacity: 0.7;
+    transition:
+      opacity 0.15s ease,
+      background-color 0.15s ease;
+  }
+  input[type='date']::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    background-color: var(--accent);
+  }
 }

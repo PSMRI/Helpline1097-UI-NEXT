@@ -65,7 +65,7 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
       <form [formGroup]="form" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <label class="flex flex-col gap-1.5 text-sm">
           <span>State <span class="text-destructive">*</span></span>
-          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange()">
+          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange($event)">
             @for (s of states(); track s.stateID) {
               <z-select-item [zValue]="s.stateID + ''">{{ s.stateName }}</z-select-item>
             }
@@ -73,7 +73,7 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>District <span class="text-destructive">*</span></span>
-          <z-select formControlName="district" zPlaceholder="Select district" (zValueChange)="onDistrictChange()">
+          <z-select formControlName="district" zPlaceholder="Select district" (zValueChange)="onDistrictChange($event)">
             @for (d of districts(); track d.districtID) {
               <z-select-item [zValue]="d.districtID + ''">{{ d.districtName }}</z-select-item>
             }
@@ -82,14 +82,14 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Taluk</span>
           <z-select formControlName="taluk" zPlaceholder="Select taluk">
-            @for (t of taluks(); track t.talukID) {
-              <z-select-item [zValue]="t.talukID + ''">{{ t.talukName }}</z-select-item>
+            @for (t of taluks(); track t.blockID) {
+              <z-select-item [zValue]="t.blockID + ''">{{ t.blockName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Directory <span class="text-destructive">*</span></span>
-          <z-select formControlName="directory" zPlaceholder="Select directory" (zValueChange)="onDirectoryChange()">
+          <z-select formControlName="directory" zPlaceholder="Select directory" (zValueChange)="onDirectoryChange($event)">
             @for (d of directories(); track d.instituteDirectoryID) {
               <z-select-item [zValue]="d.instituteDirectoryID + ''">{{ d.instituteDirectoryName }}</z-select-item>
             }
@@ -105,7 +105,7 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
         </label>
         <div class="flex items-end">
           <button z-button type="button" [zDisabled]="form.invalid" [zLoading]="saving()" (click)="provideReferral()">
-            Provide Referral
+            Get Details
           </button>
         </div>
       </form>
@@ -155,10 +155,12 @@ export class CoReferralComponent implements OnInit {
   readonly serviceProvided = output<void>();
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
+  // Old app defaulted subServiceID to 3 and only overrode it on a "REFE" name match, so a
+  // missing REFE entry still sent 3 (not null).
   private readonly subServiceId = computed(
     () =>
       this.serviceTypes().find((t) => t.subServiceName?.toUpperCase().includes('REFE'))
-        ?.subServiceID ?? null,
+        ?.subServiceID ?? 3,
   );
 
   protected readonly districts = signal<DistrictRow[]>([]);
@@ -191,11 +193,13 @@ export class CoReferralComponent implements OnInit {
     this.loadHistory();
   }
 
-  protected onStateChange(): void {
+  // Handlers take the emitted value: z-select fires zValueChange BEFORE its CVA writes the
+  // form control, so reading the control here would see the previous selection.
+  protected onStateChange(value: string | string[]): void {
     this.districts.set([]);
     this.taluks.set([]);
     this.form.patchValue({ district: null, taluk: null });
-    const state = this.form.controls.state.value;
+    const state = value as string;
     if (!state) {
       return;
     }
@@ -205,10 +209,10 @@ export class CoReferralComponent implements OnInit {
     });
   }
 
-  protected onDistrictChange(): void {
+  protected onDistrictChange(value: string | string[]): void {
     this.taluks.set([]);
     this.form.patchValue({ taluk: null });
-    const district = this.form.controls.district.value;
+    const district = value as string;
     if (!district) {
       return;
     }
@@ -218,10 +222,10 @@ export class CoReferralComponent implements OnInit {
     });
   }
 
-  protected onDirectoryChange(): void {
+  protected onDirectoryChange(value: string | string[]): void {
     this.subDirectories.set([]);
     this.form.patchValue({ subDirectory: null });
-    const directory = this.form.controls.directory.value;
+    const directory = value as string;
     if (!directory) {
       return;
     }
@@ -250,9 +254,16 @@ export class CoReferralComponent implements OnInit {
         blockID: numOrNull(v.taluk),
       })
       .subscribe({
-        next: () => {
+        next: (res) => {
           this.saving.set(false);
-          this.notify.alert('Referral recorded', 'success');
+          // Old SetReferralDetails: response holds the matched institution list. Empty → the
+          // old app alerts "No data found" (the institution-list render itself is still deferred).
+          const rows = Array.isArray(res?.data) ? res.data : [];
+          if (rows.length > 0) {
+            this.notify.alert('Referral recorded', 'success');
+          } else {
+            this.notify.alert('No data found', 'info');
+          }
           this.serviceProvided.emit();
           this.loadHistory();
         },

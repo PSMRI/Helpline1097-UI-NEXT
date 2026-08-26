@@ -67,6 +67,17 @@ export class CallStore {
   readonly outboundGrievanceData = signal<Record<string, unknown> | null>(null);
   /** Old `dataService.outboundEverwellData` — populated by the Everwell outbound worklist. */
   readonly outboundEverwellData = signal<Record<string, unknown> | null>(null);
+  /** Old `dataService.outboundData` — the generic outbound worklist row being dialed. */
+  readonly outboundData = signal<Record<string, unknown> | null>(null);
+  /** Old quirk: the generic worklist stores the 12-digit `beneficiaryID` here, not a regID. */
+  readonly outboundBenRegID = signal<number | string | null>(null);
+  /** The generic row's `outboundCallReqID` (old `outBoundCallID`) for completeOutboundCall. */
+  readonly outBoundCallID = signal<number | string | null>(null);
+  // Everwell hand-off state (old dataService fields; consumers land with Phase 8).
+  readonly checkEverwellResponse = signal<boolean>(false);
+  readonly everwellCallNotConnected = signal<string | null>(null);
+  readonly feedbackData = signal<Record<string, unknown>[]>([]);
+  readonly updatedFeedbackList = signal<unknown[]>([]);
   /**
    * Old `dataService.custDisconnectCall$`/`enablePreviousOnCustDisconnect` subject — bumped
    * by the innerpage's CustDisconnect handler; the wizard reacts (jump to Closure, lock nav).
@@ -155,6 +166,13 @@ export class CallStore {
     this.callData.set(null);
     this.outboundGrievanceData.set(null);
     this.outboundEverwellData.set(null);
+    this.outboundData.set(null);
+    this.outboundBenRegID.set(null);
+    this.outBoundCallID.set(null);
+    this.checkEverwellResponse.set(false);
+    this.everwellCallNotConnected.set(null);
+    this.feedbackData.set([]);
+    this.updatedFeedbackList.set([]);
     this.custDisconnected.set(0);
     this.onlyOutboundAvailable.set(false);
     this.isOutBoundSelected.set(false);

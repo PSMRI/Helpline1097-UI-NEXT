@@ -152,9 +152,25 @@ export class CallApiService {
     return this.http.post<ApiResponse>(`${this.config.commonBaseURL}cti/transferCall`, request);
   }
 
-  /** POST call/completeOutboundCall — mark an outbound work item completed. */
+  /** POST call/outboundCallList — the agent's generic outbound follow-ups. A missing user
+   * id omits `assignedUserID` (service-wide list, old semantics). */
+  getAgentOutboundWorklist(
+    providerServiceMapID: number,
+    assignedUserID?: number | string | null,
+  ): Observable<ApiResponse> {
+    const request: Record<string, unknown> = { providerServiceMapID, is1097: true };
+    if (assignedUserID != null) {
+      request['assignedUserID'] = assignedUserID;
+    }
+    return this.http.post<ApiResponse>(
+      `${this.config.commonBaseURL}call/outboundCallList`,
+      request,
+    );
+  }
+
+  /** POST call/completeOutboundCall — old app posted `null` when the id was never captured. */
   completeOutboundCall(
-    outboundCallReqID: number | string,
+    outboundCallReqID: number | string | null,
     isCompleted: boolean,
   ): Observable<ApiResponse> {
     return this.http.post<ApiResponse>(`${this.config.commonBaseURL}call/completeOutboundCall`, {

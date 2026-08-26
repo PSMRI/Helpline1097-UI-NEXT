@@ -37,7 +37,9 @@ import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
+import { CtiService } from '@/app-modules/core/services/cti.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { OutboundApiService } from '@/app-modules/core/services/outbound-api.service';
 import {
   ENCRYPTED_KEYS,
   SessionStorageService,
@@ -73,7 +75,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
       <form [formGroup]="form" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Call Type <span class="text-destructive">*</span></span>
-          <z-select formControlName="callType" zPlaceholder="Select call type" (zValueChange)="onCallTypeChange()">
+          <z-select formControlName="callType" zPlaceholder="Select call type" (zValueChange)="onCallTypeChange($event)">
             @for (g of callGroups(); track g) {
               <z-select-item [zValue]="g">{{ g }}</z-select-item>
             }
@@ -81,7 +83,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Call Sub-Type <span class="text-destructive">*</span></span>
-          <z-select formControlName="callSubType" zPlaceholder="Select sub-type" (zValueChange)="onSubTypeChange()">
+          <z-select formControlName="callSubType" zPlaceholder="Select sub-type" (zValueChange)="onSubTypeChange($event)">
             @for (st of subTypes(); track st.callTypeID) {
               <z-select-item [zValue]="subTypeValue(st)">{{ st.callType }}</z-select-item>
             }
@@ -91,7 +93,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
         @if (transferValid()) {
           <label class="flex flex-col gap-1.5 text-sm">
             <span>Transfer Campaign <span class="text-destructive">*</span></span>
-            <z-select formControlName="campaignName" zPlaceholder="Select campaign" (zValueChange)="onCampaignChange()">
+            <z-select formControlName="campaignName" zPlaceholder="Select campaign" (zValueChange)="onCampaignChange($event)">
               @for (c of campaigns(); track c) {
                 <z-select-item [zValue]="c">{{ c }}</z-select-item>
               }
@@ -201,6 +203,8 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
 export class ClosureComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly callApi = inject(CallApiService);
+  private readonly cti = inject(CtiService);
+  private readonly outboundApi = inject(OutboundApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
@@ -213,6 +217,8 @@ export class ClosureComponent implements OnInit {
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
   protected readonly minDate = new Date().toISOString().slice(0, 10);
+  /** Old `ipAddress` — fetched via `cti/getAgentIPAddress` and sent in the closeCall payload. */
+  private readonly ipAddress = signal<string | undefined>(undefined);
 
   private callTypeGroups: CallTypeGroup[] = [];
   protected readonly callGroups = signal<string[]>([]);
@@ -232,6 +238,8 @@ export class ClosureComponent implements OnInit {
   /** Old `isEverwell` — the feedback checkbox is hidden on Everwell calls. */
   protected readonly isEverwell =
     this.storage.getItem(ENCRYPTED_KEYS.isEverwellCall) === 'yes';
+  private readonly isGrievance =
+    this.storage.getItem(ENCRYPTED_KEYS.isGrievanceCall) === 'yes';
   protected readonly campaigns = signal<string[]>([]);
   protected readonly skills = signal<string[]>([]);
   protected readonly languages = signal<{ languageID?: number; languageName?: string }[]>([]);
@@ -292,11 +300,20 @@ export class ClosureComponent implements OnInit {
     if (serviceId == null) {
       return;
     }
-    const campaign = this.callStore.currentCampaign();
+    // currentCampaign is memory-only and lost on a mid-call reload; fall back to the persisted
+    // call direction (old app persisted current_campaign, so it never lost inbound/outbound).
+    const campaign = this.callStore.currentCampaign() ?? this.callStore.callCategory();
     this.callApi.getCallTypes(serviceId, campaign).subscribe({
       next: (res) => this.populateCallTypes(res?.data ?? []),
       error: (err: { errorMessage?: string }) =>
         this.notify.alert(err?.errorMessage ?? 'Failed to load call types', 'error'),
+    });
+    // Old innerpage fetched the agent IP (cti/getAgentIPAddress → data.agent_ip) for closeCall.
+    this.cti.getIpAddress().subscribe({
+      next: (res) => this.ipAddress.set((res?.data as { agent_ip?: string })?.agent_ip),
+      error: () => {
+        // Old app only logged this; closeCall still goes out (agentIPAddress stays undefined).
+      },
     });
     this.callApi.getLanguages().subscribe({
       next: (res) => {
@@ -357,8 +374,10 @@ export class ClosureComponent implements OnInit {
     return `${st.callTypeID},${st.fitToBlock ?? ''},${st.fitForFollowUp ?? ''}`;
   }
 
-  protected onCallTypeChange(): void {
-    const group = this.form.controls.callType.value;
+  // Handlers take the emitted value: z-select fires zValueChange BEFORE its CVA writes the
+  // form control, so reading the control here would see the previous selection.
+  protected onCallTypeChange(value: string | string[]): void {
+    const group = value as string;
     this.form.patchValue({ callSubType: null });
     this.subTypes.set([]);
     this.showFollowUp.set(false);
@@ -420,8 +439,8 @@ export class ClosureComponent implements OnInit {
   }
 
   /** Old `sliderVisibility` — follow-up shows when the sub-type's fitForFollowUp is "true". */
-  protected onSubTypeChange(): void {
-    const value = this.form.controls.callSubType.value ?? '';
+  protected onSubTypeChange(subType: string | string[]): void {
+    const value = (subType as string) ?? '';
     const fitForFollowUp = value.split(',')[2];
     this.showFollowUp.set(fitForFollowUp === 'true');
     // A hidden checkbox left the old form entirely (`isFollowupRequired == undefined` →
@@ -432,10 +451,10 @@ export class ClosureComponent implements OnInit {
     this.syncFollowUpValidators();
   }
 
-  protected onCampaignChange(): void {
+  protected onCampaignChange(value: string | string[]): void {
     this.skills.set([]);
     this.form.patchValue({ campaignSkill: null });
-    const name = this.form.controls.campaignName.value;
+    const name = value as string;
     if (!name) {
       return;
     }
@@ -510,6 +529,7 @@ export class ClosureComponent implements OnInit {
       // Old `values.isFeedback = this.isFeedbackRequiredFlag` — sent on EVERY close.
       isFeedback: v.isFeedback ?? false,
       isFollowupRequired: v.isFollowupRequired ?? false,
+      agentIPAddress: this.ipAddress(),
       endCall: kind === 'close',
       isTransfered: transfer,
       IsOutbound: campaign === 'OUTBOUND',
@@ -518,12 +538,15 @@ export class ClosureComponent implements OnInit {
       request.isCompleted = true;
     }
     // Old form dropped the hidden follow-up controls from `Form.value`, so the follow-up
-    // block was only sent while the checkbox was ticked.
+    // block was only sent while the checkbox was ticked (misspelled key = backend contract);
+    // otherwise the old app sent the correctly-spelled `preferredDateTime: null`.
     if (v.isFollowupRequired && v.prefferedDateTime) {
       request.prefferedDateTime = new Date(v.prefferedDateTime).toJSON();
       request.requestedServiceID = v.requestedServiceID ? Number(v.requestedServiceID) : null;
       request.requestedFor = v.requestedFor;
       request.preferredLanguageName = v.preferredLanguageName;
+    } else {
+      request.preferredDateTime = null;
     }
 
     if (this.callStore.benCallID() == null) {
@@ -534,6 +557,54 @@ export class ClosureComponent implements OnInit {
       return;
     }
     this.busy.set(true);
+    // OUTBOUND completes the worklist item FIRST, then closes (old branch order); the
+    // bare-HTTP-status error alerts are the old handlers' quirk.
+    if (campaign === 'OUTBOUND') {
+      if (!this.isEverwell && !this.isGrievance) {
+        this.callApi.completeOutboundCall(this.callStore.outBoundCallID(), true).subscribe({
+          next: () => this.postCloseCall(request, kind, campaign),
+          error: (err: { status?: number }) => {
+            this.busy.set(false);
+            this.notify.alert(String(err?.status ?? 'error'), 'error');
+          },
+        });
+        return;
+      }
+      if (this.isGrievance) {
+        const grievanceData = this.callStore.outboundGrievanceData() ?? {};
+        this.outboundApi
+          .completeGrievanceCall({
+            complaintID: grievanceData['complaintID'],
+            userID: this.sessionStore.userId(),
+            isCompleted: true,
+            beneficiaryRegID: grievanceData['beneficiaryRegID'] ?? grievanceData['beneficiaryRegId'],
+            callTypeID: request.callTypeID,
+            benCallID: request.benCallID,
+            providerServiceMapID: request.providerServiceMapID,
+            createdBy: this.sessionStore.user()?.userName,
+          })
+          .subscribe({
+            next: () => this.postCloseCall(request, kind, campaign),
+            error: (err: { status?: number }) => {
+              this.busy.set(false);
+              this.notify.alert(String(err?.status ?? 'error'), 'error');
+            },
+          });
+        return;
+      }
+      // Everwell without feedback data posted NOTHING in the old app (silent no-op quirk);
+      // the Phase 8 feedback flow adds the completion branch.
+      this.busy.set(false);
+      return;
+    }
+    this.postCloseCall(request, kind, campaign);
+  }
+
+  private postCloseCall(
+    request: CloseCallRequest,
+    kind: 'continue' | 'close',
+    campaign: string | null,
+  ): void {
     this.callApi.closeCall(request).subscribe({
       next: () => {
         this.busy.set(false);
