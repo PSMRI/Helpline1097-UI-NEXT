@@ -59,6 +59,13 @@ const SOURCE_OF_INFO = [
 
 const NOT_DISCLOSED = 'Not Disclosed';
 
+/**
+ * Sentinel for the HIV-status "Not disclosed" option. The old app used `<md-option value="">`
+ * and posted `isHIVPos: ""`, but the select rejects an empty option value — so carry a sentinel
+ * in the form and map it back to `""` on submit.
+ */
+const HIV_NOT_DISCLOSED = '__not_disclosed__';
+
 /** Coerce a z-select value to an array (multi-mode CVA can hand back a scalar). */
 function asArray(value: string | string[] | null): string[] {
   return Array.isArray(value) ? value : value ? [value] : [];
@@ -109,7 +116,7 @@ function asArray(value: string | string[] | null): string[] {
         <z-select formControlName="isHIVPos" zPlaceholder="Not disclosed">
           <z-select-item zValue="yes">Yes</z-select-item>
           <z-select-item zValue="no">No</z-select-item>
-          <z-select-item zValue="">Not disclosed</z-select-item>
+          <z-select-item [zValue]="hivNotDisclosed">Not disclosed</z-select-item>
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
@@ -118,7 +125,7 @@ function asArray(value: string | string[] | null): string[] {
           formControlName="sourceOfInformation"
           [zMultiple]="true"
           zPlaceholder="Select"
-          (zValueChange)="onSourcesChange($event)"
+          (zSelectionChange)="onSourcesChange($event)"
         >
           @for (s of sources(); track s.id) {
             <z-select-item [zValue]="s.value" [zDisabled]="s.disabled">{{ s.name }}</z-select-item>
@@ -147,9 +154,14 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
 
   /** Option list with per-item disabled state (old `populateSourceOfInformation`). */
+  protected readonly hivNotDisclosed = HIV_NOT_DISCLOSED;
   protected readonly sources = signal(SOURCE_OF_INFO.map((s) => ({ ...s, disabled: false })));
-  /** Full multi-selection — the reactive control alone is unreliable in multi mode. */
-  protected readonly sourcesSelected = signal<string[]>([]);
+  /**
+   * Full multi-selection — the reactive control alone is unreliable in multi mode. Mirrors the
+   * old `cameToKnowFrom`: `undefined` until prefilled or touched (drives `undefined` vs `""`
+   * in the payload), an array (possibly empty) thereafter.
+   */
+  protected readonly sourcesSelected = signal<string[] | undefined>(undefined);
   protected readonly occupations = signal<RegistrationData['beneficiaryOccupations']>([]);
   protected readonly educations = signal<RegistrationData['i_BeneficiaryEducation']>([]);
   protected readonly orientations = signal<RegistrationData['sexualOrientations']>([]);
@@ -190,24 +202,28 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
       return;
     }
     const str = (v: unknown) => (v != null ? String(v) : null);
-    // Old app split the stored CSV of source names back into the multi-select.
+    // Old app split the stored CSV of source names back into the multi-select (and left
+    // `cameToKnowFrom` undefined when nothing was stored).
     const selectedSources = ben.sourceOfInformation
       ? String(ben.sourceOfInformation)
           .split(',')
           .map((s) => s.trim())
           .filter(Boolean)
-      : [];
+      : undefined;
     this.form.patchValue({
       occupationID: str(ben.i_bendemographics.occupationID),
       educationID: str(ben.i_bendemographics.educationID),
       sexualOrientationID: str(ben.sexualOrientationID),
       placeOfWork: ben.placeOfWork ?? null,
-      isHIVPos: ben.isHIVPos ? ben.isHIVPos.toLowerCase() : null,
+      // Old `isHIVPos` defaulted to "" (the "Not disclosed" option).
+      isHIVPos: ben.isHIVPos ? ben.isHIVPos.toLowerCase() : HIV_NOT_DISCLOSED,
       remarks: ben.remarks ?? null,
-      sourceOfInformation: selectedSources,
+      sourceOfInformation: selectedSources ?? [],
     });
     this.sourcesSelected.set(selectedSources);
-    this.applyNotDisclosedState(selectedSources);
+    // Prefill only sets the disabled state (old `populateSourceOfInformation`); it never
+    // rewrites the stored selection, so an existing value is posted back untouched.
+    this.applyNotDisclosedState(selectedSources ?? []);
   }
 
   /**
@@ -218,10 +234,16 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
   protected onSourcesChange(value: string | string[]): void {
     const selected = asArray(value);
     if (selected.includes(NOT_DISCLOSED)) {
-      const only = [NOT_DISCLOSED];
-      this.sourcesSelected.set(only);
-      this.form.controls.sourceOfInformation.setValue(only);
-      this.applyNotDisclosedState(only);
+      // Already collapsed — don't write back (a fresh array would re-trigger the select).
+      if (selected.length !== 1) {
+        const only = [NOT_DISCLOSED];
+        this.form.controls.sourceOfInformation.setValue(only);
+        this.sourcesSelected.set(only);
+        this.applyNotDisclosedState(only);
+        return;
+      }
+      this.sourcesSelected.set([NOT_DISCLOSED]);
+      this.applyNotDisclosedState([NOT_DISCLOSED]);
       return;
     }
     this.sourcesSelected.set(selected);
@@ -251,11 +273,13 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
     };
     ben.sexualOrientationID = numOrNull(v.sexualOrientationID);
     ben.placeOfWork = v.placeOfWork?.trim() || null;
-    ben.isHIVPos = v.isHIVPos;
+    // "Not disclosed" (and an untouched control) post "" — the old app's default value.
+    ben.isHIVPos = v.isHIVPos == null || v.isHIVPos === HIV_NOT_DISCLOSED ? '' : v.isHIVPos;
     ben.remarks = v.remarks?.trim() || null;
-    // Old app posted `cameToKnowFrom.toString()` — a CSV of source NAMES (undefined if none).
+    // Old app posted `cameToKnowFrom ? cameToKnowFrom.toString() : undefined` — a CSV of source
+    // NAMES. An empty array is truthy there, so a cleared selection posts "" (not undefined).
     const sources = this.sourcesSelected();
-    ben.sourceOfInformation = sources.length > 0 ? sources.join(',') : undefined;
+    ben.sourceOfInformation = sources ? sources.join(',') : undefined;
     ben.is1097 = true;
     // Old change-flag battery — the backend contract keys off these.
     ben.changeInSelfDetails = true;

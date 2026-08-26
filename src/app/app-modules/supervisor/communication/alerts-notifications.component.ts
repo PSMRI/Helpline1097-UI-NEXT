@@ -357,7 +357,9 @@ export class AlertsNotificationsComponent implements OnInit {
       return;
     }
     const start = dateAt(v.startDate, v.startTime || null, [0, 0, 0]);
-    const end = dateAt(v.endDate, v.endTime || null, [0, 0, 0]);
+    // Same end-of-day fallback as create() — old `editAlertNotification` set 23:59:59 when
+    // End Time was blank, and the start/end comparison below is driven off that value.
+    const end = dateAt(v.endDate, v.endTime || null, [23, 59, 59]);
     if (end <= start) {
       this.notify.alert('End date must be after start date', 'info');
       return;
