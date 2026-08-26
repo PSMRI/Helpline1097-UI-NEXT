@@ -1,0 +1,105 @@
+<!--
+  AMRIT – Accessible Medical Records via Integrated Technologies
+  Integrated EHR (Electronic Health Records) Solution
+
+  Copyright (C) "Piramal Swasthya Management and Research Institute"
+
+  This file is part of AMRIT.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see https://www.gnu.org/licenses/.
+-->
+
+<div class="flex max-w-3xl flex-col gap-4">
+  <h2 class="text-base font-semibold">Knowledge Management</h2>
+
+  <form class="grid gap-3 sm:grid-cols-2" [formGroup]="form">
+    <label class="flex flex-col gap-1.5 text-sm">
+      <span>Service <span class="text-destructive">*</span></span>
+      <z-select formControlName="service" zPlaceholder="Select service" (zValueChange)="onServiceChange($event)">
+        @for (s of services(); track s.subServiceID) {
+          <z-select-item [zValue]="s.subServiceID + ''">{{ s.subServiceName }}</z-select-item>
+        }
+      </z-select>
+    </label>
+
+    <label class="flex flex-col gap-1.5 text-sm">
+      <span>Category <span class="text-destructive">*</span></span>
+      <z-select
+        formControlName="category"
+        zPlaceholder="Select category"
+        [zDisabled]="categories().length === 0"
+        (zValueChange)="onCategoryChange($event)"
+      >
+        @for (c of categories(); track c.categoryID) {
+          <z-select-item [zValue]="c.categoryID + ''">{{ c.categoryName }}</z-select-item>
+        }
+      </z-select>
+    </label>
+
+    <label class="flex flex-col gap-1.5 text-sm">
+      <span>Sub Category <span class="text-destructive">*</span></span>
+      <z-select
+        formControlName="subCategory"
+        zPlaceholder="Select sub category"
+        [zDisabled]="subcategories().length === 0"
+        (zValueChange)="onSubCategoryChange($event)"
+      >
+        @for (sc of subcategories(); track sc.subCategoryID) {
+          <z-select-item [zValue]="sc.subCategoryID + ''">{{ sc.subCategoryName }}</z-select-item>
+        }
+      </z-select>
+    </label>
+
+    <div class="flex flex-col gap-1.5 text-sm">
+      <span>Previously Uploaded File</span>
+      @if (selectedSubcategory()?.subCatFilePath) {
+        <a
+          class="text-primary underline"
+          [href]="selectedSubcategory()?.fileURL"
+          target="_blank"
+          rel="noopener"
+        >
+          {{ selectedSubcategory()?.fileNameWithExtension || '-' }}
+        </a>
+      } @else {
+        <span class="text-muted-foreground">—</span>
+      }
+    </div>
+
+    <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
+      <span>File <span class="text-destructive">*</span></span>
+      <input
+        type="file"
+        class="text-sm file:mr-3 file:rounded-md file:border file:border-border file:bg-muted file:px-3 file:py-1.5 file:text-sm"
+        (change)="onFileSelected($event)"
+      />
+      @if (fileError()) {
+        <span class="text-destructive">{{ fileError() }}</span>
+      } @else if (pendingFile()) {
+        <span class="text-muted-foreground">{{ pendingFile()!.fileName }} ready</span>
+      }
+    </label>
+
+    <div class="sm:col-span-2">
+      <button
+        z-button
+        type="button"
+        [zDisabled]="form.invalid || !pendingFile() || reading() || saving()"
+        (click)="save()"
+      >
+        Upload
+      </button>
+    </div>
+  </form>
+</div>

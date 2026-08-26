@@ -1,0 +1,168 @@
+<!--
+  AMRIT – Accessible Medical Records via Integrated Technologies
+  Integrated EHR (Electronic Health Records) Solution
+
+  Copyright (C) "Piramal Swasthya Management and Research Institute"
+
+  This file is part of AMRIT.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see https://www.gnu.org/licenses/.
+-->
+
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    <h2 class="text-base font-semibold">Training Resources</h2>
+    @if (mode() === 'list') {
+      <button z-button type="button" (click)="startCreate()">Add New</button>
+    } @else {
+      <button z-button zType="outline" type="button" (click)="cancelForm()">Back to List</button>
+    }
+  </div>
+
+  @if (mode() === 'list') {
+    <div class="overflow-x-auto rounded-md border border-border">
+      <table class="w-full text-sm">
+        <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+          <tr>
+            <th class="px-3 py-2">Role</th>
+            <th class="px-3 py-2">Subject</th>
+            <th class="px-3 py-2">Message</th>
+            <th class="px-3 py-2">File</th>
+            <th class="px-3 py-2">Status</th>
+            <th class="px-3 py-2"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of pagedRows(); track row.notificationID) {
+            <tr class="border-t border-border align-top">
+              <td class="px-3 py-2">{{ row.role?.RoleName ?? 'All' }}</td>
+              <td class="px-3 py-2">{{ row.notification }}</td>
+              <td class="px-3 py-2">{{ row.notificationDesc }}</td>
+              <td class="px-3 py-2">
+                @if (row.kmFilePath) {
+                  <a
+                    class="text-primary underline"
+                    [href]="row.kmFilePath"
+                    target="_blank"
+                    rel="noopener"
+                    [title]="row.kmFileManager?.fileName"
+                  >
+                    {{ row.kmFileManager?.fileName ?? 'Download' }}
+                  </a>
+                } @else {
+                  <span class="text-muted-foreground">—</span>
+                }
+              </td>
+              <td class="px-3 py-2">
+                <span [class.text-destructive]="row.deleted" [class.text-emerald-600]="!row.deleted">
+                  {{ row.deleted ? 'Inactive' : 'Active' }}
+                </span>
+              </td>
+              <td class="px-3 py-2 text-right">
+                <div class="flex justify-end gap-2">
+                  <button z-button zSize="sm" zType="outline" type="button" (click)="startEdit(row)">
+                    Edit
+                  </button>
+                  <button z-button zSize="sm" zType="outline" type="button" (click)="toggleActive(row)">
+                    {{ row.deleted ? 'Activate' : 'Deactivate' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="px-3 py-6 text-center text-muted-foreground">No Records Found</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (rows().length > 0) {
+      <div class="flex items-center justify-end gap-3 text-sm">
+        <span class="text-muted-foreground">Page {{ pageIndex() + 1 }} of {{ pageCount() }}</span>
+        <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="pageIndex() === 0" (click)="prevPage()">
+          Prev
+        </button>
+        <button
+          z-button
+          zSize="sm"
+          zType="outline"
+          type="button"
+          [zDisabled]="pageIndex() >= pageCount() - 1"
+          (click)="nextPage()"
+        >
+          Next
+        </button>
+      </div>
+    }
+  } @else {
+    <form class="grid gap-3 sm:grid-cols-2" [formGroup]="form">
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Role(s) <span class="text-destructive">*</span></span>
+        <z-select
+          formControlName="roles"
+          [zMultiple]="true"
+          zPlaceholder="Select role(s)"
+          [zDisabled]="form.controls.roles.disabled"
+          (zValueChange)="onRolesChange($event)"
+        >
+          @for (r of roles(); track r.roleID) {
+            <z-select-item [zValue]="r.roleID + ''">{{ r.roleName }}</z-select-item>
+          }
+        </z-select>
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>File</span>
+        <input
+          type="file"
+          class="text-sm file:mr-3 file:rounded-md file:border file:border-border file:bg-muted file:px-3 file:py-1.5 file:text-sm"
+          (change)="onFileSelected($event)"
+        />
+        @if (fileError()) {
+          <span class="text-destructive">{{ fileError() }}</span>
+        } @else if (pendingFile()) {
+          <span class="text-muted-foreground">{{ pendingFile()!.fileName }} ready</span>
+        }
+      </label>
+
+      <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
+        <span>Subject <span class="text-destructive">*</span></span>
+        <input z-input formControlName="subject" maxlength="200" placeholder="Subject (5-200 chars)" />
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
+        <span>Message <span class="text-destructive">*</span></span>
+        <textarea
+          z-input
+          formControlName="message"
+          rows="3"
+          maxlength="300"
+          placeholder="Message (5-300 chars)"
+        ></textarea>
+      </label>
+
+      <div class="flex items-center gap-3 sm:col-span-2">
+        <button
+          z-button
+          type="button"
+          [zDisabled]="form.invalid || saving() || reading() || (!editing() && rolesSelected().length === 0)"
+          (click)="save()"
+        >
+          {{ editing() ? 'Update' : 'Create' }}
+        </button>
+        <button z-button zType="outline" type="button" (click)="cancelForm()">Cancel</button>
+      </div>
+    </form>
+  }
+</div>

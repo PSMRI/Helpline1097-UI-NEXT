@@ -1,0 +1,245 @@
+<!--
+  AMRIT – Accessible Medical Records via Integrated Technologies
+  Integrated EHR (Electronic Health Records) Solution
+
+  Copyright (C) "Piramal Swasthya Management and Research Institute"
+
+  This file is part of AMRIT.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see https://www.gnu.org/licenses/.
+-->
+
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    <h2 class="text-base font-semibold">SMS Templates</h2>
+    @if (mode() === 'list') {
+      <button z-button type="button" (click)="startCreate()">Create New SMS Template</button>
+    } @else {
+      <button z-button zType="outline" type="button" (click)="showTable()">Back to List</button>
+    }
+  </div>
+
+  @if (mode() === 'list') {
+    <div class="overflow-x-auto rounded-md border border-border">
+      <table class="w-full text-sm">
+        <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+          <tr>
+            <th class="px-3 py-2">S.No</th>
+            <th class="px-3 py-2">Template Name</th>
+            <th class="px-3 py-2">Template Type</th>
+            <th class="px-3 py-2">Template</th>
+            <th class="px-3 py-2">View</th>
+            <th class="px-3 py-2">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of pagedTemplates(); track row.smsTemplateID; let i = $index) {
+            <tr class="border-t border-border align-top">
+              <td class="px-3 py-2">{{ pageIndex() * 5 + i + 1 }}</td>
+              <td class="px-3 py-2">{{ row.smsTemplateName }}</td>
+              <td class="px-3 py-2">{{ row.smsType?.smsType }}</td>
+              <td class="px-3 py-2">{{ row.smsTemplate }}</td>
+              <td class="px-3 py-2">
+                <button class="text-primary underline" type="button" (click)="view(row)">View</button>
+              </td>
+              <td class="px-3 py-2">
+                @if (!row.deleted) {
+                  <button z-button zSize="sm" zType="outline" type="button" (click)="activateDeactivate(row, true)">
+                    Deactivate
+                  </button>
+                } @else {
+                  <button z-button zSize="sm" type="button" (click)="activateDeactivate(row, false)">
+                    Activate
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="px-3 py-6 text-center text-muted-foreground">No Record Found</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (templates().length > 0) {
+      <div class="flex items-center justify-end gap-3 text-sm">
+        <span class="text-muted-foreground">Page {{ pageIndex() + 1 }} of {{ pageCount() }}</span>
+        <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="pageIndex() === 0" (click)="prevPage()">
+          Prev
+        </button>
+        <button
+          z-button
+          zSize="sm"
+          zType="outline"
+          type="button"
+          [zDisabled]="pageIndex() >= pageCount() - 1"
+          (click)="nextPage()"
+        >
+          Next
+        </button>
+      </div>
+    }
+  } @else if (mode() === 'create') {
+    <form class="grid gap-3 sm:grid-cols-2" [formGroup]="form">
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Template Name <span class="text-destructive">*</span></span>
+        <input z-input formControlName="templateName" maxlength="40" />
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Template Type <span class="text-destructive">*</span></span>
+        <z-select formControlName="smsType" zPlaceholder="Select type" [zDisabled]="form.controls.smsType.disabled">
+          @for (t of smsTypes(); track t.smsTypeID) {
+            <z-select-item [zValue]="t.smsTypeID + ''">{{ t.smsType }}</z-select-item>
+          }
+        </z-select>
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
+        <span>Template <span class="text-destructive">*</span></span>
+        <textarea z-input formControlName="smsTemplate" rows="3" maxlength="160" placeholder="Use $$TOKEN$$ placeholders (20-160 chars)"></textarea>
+        <span class="text-xs text-muted-foreground">{{ form.controls.smsTemplate.value.length }}/160</span>
+      </label>
+
+      @if (!showParameters()) {
+        <div class="sm:col-span-2">
+          <button z-button type="button" [zDisabled]="form.invalid" (click)="continueToParameters()">
+            Continue
+          </button>
+          <button z-button zType="outline" type="button" class="ml-2" (click)="cancelCreate()">Cancel</button>
+        </div>
+      }
+    </form>
+
+    @if (showParameters()) {
+      <div class="flex flex-col gap-3 rounded-md border border-border p-3">
+        <h3 class="text-sm font-semibold">Map Parameters</h3>
+        <p class="text-xs text-muted-foreground">
+          Map every placeholder before saving ({{ buffer().length }}/{{ pendingParameters().length + buffer().length }} mapped).
+        </p>
+        <form class="grid gap-3 sm:grid-cols-4" [formGroup]="mapForm">
+          <label class="flex flex-col gap-1.5 text-sm">
+            <span>Parameter</span>
+            <z-select formControlName="parameter" zPlaceholder="Select parameter">
+              @for (p of pendingParameters(); track p) {
+                <z-select-item [zValue]="p">{{ p }}</z-select-item>
+              }
+            </z-select>
+          </label>
+          <label class="flex flex-col gap-1.5 text-sm">
+            <span>Value Type</span>
+            <z-select formControlName="valueType" zPlaceholder="Select value type" (zValueChange)="onValueTypeChange()">
+              @for (vt of valueTypes(); track vt) {
+                <z-select-item [zValue]="vt">{{ vt }}</z-select-item>
+              }
+            </z-select>
+          </label>
+          <label class="flex flex-col gap-1.5 text-sm">
+            <span>Value</span>
+            <z-select formControlName="value" zPlaceholder="Select value">
+              @for (val of valueOptions(); track val.smsParameterID) {
+                <z-select-item [zValue]="val.smsParameterID + ''">{{ val.smsParameterName }}</z-select-item>
+              }
+            </z-select>
+          </label>
+          <div class="flex items-end">
+            <button z-button zType="outline" type="button" (click)="addMapping()">Add</button>
+          </div>
+        </form>
+
+        <div class="overflow-x-auto rounded-md border border-border">
+          <table class="w-full text-sm">
+            <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+              <tr>
+                <th class="px-3 py-2">S.No</th>
+                <th class="px-3 py-2">Parameter</th>
+                <th class="px-3 py-2">Value Type</th>
+                <th class="px-3 py-2">Value</th>
+                <th class="px-3 py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of buffer(); track $index) {
+                <tr class="border-t border-border">
+                  <td class="px-3 py-2">{{ $index + 1 }}</td>
+                  <td class="px-3 py-2">{{ m.smsParameterName }}</td>
+                  <td class="px-3 py-2">{{ m.smsParameterType }}</td>
+                  <td class="px-3 py-2">{{ m.smsParameterValue }}</td>
+                  <td class="px-3 py-2 text-right">
+                    <button z-button zSize="sm" zType="destructive" type="button" (click)="removeMapping($index)">
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="px-3 py-6 text-center text-muted-foreground">
+                    Map each placeholder, then Save.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button z-button type="button" [zDisabled]="!canSubmit() || saving()" (click)="submit()">Save</button>
+          <button z-button zType="outline" type="button" (click)="cancelCreate()">Cancel</button>
+        </div>
+      </div>
+    }
+  } @else {
+    <form class="grid gap-3 sm:grid-cols-2" [formGroup]="viewForm">
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Template Name</span>
+        <input z-input formControlName="templateName" />
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Template Type</span>
+        <input z-input formControlName="smsType" />
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
+        <span>Template</span>
+        <textarea z-input formControlName="smsTemplate" rows="3"></textarea>
+      </label>
+    </form>
+
+    <div class="overflow-x-auto rounded-md border border-border">
+      <table class="w-full text-sm">
+        <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+          <tr>
+            <th class="px-3 py-2">S.No</th>
+            <th class="px-3 py-2">Parameter</th>
+            <th class="px-3 py-2">Value Type</th>
+            <th class="px-3 py-2">Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of viewParams(); track $index) {
+            <tr class="border-t border-border">
+              <td class="px-3 py-2">{{ $index + 1 }}</td>
+              <td class="px-3 py-2">{{ m.smsParameterName }}</td>
+              <td class="px-3 py-2">{{ m.smsParameterType }}</td>
+              <td class="px-3 py-2">{{ m.smsParameterValue }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="px-3 py-6 text-center text-muted-foreground">No parameters</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

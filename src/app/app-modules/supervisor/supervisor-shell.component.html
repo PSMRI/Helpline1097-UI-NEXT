@@ -80,8 +80,74 @@
       @case ('14') {
         <app-telephony-iframe query="campaignStatus" label="Campaign Status" />
       }
+      @case ('15') {
+        <app-distribution-report kind="age" />
+      }
+      @case ('16') {
+        <app-distribution-report kind="sexualOrientation" />
+      }
+      @case ('17') {
+        <app-distribution-report kind="language" />
+      }
+      @case ('18') {
+        <app-distribution-report kind="gender" />
+      }
       @case ('7') {
         <app-telephony-iframe query="reportUI" label="Telephony Reports" />
+      }
+      @case ('9') {
+        <app-call-type-report />
+      }
+      @case ('12') {
+        <app-call-allocation flavor="generic" />
+      }
+      @case ('13') {
+        <app-call-reallocation flavor="generic" />
+      }
+      @case ('26') {
+        <app-call-allocation flavor="everwell" />
+      }
+      @case ('27') {
+        <app-call-reallocation flavor="everwell" />
+      }
+      @case ('29') {
+        <app-call-allocation flavor="grievance" />
+      }
+      @case ('30') {
+        <app-call-reallocation flavor="grievance" />
+      }
+      @case ('19') {
+        <app-alerts-notifications />
+      }
+      @case ('20') {
+        <app-location-messages />
+      }
+      @case ('21') {
+        <app-training-resources />
+      }
+      @case ('22') {
+        <app-emergency-contacts />
+      }
+      @case ('3') {
+        <app-blacklist-number />
+      }
+      @case ('10') {
+        <app-knowledge-management />
+      }
+      @case ('23') {
+        <app-force-logout />
+      }
+      @case ('5') {
+        <app-call-auditing />
+      }
+      @case ('24') {
+        <app-sms-templates />
+      }
+      @case ('28') {
+        <app-everwell-guidelines />
+      }
+      @case ('1') {
+        <app-feedback-tracking />
       }
       @default {
         <!-- Not-yet-migrated pages land slice-by-slice (see PAGES map) -->

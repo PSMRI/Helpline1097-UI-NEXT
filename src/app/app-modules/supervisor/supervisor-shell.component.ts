@@ -28,6 +28,21 @@ import { RouterLink } from '@angular/router';
 import { ZardButtonComponent } from '@common-ui/ui/button';
 import { menuImports } from '@common-ui/ui/menu';
 
+import { CallAllocationComponent } from './allocation/call-allocation.component';
+import { CallReallocationComponent } from './allocation/call-reallocation.component';
+import { AlertsNotificationsComponent } from './communication/alerts-notifications.component';
+import { EmergencyContactsComponent } from './communication/emergency-contacts.component';
+import { LocationMessagesComponent } from './communication/location-messages.component';
+import { TrainingResourcesComponent } from './communication/training-resources.component';
+import { BlacklistNumberComponent } from './config/blacklist-number.component';
+import { CallAuditingComponent } from './config/call-auditing.component';
+import { ForceLogoutComponent } from './config/force-logout.component';
+import { KnowledgeManagementComponent } from './config/knowledge-management.component';
+import { SmsTemplatesComponent } from './config/sms-templates.component';
+import { EverwellGuidelinesComponent } from './everwell/everwell-guidelines.component';
+import { FeedbackTrackingComponent } from './feedback/feedback-tracking.component';
+import { CallTypeReportComponent } from './reports/call-type-report.component';
+import { DistributionReportComponent } from './reports/distribution-report.component';
 import { TelephonyIframeComponent } from './telephony-iframe.component';
 import { ConfigService } from '@/app-modules/core/services/config.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
@@ -46,34 +61,34 @@ interface SupervisorPage {
  * cases 11/25 never existed.
  */
 const PAGES: Record<string, SupervisorPage> = {
-  '1': { label: 'Feedback Tracking', arrives: 'Phase 7h' },
+  '1': { label: 'Feedback Tracking' },
   '2': { label: 'Agent Status' },
-  '3': { label: 'Blacklist a Number', arrives: 'Phase 7g' },
+  '3': { label: 'Blacklist a Number' },
   '4': { label: 'Dial Beneficiary', arrives: 'a later phase (menu-less in the old app)' },
-  '5': { label: 'Call Auditing', arrives: 'Phase 7g' },
+  '5': { label: 'Call Auditing' },
   '6': { label: 'Supervisor Notifications', arrives: 'a later phase (menu-less in the old app)' },
   '7': { label: 'Telephony Reports' },
   '8': { label: 'Supervisor Configurations', arrives: 'a later phase (menu-less in the old app)' },
-  '9': { label: 'Call Type Report', arrives: 'Phase 7e' },
-  '10': { label: 'Knowledge Management', arrives: 'Phase 7g' },
-  '12': { label: 'Outbound Call List', arrives: 'Phase 7d' },
-  '13': { label: 'Outbound Call Re-Allocation', arrives: 'Phase 7d' },
+  '9': { label: 'Call Type Report' },
+  '10': { label: 'Knowledge Management' },
+  '12': { label: 'Outbound Call List' },
+  '13': { label: 'Outbound Call Re-Allocation' },
   '14': { label: 'Campaign Status' },
-  '15': { label: 'Caller Age Report', arrives: 'Phase 7e' },
-  '16': { label: 'Sexual Orientation Report', arrives: 'Phase 7e' },
-  '17': { label: 'Language Distribution Report', arrives: 'Phase 7e' },
-  '18': { label: 'Gender Distribution Report', arrives: 'Phase 7e' },
-  '19': { label: 'Alerts and Notifications', arrives: 'Phase 7f' },
-  '20': { label: 'Location Messages', arrives: 'Phase 7f' },
-  '21': { label: 'Training Resource', arrives: 'Phase 7f' },
-  '22': { label: 'Emergency Contacts', arrives: 'Phase 7f' },
-  '23': { label: 'Force Logout', arrives: 'Phase 7g' },
-  '24': { label: 'SMS Templates', arrives: 'Phase 7g' },
-  '26': { label: 'Everwell Call Allocation', arrives: 'Phase 7d' },
-  '27': { label: 'Everwell Call Re-Allocation', arrives: 'Phase 7d' },
-  '28': { label: 'Everwell Guidelines Upload', arrives: 'Phase 8' },
-  '29': { label: 'Grievance Outbound Call Allocation', arrives: 'Phase 7d' },
-  '30': { label: 'Grievance Outbound Call Re-Allocation', arrives: 'Phase 7d' },
+  '15': { label: 'Caller Age Report' },
+  '16': { label: 'Sexual Orientation Report' },
+  '17': { label: 'Language Distribution Report' },
+  '18': { label: 'Gender Distribution Report' },
+  '19': { label: 'Alerts and Notifications' },
+  '20': { label: 'Location Messages' },
+  '21': { label: 'Training Resource' },
+  '22': { label: 'Emergency Contacts' },
+  '23': { label: 'Force Logout' },
+  '24': { label: 'SMS Templates' },
+  '26': { label: 'Everwell Call Allocation' },
+  '27': { label: 'Everwell Call Re-Allocation' },
+  '28': { label: 'Everwell Guidelines Upload' },
+  '29': { label: 'Grievance Outbound Call Allocation' },
+  '30': { label: 'Grievance Outbound Call Re-Allocation' },
 };
 
 /** A dropdown entry: a page item, a labeled group heading (old submenu), or a divider. */
@@ -138,7 +153,28 @@ const CONFIGURATIONS_MENU: MenuEntry[] = [
  */
 @Component({
   selector: 'app-supervisor-shell',
-  imports: [NgTemplateOutlet, RouterLink, ZardButtonComponent, TelephonyIframeComponent, ...menuImports],
+  imports: [
+    NgTemplateOutlet,
+    RouterLink,
+    ZardButtonComponent,
+    TelephonyIframeComponent,
+    CallAllocationComponent,
+    CallReallocationComponent,
+    AlertsNotificationsComponent,
+    EmergencyContactsComponent,
+    LocationMessagesComponent,
+    TrainingResourcesComponent,
+    BlacklistNumberComponent,
+    CallAuditingComponent,
+    ForceLogoutComponent,
+    KnowledgeManagementComponent,
+    SmsTemplatesComponent,
+    EverwellGuidelinesComponent,
+    FeedbackTrackingComponent,
+    CallTypeReportComponent,
+    DistributionReportComponent,
+    ...menuImports,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './supervisor-shell.component.html',
 })

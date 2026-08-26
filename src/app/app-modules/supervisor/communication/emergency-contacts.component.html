@@ -1,0 +1,182 @@
+<!--
+  AMRIT – Accessible Medical Records via Integrated Technologies
+  Integrated EHR (Electronic Health Records) Solution
+
+  Copyright (C) "Piramal Swasthya Management and Research Institute"
+
+  This file is part of AMRIT.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see https://www.gnu.org/licenses/.
+-->
+
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-3">
+    <h2 class="text-base font-semibold">Emergency Contacts</h2>
+    @if (mode() === 'list') {
+      <button z-button type="button" (click)="startCreate()">Add New</button>
+    } @else {
+      <button z-button zType="outline" type="button" (click)="cancelForm()">Back to List</button>
+    }
+  </div>
+
+  @if (mode() === 'list') {
+    <label class="flex max-w-xs flex-col gap-1.5 text-sm">
+      <span>Search</span>
+      <input z-input type="text" placeholder="Name, number or location" (input)="onSearch($event)" />
+    </label>
+
+    <div class="overflow-x-auto rounded-md border border-border">
+      <table class="w-full text-sm">
+        <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+          <tr>
+            <th class="px-3 py-2">Name</th>
+            <th class="px-3 py-2">Designation</th>
+            <th class="px-3 py-2">Location</th>
+            <th class="px-3 py-2">Contact Number</th>
+            <th class="px-3 py-2">Status</th>
+            <th class="px-3 py-2"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of filteredContacts(); track row.notificationID) {
+            <tr class="border-t border-border align-top">
+              <td class="px-3 py-2">{{ row.emergContactName }}</td>
+              <td class="px-3 py-2">{{ row.designation?.designationName ?? row.designationName }}</td>
+              <td class="px-3 py-2">{{ row.location }}</td>
+              <td class="px-3 py-2">{{ row.emergContactNo }}</td>
+              <td class="px-3 py-2">
+                <span [class.text-destructive]="row.deleted" [class.text-emerald-600]="!row.deleted">
+                  {{ row.deleted ? 'Inactive' : 'Active' }}
+                </span>
+              </td>
+              <td class="px-3 py-2 text-right">
+                <div class="flex justify-end gap-2">
+                  <button z-button zSize="sm" zType="outline" type="button" (click)="startEdit(row)">
+                    Edit
+                  </button>
+                  <button z-button zSize="sm" zType="outline" type="button" (click)="toggleActive(row)">
+                    {{ row.deleted ? 'Activate' : 'Deactivate' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="px-3 py-6 text-center text-muted-foreground">No Records Found</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else if (mode() === 'create') {
+    <form class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" [formGroup]="createForm">
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Name <span class="text-destructive">*</span></span>
+        <input z-input formControlName="name" maxlength="50" />
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Designation <span class="text-destructive">*</span></span>
+        <z-select formControlName="designation" zPlaceholder="Select designation">
+          @for (d of designations(); track d.designationID) {
+            <z-select-item [zValue]="d.designationID + ''">{{ d.designationName }}</z-select-item>
+          }
+        </z-select>
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Location <span class="text-destructive">*</span></span>
+        <input z-input formControlName="location" maxlength="90" />
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Contact Number <span class="text-destructive">*</span></span>
+        <input z-input formControlName="contactNumber" maxlength="10" inputmode="numeric" />
+      </label>
+      <div class="flex items-end sm:col-span-2 lg:col-span-4">
+        <button z-button zType="outline" type="button" [zDisabled]="createForm.invalid" (click)="addToBuffer()">
+          Add
+        </button>
+      </div>
+    </form>
+
+    <div class="overflow-x-auto rounded-md border border-border">
+      <table class="w-full text-sm">
+        <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+          <tr>
+            <th class="px-3 py-2">Name</th>
+            <th class="px-3 py-2">Designation</th>
+            <th class="px-3 py-2">Location</th>
+            <th class="px-3 py-2">Contact Number</th>
+            <th class="px-3 py-2"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of buffer(); track $index) {
+            <tr class="border-t border-border">
+              <td class="px-3 py-2">{{ row.emergContactName }}</td>
+              <td class="px-3 py-2">{{ row.designationName }}</td>
+              <td class="px-3 py-2">{{ row.location }}</td>
+              <td class="px-3 py-2">{{ row.emergContactNo }}</td>
+              <td class="px-3 py-2 text-right">
+                <button z-button zSize="sm" zType="destructive" type="button" (click)="removeFromBuffer($index)">
+                  Remove
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="px-3 py-6 text-center text-muted-foreground">
+                Add one or more contacts, then Save.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button z-button type="button" [zDisabled]="buffer().length === 0 || saving()" (click)="saveBuffer()">
+        Save
+      </button>
+      <button z-button zType="outline" type="button" (click)="cancelForm()">Cancel</button>
+    </div>
+  } @else {
+    <form class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" [formGroup]="editForm">
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Name <span class="text-destructive">*</span></span>
+        <input z-input formControlName="name" maxlength="50" />
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Designation <span class="text-destructive">*</span></span>
+        <z-select formControlName="designation" zPlaceholder="Select designation">
+          @for (d of designations(); track d.designationID) {
+            <z-select-item [zValue]="d.designationID + ''">{{ d.designationName }}</z-select-item>
+          }
+        </z-select>
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Location <span class="text-destructive">*</span></span>
+        <input z-input formControlName="location" maxlength="90" />
+      </label>
+      <label class="flex flex-col gap-1.5 text-sm">
+        <span>Contact Number <span class="text-destructive">*</span></span>
+        <input z-input formControlName="contactNumber" maxlength="10" inputmode="numeric" />
+      </label>
+      <div class="flex items-center gap-3 sm:col-span-2 lg:col-span-4">
+        <button z-button type="button" [zDisabled]="editForm.invalid || saving()" (click)="update()">
+          Update
+        </button>
+        <button z-button zType="outline" type="button" (click)="cancelForm()">Cancel</button>
+      </div>
+    </form>
+  }
+</div>
