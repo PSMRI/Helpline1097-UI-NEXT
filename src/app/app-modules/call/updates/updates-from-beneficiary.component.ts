@@ -42,16 +42,27 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
 import { numOrNull } from '@/app-modules/core/utils/select-value';
 
 /** Old hardcoded `sourceOfInfo` list (id 7 = Not Disclosed disables the rest). */
+/**
+ * Old `sourceOfInfo`. The option VALUE is the source name, not the id — the backend stores
+ * `sourceOfInformation` as a comma-separated list of these names.
+ */
 const SOURCE_OF_INFO = [
-  { id: 1, name: 'Pamphlet' },
-  { id: 2, name: 'Radio' },
-  { id: 3, name: 'Television' },
-  { id: 4, name: 'Family and Friends' },
-  { id: 5, name: 'Healthcare Worker' },
-  { id: 6, name: 'Others' },
-  { id: 8, name: 'Newspaper' },
-  { id: 7, name: 'Not Disclosed' },
+  { id: 1, name: 'Pamphlet', value: 'Pamphlet' },
+  { id: 2, name: 'Radio', value: 'Radio' },
+  { id: 3, name: 'Television', value: 'Television' },
+  { id: 4, name: 'Family and Friends', value: 'Family and Friends' },
+  { id: 5, name: 'Healthcare Worker', value: 'Healthcare Worker' },
+  { id: 6, name: 'Others', value: 'Others' },
+  { id: 8, name: 'Newspaper', value: 'Newspaper' },
+  { id: 7, name: 'Not Disclosed', value: 'Not Disclosed' },
 ];
+
+const NOT_DISCLOSED = 'Not Disclosed';
+
+/** Coerce a z-select value to an array (multi-mode CVA can hand back a scalar). */
+function asArray(value: string | string[] | null): string[] {
+  return Array.isArray(value) ? value : value ? [value] : [];
+}
 
 /**
  * "Other Details" slide (old `updates-from-beneficiary`). Edits occupation / education /
@@ -98,13 +109,19 @@ const SOURCE_OF_INFO = [
         <z-select formControlName="isHIVPos" zPlaceholder="Not disclosed">
           <z-select-item zValue="yes">Yes</z-select-item>
           <z-select-item zValue="no">No</z-select-item>
+          <z-select-item zValue="">Not disclosed</z-select-item>
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Came to know from</span>
-        <z-select formControlName="sourceOfInformation" zPlaceholder="Select">
-          @for (s of sources; track s.id) {
-            <z-select-item [zValue]="s.id + ''">{{ s.name }}</z-select-item>
+        <z-select
+          formControlName="sourceOfInformation"
+          [zMultiple]="true"
+          zPlaceholder="Select"
+          (zValueChange)="onSourcesChange($event)"
+        >
+          @for (s of sources(); track s.id) {
+            <z-select-item [zValue]="s.value" [zDisabled]="s.disabled">{{ s.name }}</z-select-item>
           }
         </z-select>
       </label>
@@ -129,7 +146,10 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
 
-  protected readonly sources = SOURCE_OF_INFO;
+  /** Option list with per-item disabled state (old `populateSourceOfInformation`). */
+  protected readonly sources = signal(SOURCE_OF_INFO.map((s) => ({ ...s, disabled: false })));
+  /** Full multi-selection — the reactive control alone is unreliable in multi mode. */
+  protected readonly sourcesSelected = signal<string[]>([]);
   protected readonly occupations = signal<RegistrationData['beneficiaryOccupations']>([]);
   protected readonly educations = signal<RegistrationData['i_BeneficiaryEducation']>([]);
   protected readonly orientations = signal<RegistrationData['sexualOrientations']>([]);
@@ -141,7 +161,7 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
     sexualOrientationID: this.fb.control<string | null>(null),
     placeOfWork: this.fb.control<string | null>(null),
     isHIVPos: this.fb.control<string | null>(null),
-    sourceOfInformation: this.fb.control<string | null>(null),
+    sourceOfInformation: this.fb.control<string[]>([], { nonNullable: true }),
     remarks: this.fb.control<string | null>(null),
   });
 
@@ -170,6 +190,13 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
       return;
     }
     const str = (v: unknown) => (v != null ? String(v) : null);
+    // Old app split the stored CSV of source names back into the multi-select.
+    const selectedSources = ben.sourceOfInformation
+      ? String(ben.sourceOfInformation)
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
     this.form.patchValue({
       occupationID: str(ben.i_bendemographics.occupationID),
       educationID: str(ben.i_bendemographics.educationID),
@@ -177,8 +204,35 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
       placeOfWork: ben.placeOfWork ?? null,
       isHIVPos: ben.isHIVPos ? ben.isHIVPos.toLowerCase() : null,
       remarks: ben.remarks ?? null,
-      sourceOfInformation: ben.sourceOfInformation ?? null,
+      sourceOfInformation: selectedSources,
     });
+    this.sourcesSelected.set(selectedSources);
+    this.applyNotDisclosedState(selectedSources);
+  }
+
+  /**
+   * Old `checkInCaseNotDisclosed` + `populateSourceOfInformation`: selecting "Not Disclosed"
+   * collapses the selection to just that value and disables every other option; clearing the
+   * selection re-enables them.
+   */
+  protected onSourcesChange(value: string | string[]): void {
+    const selected = asArray(value);
+    if (selected.includes(NOT_DISCLOSED)) {
+      const only = [NOT_DISCLOSED];
+      this.sourcesSelected.set(only);
+      this.form.controls.sourceOfInformation.setValue(only);
+      this.applyNotDisclosedState(only);
+      return;
+    }
+    this.sourcesSelected.set(selected);
+    this.applyNotDisclosedState(selected);
+  }
+
+  private applyNotDisclosedState(selected: string[]): void {
+    const lock = selected.includes(NOT_DISCLOSED);
+    this.sources.update((list) =>
+      list.map((s) => ({ ...s, disabled: lock && s.value !== NOT_DISCLOSED })),
+    );
   }
 
   protected submit(): void {
@@ -199,7 +253,9 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
     ben.placeOfWork = v.placeOfWork?.trim() || null;
     ben.isHIVPos = v.isHIVPos;
     ben.remarks = v.remarks?.trim() || null;
-    ben.sourceOfInformation = v.sourceOfInformation;
+    // Old app posted `cameToKnowFrom.toString()` — a CSV of source NAMES (undefined if none).
+    const sources = this.sourcesSelected();
+    ben.sourceOfInformation = sources.length > 0 ? sources.join(',') : undefined;
     ben.is1097 = true;
     // Old change-flag battery — the backend contract keys off these.
     ben.changeInSelfDetails = true;
