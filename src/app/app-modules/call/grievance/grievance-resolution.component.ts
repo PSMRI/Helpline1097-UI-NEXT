@@ -83,19 +83,32 @@ const RESOLUTION_OPTIONS = ['Resolved', 'Unresolved'];
           <table class="w-full text-sm">
             <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                <th class="px-3 py-2">Resolution</th>
-                <th class="px-3 py-2">Remarks</th>
-                <th class="px-3 py-2">By</th>
+                <th class="px-3 py-2">S.No</th>
                 <th class="px-3 py-2">Date</th>
+                <th class="px-3 py-2">Comments</th>
+                <th class="px-3 py-2">Status</th>
+                <th class="px-3 py-2">Action Taken By</th>
+                <th class="px-3 py-2">File</th>
               </tr>
             </thead>
             <tbody>
               @for (t of transactions(); track $index) {
                 <tr class="border-t border-border">
-                  <td class="px-3 py-2">{{ t.complaintResolution || '—' }}</td>
-                  <td class="px-3 py-2">{{ t.remarks || '—' }}</td>
-                  <td class="px-3 py-2">{{ t.createdBy || '—' }}</td>
-                  <td class="px-3 py-2">{{ t.createdDate || '—' }}</td>
+                  <td class="px-3 py-2">{{ $index + 1 }}</td>
+                  <td class="px-3 py-2">{{ transactionDate(t.updatedAt) }}</td>
+                  <td class="px-3 py-2">{{ t.comment || '—' }}</td>
+                  <td class="px-3 py-2">{{ t.status || '—' }}</td>
+                  <td class="px-3 py-2">{{ t.actionTakenBy || '—' }}</td>
+                  <td class="px-3 py-2">
+                    <button
+                      type="button"
+                      class="text-primary underline hover:text-primary/80"
+                      title="View File"
+                      (click)="viewTransactionFile(t)"
+                    >
+                      View
+                    </button>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -150,12 +163,46 @@ export class GrievanceResolutionComponent implements OnInit {
     () => (this.grievanceData()['subjectOfComplaint'] as string | undefined) ?? '',
   );
   protected readonly complaint = computed(() => (this.grievanceData()['complaint'] as string | undefined) ?? '');
+  /** Transaction rows as the backend returns them (old dialog's field names, not the save payload's). */
   protected readonly transactions = computed(
     () =>
       (this.grievanceData()['transactions'] as
-        | { complaintResolution?: string; remarks?: string; createdBy?: string; createdDate?: string }[]
+        | {
+            updatedAt?: string;
+            comment?: string;
+            status?: string;
+            actionTakenBy?: string;
+            fileName?: string;
+          }[]
         | undefined) ?? [],
   );
+
+  /** Old `updatedAt | date:'dd/MM/yyyy hh:mm a'`; blank when absent. */
+  protected transactionDate(value: string | undefined): string {
+    if (!value) {
+      return '';
+    }
+    const d = new Date(value);
+    if (Number.isNaN(d.valueOf())) {
+      return '';
+    }
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const h24 = d.getHours();
+    const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+    return (
+      `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ` +
+      `${pad(h12)}:${pad(d.getMinutes())} ${h24 < 12 ? 'AM' : 'PM'}`
+    );
+  }
+
+  /** Old `viewTransactionFile` — strips backslashes and opens the file, else an info alert. */
+  protected viewTransactionFile(row: { fileName?: string }): void {
+    if (row?.fileName) {
+      window.open(row.fileName.replace(/\\/g, ''), '_blank');
+    } else {
+      this.notify.alert('File is not available', 'info');
+    }
+  }
 
   protected readonly saving = signal(false);
   /** Live char count (old `count`/`updateCount`) — a signal because zoneless CD won't track
