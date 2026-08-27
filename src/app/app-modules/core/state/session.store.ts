@@ -20,7 +20,7 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-import { inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { Privilege, Role, User } from '../models';
 import { PLAIN_KEYS, SessionStorageService } from '../services/session-storage.service';
 
@@ -46,6 +46,17 @@ export class SessionStore {
   readonly userId = signal<string | null>(this.storage.getPlain(PLAIN_KEYS.userId));
   // Token presence is checked via AuthService.isLoggedIn() (reads fresh each call) — a
   // computed here would memoize against sessionStorage (non-reactive) and go stale.
+
+  /**
+   * Old `current_serviceID` — the SERVICE MASTER id, a different number space from
+   * `currentServiceId` (which is the providerServiceMapID, e.g. 1722). A few endpoints key off
+   * this one, notably `sms/getSMSTypes`, which returns nothing for a providerServiceMapID.
+   */
+  readonly serviceMasterId = computed(
+    () =>
+      this.privileges()?.[0]?.roles?.[0]?.serviceRoleScreenMappings?.[0]?.providerServiceMapping
+        ?.m_ServiceMaster?.serviceID ?? null,
+  );
 
   setUser(user: User): void {
     this.user.set(user);

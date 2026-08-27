@@ -409,8 +409,15 @@ export class CoReferralComponent implements OnInit {
     if (serviceId == null || institutions.length === 0) {
       return;
     }
+    // `getSMSTypes` keys off the SERVICE MASTER id (old `current_serviceID`), NOT the
+    // providerServiceMapID — the latter returns an empty type list, so the send would never
+    // resolve "Referral SMS". Templates and the payload keep the providerServiceMapID.
+    const smsTypeServiceId = this.sessionStore.serviceMasterId();
+    if (smsTypeServiceId == null) {
+      return;
+    }
     this.sendingSms.set(true);
-    this.smsApi.getSmsTypes(serviceId).subscribe({
+    this.smsApi.getSmsTypes(smsTypeServiceId).subscribe({
       next: (typesRes) => {
         const smsType = (typesRes?.data ?? []).find(
           (t) => (t.smsType ?? '').toLowerCase() === 'referral sms',

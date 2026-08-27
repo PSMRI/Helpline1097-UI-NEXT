@@ -120,7 +120,23 @@ describe('CoReferralComponent (referral SMS contract)', () => {
 
     const session = TestBed.inject(SessionStore);
     session.currentServiceId.set(1722);
-    session.setUser({ userID: 3950, userName: 'co', previlegeObj: [] } as never);
+    // `serviceMasterId` (old `current_serviceID`) is walked out of the privilege tree and is a
+    // DIFFERENT number space from the providerServiceMapID above.
+    session.setUser({
+      userID: 3950,
+      userName: 'co',
+      previlegeObj: [
+        {
+          roles: [
+            {
+              serviceRoleScreenMappings: [
+                { providerServiceMapping: { m_ServiceMaster: { serviceID: 1 } } },
+              ],
+            },
+          ],
+        },
+      ],
+    } as never);
     TestBed.inject(CallStore).beneficiaryRegId.set(9911);
 
     fixture = TestBed.createComponent(CoReferralComponent);
@@ -175,6 +191,16 @@ describe('CoReferralComponent (referral SMS contract)', () => {
     expect(req.smsTemplateTypeID).toBe(7);
     expect(req.smsTemplateID).toBe(55);
     expect(req.beneficiaryRegID).toBe(9911);
+  });
+
+  it('resolves the SMS type with the service-master id, not the providerServiceMapID', () => {
+    // UAT proof: `sms/getSMSTypes` returns [] for the providerServiceMapID (1722) and the real
+    // types for the service-master id (1), so passing the wrong one silently sends nothing.
+    api().selectedRows.set([0]);
+    send(undefined);
+    expect(smsApi.getSmsTypes).toHaveBeenCalledWith(1);
+    // Templates and the payload still key off the providerServiceMapID.
+    expect(smsApi.getSmsTemplates).toHaveBeenCalledWith(1722, 7);
   });
 
   it('omits alternateNo entirely when sending to the primary number', () => {
