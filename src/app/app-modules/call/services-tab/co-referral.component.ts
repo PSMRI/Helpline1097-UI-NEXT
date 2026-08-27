@@ -127,8 +127,8 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
                   <input
                     type="checkbox"
                     class="mt-1"
-                    [checked]="isSelected(row.institutionDetails.institutionID)"
-                    (change)="toggleSms($event, row.institutionDetails)"
+                    [checked]="isSelected($index)"
+                    (change)="toggleSms($event, $index)"
                   />
                   <span>{{ institutionLine(row.institutionDetails) }}</span>
                 </label>
@@ -141,7 +141,7 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
             <button
               z-button
               type="button"
-              [zDisabled]="selectedInstitutions().length === 0"
+              [zDisabled]="selectedRows().length === 0"
               [zLoading]="sendingSms()"
               (click)="openSmsDialog()"
             >
@@ -218,8 +218,11 @@ export class CoReferralComponent implements OnInit {
   protected readonly institutions = signal<ReferralInstitutionRow[]>([]);
   /** Old `showresult` — the result panel appears only after a Get Details round-trip. */
   protected readonly showResult = signal(false);
-  /** Old `row_array`/`ref_array` kept as one list, in tick order. */
-  protected readonly selectedInstitutions = signal<InstitutionDetails[]>([]);
+  /**
+   * Ticked ROW indexes, in tick order (old `ref_array`/`row_array`). Keyed by row rather than
+   * by `institutionID` so duplicate ids behave like the old per-row checkboxes.
+   */
+  protected readonly selectedRows = signal<number[]>([]);
   protected readonly sendingSms = signal(false);
 
   protected readonly form = this.fb.group({
@@ -310,7 +313,10 @@ export class CoReferralComponent implements OnInit {
           // as a tickable list for the referral SMS; an empty list only alerts "No data found".
           const rows = Array.isArray(res?.data) ? (res.data as ReferralInstitutionRow[]) : [];
           this.institutions.set(rows);
-          this.selectedInstitutions.set([]);
+          // DELIBERATE DEVIATION from an old-app bug: the old app never cleared its ticked-id
+          // list when a new search returned, so a later Send SMS could post institutions from a
+          // previous query whose checkboxes rendered unticked.
+          this.selectedRows.set([]);
           this.showResult.set(true);
           if (rows.length === 0) {
             this.notify.alert('No data found', 'info');
@@ -326,18 +332,24 @@ export class CoReferralComponent implements OnInit {
   }
 
   // ---- institution result list + referral SMS -------------------------------
-  protected isSelected(institutionID: number | undefined): boolean {
-    return this.selectedInstitutions().some((i) => i.institutionID === institutionID);
+  protected isSelected(index: number): boolean {
+    return this.selectedRows().includes(index);
   }
 
-  /** Old `toggleSms` — tick/untick keeps the institution (id + state/district/block) for the send. */
-  protected toggleSms(event: Event, institution: InstitutionDetails): void {
+  /** Old `toggleSms` — tick/untick keeps the row (institution id + state/district/block). */
+  protected toggleSms(event: Event, index: number): void {
     const checked = (event.target as HTMLInputElement).checked;
-    this.selectedInstitutions.update((list) =>
-      checked
-        ? [...list, institution]
-        : list.filter((i) => i.institutionID !== institution.institutionID),
+    this.selectedRows.update((rows) =>
+      checked ? [...rows, index] : rows.filter((i) => i !== index),
     );
+  }
+
+  /** The ticked institutions, in tick order. */
+  private selectedInstitutionDetails(): InstitutionDetails[] {
+    const rows = this.institutions();
+    return this.selectedRows()
+      .map((i) => rows[i]?.institutionDetails)
+      .filter((i): i is InstitutionDetails => i != null);
   }
 
   /**
@@ -364,7 +376,7 @@ export class CoReferralComponent implements OnInit {
 
   /** Old `sendSMS()` — ask for an optional alternate number, then run the send pipeline. */
   protected openSmsDialog(): void {
-    if (this.selectedInstitutions().length === 0) {
+    if (this.selectedRows().length === 0) {
       return;
     }
     this.dialog.create<SmsAlternateNumberDialogComponent, unknown>({
@@ -377,6 +389,7 @@ export class CoReferralComponent implements OnInit {
         // Keep the dialog open while an alternate number is incomplete (old app disabled the
         // button); `undefined` here is the faithful "send to primary number" branch.
         if (!instance.canSend()) {
+          instance.touched.set(true);
           return false;
         }
         this.sendReferralSms(instance.alternateNumber());
@@ -392,7 +405,7 @@ export class CoReferralComponent implements OnInit {
    */
   private sendReferralSms(alternateNo: string | undefined): void {
     const serviceId = this.serviceId();
-    const institutions = this.selectedInstitutions();
+    const institutions = this.selectedInstitutionDetails();
     if (serviceId == null || institutions.length === 0) {
       return;
     }
@@ -409,13 +422,21 @@ export class CoReferralComponent implements OnInit {
         }
         this.smsApi.getSmsTemplates(serviceId, smsTypeID).subscribe({
           next: (templatesRes) => {
-            const template = (templatesRes?.data ?? []).find((t) => t.deleted === false);
+            const templates = templatesRes?.data;
+            // The old SMS service threw when the response carried no `data`, which suppressed
+            // the send entirely; an empty ARRAY still went through (with an empty template id).
+            if (templates == null) {
+              this.sendingSms.set(false);
+              return;
+            }
+            const template = templates.find((t) => t.deleted === false);
             const requests: SendSmsRequest[] = institutions.map((institution) => ({
               alternateNo,
               createdBy: this.sessionStore.user()?.userName,
               is1097: true,
               providerServiceMapID: serviceId,
-              smsTemplateID: template?.smsTemplateID ?? null,
+              // Old app left this as the empty string when no active template matched.
+              smsTemplateID: template?.smsTemplateID ?? '',
               smsTemplateTypeID: smsTypeID,
               instituteID: institution.institutionID,
               stateID: institution.stateID,

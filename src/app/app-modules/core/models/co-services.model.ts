@@ -168,7 +168,8 @@ export interface SendSmsRequest {
   createdBy?: string;
   is1097?: boolean;
   providerServiceMapID?: number | null;
-  smsTemplateID?: number | null;
+  /** `''` when no active template matched — the old app's uninitialised value, sent as-is. */
+  smsTemplateID?: number | string | null;
   smsTemplateTypeID?: number | null;
   instituteID?: number | string | null;
   stateID?: number | string | null;

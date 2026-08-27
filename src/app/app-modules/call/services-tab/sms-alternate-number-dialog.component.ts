@@ -32,6 +32,10 @@ import { ZardInputDirective } from '@common-ui/ui/input';
  * number" branch; checked → a ten-digit number is required (`canSend()` false otherwise, which
  * the caller uses to keep the dialog open, reproducing the old disabled Send-SMS button).
  * Cancel sends nothing, matching the old `'close'` result.
+ *
+ * DELIBERATE DEVIATION from an old-app bug: the old dialog never cleared its number field, so
+ * typing a number, unticking the box, then pressing Send still posted that number as
+ * `alternateNo`. Unticking here clears it, so the CO's visible choice is what gets sent.
  */
 @Component({
   selector: 'app-sms-alternate-number-dialog',
@@ -55,8 +59,9 @@ import { ZardInputDirective } from '@common-ui/ui/input';
             placeholder="Mobile Number"
             [value]="mobileNumber()"
             (input)="onNumberInput($event)"
+            (blur)="touched.set(true)"
           />
-          @if (!validNumber() && mobileNumber().length > 0) {
+          @if (!validNumber() && touched()) {
             <span class="text-destructive">Enter ten digits mobile number</span>
           }
         </label>
@@ -67,6 +72,8 @@ import { ZardInputDirective } from '@common-ui/ui/input';
 export class SmsAlternateNumberDialogComponent {
   readonly useAlternate = signal(false);
   readonly mobileNumber = signal('');
+  /** Drives the validation hint (old `phnNum.touched`). */
+  readonly touched = signal(false);
 
   /** Old `mobileNum()` — valid only at exactly ten characters. */
   readonly validNumber = computed(() => this.mobileNumber().length === 10);
