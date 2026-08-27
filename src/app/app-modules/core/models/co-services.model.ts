@@ -122,6 +122,34 @@ export interface InstituteSubDirectory {
   instituteSubDirectoryName?: string;
 }
 
+/**
+ * One institution matched by `saveBenCalReferralMapping` (old `detailsList[].institutionDetails`).
+ * The three contact-person triples are all optional and were rendered comma-separated.
+ */
+export interface InstitutionDetails {
+  institutionID?: number;
+  institutionName?: string;
+  address?: string;
+  website?: string;
+  contactPerson1?: string;
+  contactNo1?: string;
+  contactPerson1Email?: string;
+  contactPerson2?: string;
+  contactNo2?: string;
+  contactPerson2Email?: string;
+  contactPerson3?: string;
+  contactNo3?: string;
+  contactPerson3Email?: string;
+  stateID?: number | string;
+  districtID?: number | string;
+  blockID?: number | string;
+}
+
+/** One row of the referral "Get Details" response. */
+export interface ReferralInstitutionRow {
+  institutionDetails?: InstitutionDetails;
+}
+
 /** `sms/getSMSTypes` / `sms/getSMSTemplates` rows. */
 export interface SmsType {
   smsTypeID?: number;
