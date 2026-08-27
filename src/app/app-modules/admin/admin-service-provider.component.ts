@@ -31,6 +31,12 @@ import { NotificationService } from '@/app-modules/core/services/notification.se
 
 const ROWS_PER_PAGE = 8;
 
+/** `yyyy-MM-dd` → the ISO datetime a local-midnight `Date` would serialise to. */
+function isoFromInputDay(day: string): string {
+  const [y, m, d] = day.split('-').map(Number);
+  return new Date(y, (m ?? 1) - 1, d ?? 1).toISOString();
+}
+
 /**
  * Service Provider master — super-admin tab 1 (old `admin-service-provider`).
  *
@@ -159,7 +165,7 @@ const ROWS_PER_PAGE = 8;
           </label>
           <div class="flex items-end justify-end sm:col-span-2 lg:col-span-4">
             <!-- Never disabled on invalid, faithful to the old form. -->
-            <button z-button type="submit" [zLoading]="saving()">Save</button>
+            <button z-button type="submit">Save</button>
           </div>
         </form>
       }
@@ -173,7 +179,6 @@ export class AdminServiceProviderComponent implements OnInit {
 
   protected readonly rows = signal<ServiceProviderRow[]>([]);
   protected readonly showCreate = signal(false);
-  protected readonly saving = signal(false);
   protected readonly pageIndex = signal(0);
 
   protected readonly pageCount = computed(() => Math.max(1, Math.ceil(this.rows().length / ROWS_PER_PAGE)));
@@ -243,7 +248,10 @@ export class AdminServiceProviderComponent implements OnInit {
         this.pageIndex.set(0);
       },
       // The old service funnelled errors into the success path and showed nothing.
-      error: () => this.rows.set([]),
+      error: () => {
+        // Old app funnelled errors into the success path but never reached `next`, so a failed
+        // refresh left the previously loaded list on screen rather than emptying it.
+      },
     });
   }
 
@@ -260,13 +268,23 @@ export class AdminServiceProviderComponent implements OnInit {
   }
 
   protected submit(): void {
-    this.saving.set(true);
-    const body = this.form.getRawValue() as ServiceProviderRequest;
+    const raw = this.form.getRawValue();
+    // The old field was a Material datepicker, so the control held a `Date` and serialised as
+    // an ISO datetime (local midnight → UTC). A native date input yields `yyyy-MM-dd`, so
+    // convert to keep the posted value's shape identical.
+    const body = {
+      ...raw,
+      validity: raw.validity ? isoFromInputDay(raw.validity) : raw.validity,
+    } as ServiceProviderRequest;
     // Old app fired save and the list refresh in PARALLEL (unsequenced) and discarded the save
     // response entirely — no success alert, no error handling, and the form was never reset.
     this.api.saveProvider(body).subscribe({
-      next: () => this.saving.set(false),
-      error: () => this.saving.set(false),
+      next: () => {
+        // Old app discarded the save response entirely — no alert, no reset.
+      },
+      error: () => {
+        // Old app had no error handling here either.
+      },
     });
     this.loadProviders();
     this.toggleCreate();
@@ -283,8 +301,11 @@ export class AdminServiceProviderComponent implements OnInit {
       serviceProviderName: row.ServiceProviderName ?? '',
       primaryContactName: row.PrimaryContactName ?? null,
       primaryContactNo: row.PrimaryContactNo ?? null,
-      emailID: row.emailID ?? null,
-      address: row.address ?? null,
+      // Deliberately NOT `?? null`: these two are read in camelCase off a PascalCase row, so
+      // they are normally `undefined` — and `JSON.stringify` then DROPS both keys, exactly as
+      // the old app did (its Edit→Save body carried 37 keys, not 39).
+      emailID: row.emailID as string | null,
+      address: row.address as string | null,
     });
     this.toggleCreate();
   }

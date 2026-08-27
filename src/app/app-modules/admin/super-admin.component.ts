@@ -30,8 +30,6 @@ import { AdminUserComponent } from './admin-user.component';
 const TABS = [
   { id: '1', label: 'Provider On Board' },
   { id: '2', label: 'Admin Creation' },
-  // The old third label came from a language key that was missing, so it rendered blank; the
-  // English value it was meant to show is used here.
   { id: '3', label: 'State Services Mapping' },
 ];
 

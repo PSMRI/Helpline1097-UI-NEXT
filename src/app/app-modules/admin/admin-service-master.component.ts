@@ -85,7 +85,7 @@ import { AdminApiService, ServiceMasterRequest, ServiceMasterRow } from './admin
           <input z-input formControlName="serviceDesc" type="text" />
         </label>
         <div class="flex items-end justify-end sm:col-span-2 lg:col-span-4">
-          <button z-button type="submit" [zLoading]="saving()">Save</button>
+          <button z-button type="submit">Save</button>
         </div>
       </form>
     </div>
@@ -96,7 +96,6 @@ export class AdminServiceMasterComponent implements OnInit {
   private readonly api = inject(AdminApiService);
 
   protected readonly rows = signal<ServiceMasterRow[]>([]);
-  protected readonly saving = signal(false);
 
   /** 6 controls in the old declaration order — that order IS the `saveService` key order. */
   protected readonly form = this.fb.group({
@@ -111,16 +110,22 @@ export class AdminServiceMasterComponent implements OnInit {
   ngOnInit(): void {
     this.api.getServiceMaster().subscribe({
       next: (data) => this.rows.set(Array.isArray(data) ? data : []),
-      error: () => this.rows.set([]),
+      error: () => {
+        // Old app funnelled errors into the success path but never reached `next`, so a failed
+        // refresh left the previously loaded list on screen rather than emptying it.
+      },
     });
   }
 
   /** Old `onSubmit` — response discarded, no alert, no reset, no list refresh. */
   protected submit(): void {
-    this.saving.set(true);
     this.api.saveServiceMaster(this.form.getRawValue() as ServiceMasterRequest).subscribe({
-      next: () => this.saving.set(false),
-      error: () => this.saving.set(false),
+      next: () => {
+        // Old app discarded the save response entirely — no alert, no reset.
+      },
+      error: () => {
+        // Old app had no error handling here either.
+      },
     });
   }
 }

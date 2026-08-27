@@ -127,7 +127,7 @@ const ROWS_PER_PAGE = 8;
             <input z-input formControlName="password" type="password" maxlength="20" placeholder="Enter Password" />
           </label>
           <div class="flex items-end justify-end sm:col-span-2 lg:col-span-4">
-            <button z-button type="submit" [zLoading]="saving()">Save</button>
+            <button z-button type="submit">Save</button>
           </div>
         </form>
       }
@@ -140,7 +140,6 @@ export class AdminUserComponent implements OnInit {
 
   protected readonly rows = signal<AdminUserRow[]>([]);
   protected readonly showCreate = signal(false);
-  protected readonly saving = signal(false);
   protected readonly pageIndex = signal(0);
 
   protected readonly pageCount = computed(() => Math.max(1, Math.ceil(this.rows().length / ROWS_PER_PAGE)));
@@ -170,7 +169,10 @@ export class AdminUserComponent implements OnInit {
         this.rows.set(Array.isArray(data) ? data : []);
         this.pageIndex.set(0);
       },
-      error: () => this.rows.set([]),
+      error: () => {
+        // Old app funnelled errors into the success path but never reached `next`, so a failed
+        // refresh left the previously loaded list on screen rather than emptying it.
+      },
     });
   }
 
@@ -187,10 +189,13 @@ export class AdminUserComponent implements OnInit {
 
   /** Old `onSubmit` — response discarded, no alert, no reset, and no list refresh. */
   protected submit(): void {
-    this.saving.set(true);
     this.api.saveUser(this.form.getRawValue() as AdminUserRequest).subscribe({
-      next: () => this.saving.set(false),
-      error: () => this.saving.set(false),
+      next: () => {
+        // Old app discarded the save response entirely — no alert, no reset.
+      },
+      error: () => {
+        // Old app had no error handling here either.
+      },
     });
     this.toggleCreate();
   }
