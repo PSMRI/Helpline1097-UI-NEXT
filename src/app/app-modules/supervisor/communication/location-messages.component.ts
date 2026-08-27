@@ -47,8 +47,13 @@ interface LocationRow {
   [key: string]: unknown;
 }
 
-function inputDay(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+/**
+ * `yyyy-MM-dd` from a stored timestamp's UTC wall-clock — the list renders these with
+ * `date: … : 'UTC'` and the old edit form used `transformDatetoUTC`, so local getters would
+ * prefill (and re-post) a day shifted by the timezone offset.
+ */
+function utcDay(d: Date): string {
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
 }
 
 /** Local Date for a `yyyy-MM-dd` at start (00:00:00) or end (23:59:59) of day. */
@@ -218,8 +223,8 @@ export class LocationMessagesComponent implements OnInit {
     const till = row.validTill ? new Date(row.validTill) : new Date();
     this.form.reset({
       offices: [],
-      startDate: inputDay(from),
-      endDate: inputDay(till),
+      startDate: utcDay(from),
+      endDate: utcDay(till),
       subject: row.notification ?? '',
       message: row.notificationDesc ?? '',
     });
