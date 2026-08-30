@@ -40,12 +40,12 @@
         (zValueChange)="onLanguageChange($event)"
         aria-label="Select language"
       >
-        @for (lang of languages; track lang) {
-          <z-select-item [zValue]="lang">{{ lang }}</z-select-item>
+        @for (name of languages(); track name) {
+          <z-select-item [zValue]="name">{{ name }}</z-select-item>
         }
       </z-select>
 
-      <span class="hidden text-sm sm:inline">Welcome {{ userName() }}</span>
+      <span class="hidden text-sm sm:inline">{{ 'welcome' | t }} {{ userName() }}</span>
 
       <!-- Emergency contacts (Dashboard only) -->
       @if (showContacts()) {
