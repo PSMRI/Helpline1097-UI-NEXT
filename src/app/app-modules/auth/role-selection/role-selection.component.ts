@@ -28,6 +28,7 @@ import { lucidePhone } from '@ng-icons/lucide';
 import { cardImports } from '@common-ui/ui/card';
 
 import { Privilege, RolePrivilege, Role } from '@/app-modules/core/models';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import {
   ENCRYPTED_KEYS,
   PLAIN_KEYS,
@@ -44,7 +45,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
  */
 @Component({
   selector: 'app-role-selection',
-  imports: [NgIcon, ...cardImports],
+  imports: [NgIcon, TranslatePipe, ...cardImports],
   templateUrl: './role-selection.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucidePhone })],

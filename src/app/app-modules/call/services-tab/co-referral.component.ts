@@ -41,6 +41,8 @@ import { CoServicesApiService } from '@/app-modules/core/services/co-services-ap
 import { LocationApiService } from '@/app-modules/core/services/location-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { SmsApiService } from '@/app-modules/core/services/sms-api.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import {
   DistrictRow,
   InstituteDirectory,
@@ -64,30 +66,30 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
  */
 @Component({
   selector: 'app-co-referral',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, ZardButtonComponent, TranslatePipe, ...ZardSelectImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-4">
       <form [formGroup]="form" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>State <span class="text-destructive">*</span></span>
-          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange($event)">
+          <span>{{ 'state' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="state" [zPlaceholder]="'state' | t" (zValueChange)="onStateChange($event)">
             @for (s of states(); track s.stateID) {
               <z-select-item [zValue]="s.stateID + ''">{{ s.stateName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>District <span class="text-destructive">*</span></span>
-          <z-select formControlName="district" zPlaceholder="Select district" (zValueChange)="onDistrictChange($event)">
+          <span>{{ 'district' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="district" [zPlaceholder]="'district' | t" (zValueChange)="onDistrictChange($event)">
             @for (d of districts(); track d.districtID) {
               <z-select-item [zValue]="d.districtID + ''">{{ d.districtName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Taluk</span>
-          <z-select formControlName="taluk" zPlaceholder="Select taluk">
+          <span>{{ 'taluk' | t }}</span>
+          <z-select formControlName="taluk" [zPlaceholder]="'subDistrictTalukBlock' | t">
             @for (t of taluks(); track t.blockID) {
               <z-select-item [zValue]="t.blockID + ''">{{ t.blockName }}</z-select-item>
             }
@@ -95,15 +97,15 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Directory <span class="text-destructive">*</span></span>
-          <z-select formControlName="directory" zPlaceholder="Select directory" (zValueChange)="onDirectoryChange($event)">
+          <z-select formControlName="directory" [zPlaceholder]="'informationRequiredDirectory' | t" (zValueChange)="onDirectoryChange($event)">
             @for (d of directories(); track d.instituteDirectoryID) {
               <z-select-item [zValue]="d.instituteDirectoryID + ''">{{ d.instituteDirectoryName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Sub-Directory <span class="text-destructive">*</span></span>
-          <z-select formControlName="subDirectory" zPlaceholder="Select sub-directory">
+          <span>{{ 'subDirectory' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="subDirectory" [zPlaceholder]="'subDirectory' | t">
             @for (s of subDirectories(); track s.instituteSubDirectoryID) {
               <z-select-item [zValue]="s.instituteSubDirectoryID + ''">{{ s.instituteSubDirectoryName }}</z-select-item>
             }
@@ -111,7 +113,7 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
         </label>
         <div class="flex items-end">
           <button z-button type="button" [zDisabled]="form.invalid" [zLoading]="saving()" (click)="provideReferral()">
-            Get Details
+            {{ 'getDetails' | t }}
           </button>
         </div>
       </form>
@@ -155,9 +157,9 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
         <table class="w-full text-sm">
           <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
-              <th class="px-3 py-2">Institution</th>
-              <th class="px-3 py-2">By</th>
-              <th class="px-3 py-2">Date</th>
+              <th class="px-3 py-2">{{ 'nameOfInstitute' | t }}</th>
+              <th class="px-3 py-2">{{ 'referralProvidedBy' | t }}</th>
+              <th class="px-3 py-2">{{ 'referralProvidedOn' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -172,7 +174,7 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
             } @empty {
               <tr>
                 <td colspan="3" class="px-3 py-4 text-center text-muted-foreground">
-                  No referral services recorded yet.
+                  {{ 'noRecordsFound' | t }}
                 </td>
               </tr>
             }
@@ -191,6 +193,7 @@ export class CoReferralComponent implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
+  private readonly lang = inject(LanguageStore);
 
   /** Shared masters fetched ONCE by the co-services host. */
   readonly serviceTypes = input<SubServiceType[]>([]);
@@ -319,7 +322,7 @@ export class CoReferralComponent implements OnInit {
           this.selectedRows.set([]);
           this.showResult.set(true);
           if (rows.length === 0) {
-            this.notify.alert('No data found', 'info');
+            this.notify.alert(this.lang.t('noDataFound'), 'info');
           }
           this.serviceProvided.emit();
           this.loadHistory();

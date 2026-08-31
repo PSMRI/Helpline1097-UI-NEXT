@@ -30,6 +30,7 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { OutboundDialService } from './outbound-dial.service';
 import { formatWorklistDate } from './worklist-date';
 import { WorklistTable } from './worklist-table';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
@@ -55,15 +56,15 @@ interface OutboundRow {
  * Table reproduces the old md2DataTable: 4/page, sortable columns, serial number. */
 @Component({
   selector: 'app-generic-worklist',
-  imports: [NgIcon, ZardButtonComponent],
+  imports: [NgIcon, TranslatePipe, ZardButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucidePhoneOutgoing })],
   template: `
     <div class="flex flex-col gap-3 py-3">
       <div class="flex items-center justify-between">
-        <h2 class="text-base font-semibold">Outbound Worklist</h2>
+        <h2 class="text-base font-semibold">{{ 'outboundWorkList' | t }}</h2>
         <button z-button zType="outline" type="button" (click)="backToDashboard()">
-          Back to Dashboard
+          {{ 'backToDashboard' | t }}
         </button>
       </div>
       <div class="overflow-x-auto rounded-md border border-border">
@@ -72,21 +73,21 @@ interface OutboundRow {
             <tr>
               <!-- Old generic tab had NO S.No column (unlike its Everwell/Grievance siblings). -->
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('id')">
-                Beneficiary ID {{ table.sortIndicator('id') }}
+                {{ 'beneficiaryId' | t }} {{ table.sortIndicator('id') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('name')">
-                Beneficiary Name {{ table.sortIndicator('name') }}
+                {{ 'beneficiaryName' | t }} {{ table.sortIndicator('name') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('date')">
-                Requested Date {{ table.sortIndicator('date') }}
+                {{ 'requestedDate' | t }} {{ table.sortIndicator('date') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('service')">
-                Requested Service {{ table.sortIndicator('service') }}
+                {{ 'requestedService' | t }} {{ table.sortIndicator('service') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('remarks')">
-                Remarks {{ table.sortIndicator('remarks') }}
+                {{ 'remarks' | t }} {{ table.sortIndicator('remarks') }}
               </th>
-              <th class="px-3 py-2">Call</th>
+              <th class="px-3 py-2">{{ 'call' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -103,8 +104,8 @@ interface OutboundRow {
                   <button
                     type="button"
                     class="text-primary hover:text-primary/80"
-                    title="Call Beneficiary"
-                    aria-label="Call Beneficiary"
+                    [title]="'callBeneficiary' | t"
+                    [attr.aria-label]="'callBeneficiary' | t"
                     (click)="dial(row)"
                   >
                     <ng-icon name="lucidePhoneOutgoing" size="18" aria-hidden="true" />
@@ -114,7 +115,7 @@ interface OutboundRow {
             } @empty {
               <tr>
                 <td colspan="6" class="px-3 py-6 text-center text-muted-foreground">
-                  No Records Found
+                  {{ 'noRecordsFound' | t }}
                 </td>
               </tr>
             }
@@ -123,7 +124,7 @@ interface OutboundRow {
       </div>
       @if (rows().length) {
         <div class="flex items-center justify-between gap-3 text-sm">
-          <span class="text-muted-foreground">Total Count: {{ table.sorted().length }}</span>
+          <span class="text-muted-foreground">{{ 'totalCount' | t }}: {{ table.sorted().length }}</span>
           <div class="flex items-center gap-3">
             <span class="text-muted-foreground">Page {{ table.pageIndex() + 1 }} of {{ table.pageCount() }}</span>
             <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="table.pageIndex() === 0" (click)="table.prev()">
@@ -137,7 +138,7 @@ interface OutboundRow {
               [zDisabled]="table.pageIndex() >= table.pageCount() - 1"
               (click)="table.next()"
             >
-              Next
+              {{ 'next' | t }}
             </button>
           </div>
         </div>

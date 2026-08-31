@@ -23,12 +23,14 @@
 <div class="flex flex-col gap-4">
   <div class="flex items-center justify-between gap-3">
     <h2 class="text-base font-semibold">
-      {{ mode() === 'list' ? 'Everwell Guidelines List' : 'Everwell Guidelines' }}
+      {{ mode() === 'list' ? ('everwellGuidelinesList' | t) : ('everwellGuidelines' | t) }}
     </h2>
     @if (mode() === 'list') {
-      <button z-button type="button" (click)="startCreate()">Upload Everwell Guidelines</button>
+      <button z-button type="button" (click)="startCreate()">
+        {{ 'uploadEverwellGuidelines' | t }}
+      </button>
     } @else {
-      <button z-button zType="outline" type="button" (click)="cancelForm()">Back to List</button>
+      <button z-button zType="outline" type="button" (click)="cancelForm()">{{ 'back' | t }}</button>
     }
   </div>
 
@@ -37,12 +39,12 @@
       <table class="w-full text-sm">
         <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
           <tr>
-            <th class="px-3 py-2">S.No</th>
-            <th class="px-3 py-2">Name</th>
-            <th class="px-3 py-2">Category</th>
-            <th class="px-3 py-2">Description</th>
-            <th class="px-3 py-2">Attachment</th>
-            <th class="px-3 py-2">Action</th>
+            <th class="px-3 py-2">{{ 'sno' | t }}</th>
+            <th class="px-3 py-2">{{ 'name' | t }}</th>
+            <th class="px-3 py-2">{{ 'category' | t }}</th>
+            <th class="px-3 py-2">{{ 'description' | t }}</th>
+            <th class="px-3 py-2">{{ 'attachment' | t }}</th>
+            <th class="px-3 py-2">{{ 'action' | t }}</th>
           </tr>
         </thead>
         <tbody>
@@ -73,13 +75,13 @@
                   type="button"
                   (click)="deactivate(row)"
                 >
-                  Delete
+                  {{ 'delete' | t }}
                 </button>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="px-3 py-6 text-center text-muted-foreground">No Records Found</td>
+              <td colspan="6" class="px-3 py-6 text-center text-muted-foreground">{{ 'noRecordsFound' | t }}</td>
             </tr>
           }
         </tbody>
@@ -107,18 +109,18 @@
   } @else {
     <form class="grid gap-3 sm:grid-cols-2" [formGroup]="form">
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Guideline Name <span class="text-destructive">*</span></span>
+        <span>{{ 'guidelineName' | t }} <span class="text-destructive">*</span></span>
         <input
           z-input
           formControlName="guidelineName"
           maxlength="100"
-          placeholder="Enter guideline name"
+          [placeholder]="'enterGuidelineName' | t"
           [appRestrictInput]="inputFieldBlock"
         />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Category <span class="text-destructive">*</span></span>
-        <z-select formControlName="category" zPlaceholder="Select category">
+        <span>{{ 'category' | t }} <span class="text-destructive">*</span></span>
+        <z-select formControlName="category" [zPlaceholder]="'selectCategory' | t">
           @for (c of categories; track c) {
             <z-select-item [zValue]="c">{{ c }}</z-select-item>
           }
@@ -126,19 +128,20 @@
       </label>
 
       <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
-        <span>Guideline Description <span class="text-destructive">*</span></span>
+        <span>{{ 'guidelineDescription' | t }} <span class="text-destructive">*</span></span>
         <textarea
           z-input
           formControlName="guidelineDesc"
           rows="3"
           maxlength="300"
-          placeholder="Enter guideline description (max 300 chars)"
+          [placeholder]="'enterGuidelinedescription' | t"
           [appRestrictInput]="textAreaBlock"
         ></textarea>
       </label>
 
       <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
-        <span>Upload File (max 5 MB, supported format: .pdf)</span>
+        <!-- Old label composite: uploadFileSizeLimitInMb + maxFileSize + mb + supportedFormat -->
+        <span>{{ 'uploadFileSizeLimitInMb' | t }} :5 {{ 'mb' | t }}) {{ 'supportedFormat' | t }}- .pdf</span>
         <input
           type="file"
           accept="application/pdf"
@@ -160,9 +163,9 @@
           [zDisabled]="form.invalid || saving() || reading() || !!fileError()"
           (click)="save()"
         >
-          Submit
+          {{ 'submit' | t }}
         </button>
-        <button z-button zType="outline" type="button" (click)="cancelForm()">Back</button>
+        <button z-button zType="outline" type="button" (click)="cancelForm()">{{ 'back' | t }}</button>
       </div>
     </form>
   }

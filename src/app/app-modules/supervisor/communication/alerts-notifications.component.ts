@@ -38,7 +38,9 @@ import {
   ProviderRole,
   tzShift,
 } from './communication-api.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /** A supervisor-notification row as returned by getSupervisorNotification. */
@@ -114,6 +116,7 @@ function asArray(value: string | string[]): string[] {
     ZardInputDirective,
     RestrictInputDirective,
     ...ZardSelectImports,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './alerts-notifications.component.html',
@@ -125,6 +128,7 @@ export class AlertsNotificationsComponent implements OnInit {
   private readonly api = inject(CommunicationApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
+  private readonly lang = inject(LanguageStore);
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
 
@@ -352,17 +356,17 @@ export class AlertsNotificationsComponent implements OnInit {
         const createdId = Array.isArray(res?.data) ? (res.data[0] as NotificationRow)?.notificationTypeID : undefined;
         this.notify.alert(
           createdId === 18
-            ? 'Alert created successfully'
+            ? this.lang.t('alertCreatedSuccessfully')
             : createdId === 19
-              ? 'Notification created successfully'
-              : 'Created successfully',
+              ? this.lang.t('notificationCreatedSuccessfully')
+              : this.lang.t('createdSuccessfully'),
           'success',
         );
         this.mode.set('list');
       },
       error: (err: { errorMessage?: string }) => {
         this.saving.set(false);
-        this.notify.alert(err?.errorMessage ?? 'Failed to create', 'error');
+        this.notify.alert(err?.errorMessage ?? this.lang.t('failedToCreate'), 'error');
       },
     });
   }
@@ -378,7 +382,7 @@ export class AlertsNotificationsComponent implements OnInit {
     // End Time was blank, and the start/end comparison below is driven off that value.
     const end = dateAt(v.endDate, v.endTime || null, [23, 59, 59]);
     if (end <= start) {
-      this.notify.alert('End date must be after start date', 'info');
+      this.notify.alert(this.lang.t('validTillShouldBeAFutureDateThanValidFrom'), 'info');
       return;
     }
     this.saving.set(true);
@@ -398,13 +402,13 @@ export class AlertsNotificationsComponent implements OnInit {
       .subscribe({
         next: () => {
           this.saving.set(false);
-          this.notify.alert('Updated successfully', 'success');
+          this.notify.alert(this.lang.t('editedSuccessfully'), 'success');
           this.mode.set('list');
           this.search();
         },
         error: (err: { errorMessage?: string }) => {
           this.saving.set(false);
-          this.notify.alert(err?.errorMessage ?? 'Failed to update', 'error');
+          this.notify.alert(err?.errorMessage ?? this.lang.t('failedToUpdate'), 'error');
         },
       });
   }

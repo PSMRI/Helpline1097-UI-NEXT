@@ -38,7 +38,7 @@
         class="w-28"
         [zValue]="ui.language()"
         (zValueChange)="onLanguageChange($event)"
-        aria-label="Select language"
+        [attr.aria-label]="'selectLanguage' | t"
       >
         @for (name of languages(); track name) {
           <z-select-item [zValue]="name">{{ name }}</z-select-item>
@@ -52,8 +52,8 @@
         <button
           type="button"
           class="flex h-9 w-9 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/60"
-          aria-label="Emergency contacts"
-          title="Emergency contacts"
+          [attr.aria-label]="'emergencyContacts' | t"
+          [title]="'emergencyContacts' | t"
           (click)="openEmergencyContacts()"
         >
           <ng-icon name="lucidePhone" class="text-xl" />
@@ -65,8 +65,8 @@
         <button
           type="button"
           class="flex h-9 w-9 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/60"
-          aria-label="Force logout"
-          title="Force logout"
+          [attr.aria-label]="'forceLogout' | t"
+          [title]="'forceLogout' | t"
           (click)="openForceLogout()"
         >
           <ng-icon name="lucideUserX" class="text-xl" />
@@ -78,8 +78,8 @@
         type="button"
         [zMenuTriggerFor]="userMenu"
         class="flex h-9 w-9 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/60"
-        aria-label="User menu"
-        title="User"
+        [attr.aria-label]="'userIcon' | t"
+        [title]="'userIcon' | t"
       >
         <ng-icon name="lucideUser" class="text-xl" />
       </button>
@@ -95,8 +95,8 @@
         type="button"
         [zMenuTriggerFor]="helpMenu"
         class="flex h-9 w-9 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/60"
-        aria-label="Help"
-        title="Help"
+        [attr.aria-label]="'help' | t"
+        [title]="'help' | t"
       >
         <ng-icon name="lucideCircleHelp" class="text-xl" />
       </button>
@@ -108,8 +108,8 @@
       <button
         type="button"
         class="flex h-9 w-9 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/60"
-        aria-label="Logout"
-        title="Logout"
+        [attr.aria-label]="'logout' | t"
+        [title]="'logout' | t"
         (click)="logout()"
       >
         <ng-icon name="lucidePower" class="text-xl" />

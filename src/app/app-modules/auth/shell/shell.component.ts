@@ -233,7 +233,7 @@ export class ShellComponent {
     // Old innerpage blocked CO logout during an active call (its own header replaced the
     // shell's mid-call; ours stays visible, so the check lives here).
     if (this.isCO() && this.storage.getItem(ENCRYPTED_KEYS.isOnCall) === 'yes') {
-      this.notify.alert('Cannot logout during an active call.', 'warning');
+      this.notify.alert(this.lang.t('cannotLogoutDuringActiveCall'), 'warning');
       return;
     }
     this.cti.userLogout().subscribe({

@@ -31,6 +31,8 @@ import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-i
 import { TEXTAREA_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { CommunicationApiService, ProviderRole } from './communication-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /** A KM/training row (getSupervisorNotification). */
@@ -89,7 +91,7 @@ function endOfDayPlusYears(years: number): Date {
  */
 @Component({
   selector: 'app-training-resources',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, TranslatePipe, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './training-resources.component.html',
 })
@@ -99,6 +101,7 @@ export class TrainingResourcesComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(CommunicationApiService);
   private readonly notify = inject(NotificationService);
+  private readonly lang = inject(LanguageStore);
   private readonly sessionStore = inject(SessionStore);
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
@@ -338,13 +341,13 @@ export class TrainingResourcesComponent implements OnInit {
     this.api.createNotification(requestArray).subscribe({
       next: () => {
         this.saving.set(false);
-        this.notify.alert('Training resource created successfully', 'success');
+        this.notify.alert(this.lang.t('trainingResourceCreatedSuccessfully'), 'success');
         this.mode.set('list');
         this.loadList();
       },
       error: (err: { errorMessage?: string }) => {
         this.saving.set(false);
-        this.notify.alert(err?.errorMessage ?? 'Failed to create', 'error');
+        this.notify.alert(err?.errorMessage ?? this.lang.t('failedToCreate'), 'error');
       },
     });
   }
@@ -376,13 +379,13 @@ export class TrainingResourcesComponent implements OnInit {
     this.api.updateNotification(body).subscribe({
       next: () => {
         this.saving.set(false);
-        this.notify.alert('Updated successfully', 'success');
+        this.notify.alert(this.lang.t('trainingResourceUpdatedSuccessfully'), 'success');
         this.mode.set('list');
         this.loadList();
       },
       error: (err: { errorMessage?: string }) => {
         this.saving.set(false);
-        this.notify.alert(err?.errorMessage ?? 'Failed to update', 'error');
+        this.notify.alert(err?.errorMessage ?? this.lang.t('failedToUpdate'), 'error');
       },
     });
   }
@@ -415,11 +418,21 @@ export class TrainingResourcesComponent implements OnInit {
           })
           .subscribe({
             next: () => {
-              this.notify.alert('Updated successfully', 'success');
+              this.notify.alert(
+                this.lang.t(
+                  next
+                    ? 'trainingResourceDeactivatedSuccessfully'
+                    : 'trainingResourceActivatedSuccessfully',
+                ),
+                'success',
+              );
               this.loadList();
             },
             error: (err: { errorMessage?: string }) =>
-              this.notify.alert(err?.errorMessage ?? 'Failed to update', 'error'),
+              this.notify.alert(
+                err?.errorMessage ?? this.lang.t(next ? 'failedToDeactivate' : 'failedToActivate'),
+                'error',
+              ),
           });
       });
   }

@@ -25,7 +25,7 @@
     <!-- Search area -->
     <div class="flex flex-wrap items-end gap-3">
       <div class="flex flex-col gap-1.5">
-        <label for="benId" class="text-sm font-medium">Beneficiary ID</label>
+        <label for="benId" class="text-sm font-medium">{{ 'beneficiaryId' | t }}</label>
         <div class="relative w-56">
           <input
             z-input
@@ -50,9 +50,9 @@
           }
         </div>
       </div>
-      <button z-button type="button" (click)="search()" [zLoading]="searching()">Search</button>
+      <button z-button type="button" (click)="search()" [zLoading]="searching()">{{ 'search' | t }}</button>
       <button z-button zType="outline" type="button" (click)="toggleAdvanced()">
-        Advanced Search
+        {{ 'advancedSearch' | t }}
       </button>
       <button z-button zType="ghost" type="button" class="ml-auto" (click)="toggleMode()">
         + Register New
@@ -63,48 +63,48 @@
     @if (advancedMode()) {
       <div [formGroup]="advForm" class="grid gap-3 rounded-md border border-border bg-muted/30 p-3 sm:grid-cols-2 lg:grid-cols-4">
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>First Name <span class="text-destructive">*</span></span>
-          <input z-input formControlName="firstName" type="text" maxlength="25" placeholder="First name" [appRestrictInput]="nameBlock" />
+          <span>{{ 'first_name' | t }} <span class="text-destructive">*</span></span>
+          <input z-input formControlName="firstName" type="text" maxlength="25" [placeholder]="'first_name' | t" [appRestrictInput]="nameBlock" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Last Name</span>
-          <input z-input formControlName="lastName" type="text" maxlength="25" placeholder="Last name" [appRestrictInput]="nameBlock" />
+          <span>{{ 'lastNameOrSurname' | t }}</span>
+          <input z-input formControlName="lastName" type="text" maxlength="25" [placeholder]="'lastNameOrSurname' | t" [appRestrictInput]="nameBlock" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Gender <span class="text-destructive">*</span></span>
-          <z-select formControlName="genderID" zPlaceholder="Select gender">
+          <span>{{ 'gender' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="genderID" [zPlaceholder]="'selectGender' | t">
             @for (g of genders(); track g.genderID) {
               <z-select-item [zValue]="g.genderID + ''">{{ g.genderName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>State <span class="text-destructive">*</span></span>
-          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="advOnStateChange($event)">
+          <span>{{ 'state' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="state" [zPlaceholder]="'selectState' | t" (zValueChange)="advOnStateChange($event)">
             @for (s of states(); track s.stateID) {
               <z-select-item [zValue]="s.stateID + ''">{{ s.stateName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>District <span class="text-destructive">*</span></span>
-          <z-select formControlName="district" zPlaceholder="Select district" (zValueChange)="advOnDistrictChange($event)">
+          <span>{{ 'district' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="district" [zPlaceholder]="'selectDistrict' | t" (zValueChange)="advOnDistrictChange($event)">
             @for (d of advDistricts(); track d.districtID) {
               <z-select-item [zValue]="d.districtID + ''">{{ d.districtName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Taluk</span>
-          <z-select formControlName="taluk" zPlaceholder="Select taluk">
+          <span>{{ 'taluk' | t }}</span>
+          <z-select formControlName="taluk" [zPlaceholder]="'selectTaluk' | t">
             @for (t of advTaluks(); track t.blockID) {
               <z-select-item [zValue]="t.blockID + ''">{{ t.blockName }}</z-select-item>
             }
           </z-select>
         </label>
         <div class="flex items-end gap-2">
-          <button z-button type="button" (click)="runAdvancedSearch()" [zDisabled]="advForm.invalid || searching()" [zLoading]="searching()">Search</button>
-          <button z-button zType="outline" type="button" (click)="advClear()">Clear</button>
+          <button z-button type="button" (click)="runAdvancedSearch()" [zDisabled]="advForm.invalid || searching()" [zLoading]="searching()">{{ 'search' | t }}</button>
+          <button z-button zType="outline" type="button" (click)="advClear()">{{ 'clear' | t }}</button>
         </div>
       </div>
     }
@@ -114,15 +114,15 @@
       <table class="w-full text-sm">
         <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
           <tr>
-            <th class="px-3 py-2">Ben ID</th>
-            <th class="px-3 py-2">Name</th>
-            <th class="px-3 py-2">Age</th>
-            <th class="px-3 py-2">Gender</th>
-            <th class="px-3 py-2">State</th>
-            <th class="px-3 py-2">District</th>
-            <th class="px-3 py-2">Taluk</th>
-            <th class="px-3 py-2">Village</th>
-            <th class="px-3 py-2">Tagging</th>
+            <th class="px-3 py-2">{{ 'beneficiaryId' | t }}</th>
+            <th class="px-3 py-2">{{ 'fullName' | t }}</th>
+            <th class="px-3 py-2">{{ 'age' | t }}</th>
+            <th class="px-3 py-2">{{ 'gender' | t }}</th>
+            <th class="px-3 py-2">{{ 'state' | t }}</th>
+            <th class="px-3 py-2">{{ 'district' | t }}</th>
+            <th class="px-3 py-2">{{ 'taluk' | t }}</th>
+            <th class="px-3 py-2">{{ 'village' | t }}</th>
+            <th class="px-3 py-2">{{ 'beneficiaryTagging' | t }}</th>
             <th class="px-3 py-2"></th>
           </tr>
         </thead>
@@ -146,7 +146,7 @@
                 <div class="flex items-center justify-end gap-2">
                   <!-- Old row edit action (mode_edit) — load the beneficiary to update it -->
                   <button z-button zType="outline" zSize="sm" type="button" (click)="editBeneficiary(b)">
-                    Edit
+                    {{ 'edit' | t }}
                   </button>
                   <!-- Waits for startCall so the link never posts a null benCallID -->
                   <button
@@ -167,7 +167,7 @@
                 @if (searching()) {
                   Searching…
                 } @else {
-                  No beneficiary found. Use "Register New" to add one.
+                  {{ 'noRecordsFound' | t }}
                 }
               </td>
             </tr>
@@ -183,7 +183,7 @@
           Page {{ pageIndex() + 1 }} of {{ pageCount() }} ({{ results().length }} records)
         </span>
         <button z-button zType="outline" zSize="sm" type="button" [zDisabled]="pageIndex() === 0" (click)="prevPage()">
-          Previous
+          {{ 'previous' | t }}
         </button>
         <button
           z-button
@@ -193,7 +193,7 @@
           [zDisabled]="pageIndex() >= pageCount() - 1"
           (click)="nextPage()"
         >
-          Next
+          {{ 'next' | t }}
         </button>
       </div>
     }
@@ -202,32 +202,32 @@
     <form [formGroup]="form" (ngSubmit)="register()" (focusin)="onFormInteract()" class="flex flex-col gap-4">
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Title</span>
-          <z-select formControlName="titleId" zPlaceholder="Select">
+          <span>{{ 'title' | t }}</span>
+          <z-select formControlName="titleId" [zPlaceholder]="'title' | t">
             @for (t of titles(); track t.titleID) {
               <z-select-item [zValue]="t.titleID + ''">{{ t.titleName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>First Name</span>
-          <input z-input formControlName="firstName" type="text" maxlength="25" placeholder="First name" [appRestrictInput]="nameBlock" />
+          <span>{{ 'firstName' | t }}</span>
+          <input z-input formControlName="firstName" type="text" maxlength="25" [placeholder]="'firstName' | t" [appRestrictInput]="nameBlock" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Last Name</span>
-          <input z-input formControlName="lastName" type="text" maxlength="25" placeholder="Last name" [appRestrictInput]="nameBlock" />
+          <span>{{ 'lastNameOrSurname' | t }}</span>
+          <input z-input formControlName="lastName" type="text" maxlength="25" [placeholder]="'lastNameOrSurname' | t" [appRestrictInput]="nameBlock" />
         </label>
 
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Gender <span class="text-destructive">*</span></span>
-          <z-select formControlName="genderID" zPlaceholder="Select gender">
+          <span>{{ 'gender' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="genderID" [zPlaceholder]="'selectGender' | t">
             @for (g of genders(); track g.genderID) {
               <z-select-item [zValue]="g.genderID + ''">{{ g.genderName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Date of Birth</span>
+          <span>{{ 'dob' | t }}</span>
           <input
             z-input
             formControlName="dOB"
@@ -243,12 +243,12 @@
         </label>
         <div class="flex gap-2">
           <label class="flex flex-1 flex-col gap-1.5 text-sm">
-            <span>Age</span>
-            <input z-input formControlName="age" type="number" min="0" max="150" placeholder="Age" (input)="onAgeChange()" [appRestrictInput]="mobileNumberBlock" />
+            <span>{{ 'age' | t }}</span>
+            <input z-input formControlName="age" type="number" min="0" max="150" [placeholder]="'age' | t" (input)="onAgeChange()" [appRestrictInput]="mobileNumberBlock" />
           </label>
           <label class="flex flex-1 flex-col gap-1.5 text-sm">
-            <span>Unit</span>
-            <z-select formControlName="ageUnit" zPlaceholder="Unit" (zValueChange)="onAgeChange()">
+            <span>{{ 'ageUnit' | t }}</span>
+            <z-select formControlName="ageUnit" [zPlaceholder]="'ageUnit' | t" (zValueChange)="onAgeChange()">
               @for (u of ageUnits; track u) {
                 <z-select-item [zValue]="u">{{ u }}</z-select-item>
               }
@@ -258,7 +258,7 @@
 
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Marital Status</span>
-          <z-select formControlName="maritalStatusID" zPlaceholder="Select">
+          <z-select formControlName="maritalStatusID" [zPlaceholder]="'selectMaritalStatus' | t">
             @for (m of maritalStatuses(); track m.maritalStatusID) {
               <z-select-item [zValue]="m.maritalStatusID + ''">{{ m.status }}</z-select-item>
             }
@@ -266,14 +266,14 @@
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Caste / Community</span>
-          <z-select formControlName="community" zPlaceholder="Select">
+          <z-select formControlName="community" [zPlaceholder]="'selectCaste' | t">
             @for (c of communities(); track c.communityID) {
               <z-select-item [zValue]="c.communityID + ''">{{ c.communityType }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Relationship</span>
+          <span>{{ 'relationship' | t }}</span>
           <z-select formControlName="beneficiaryRelationID" zPlaceholder="Select">
             @for (r of relationships(); track r.benRelationshipID) {
               <z-select-item [zValue]="r.benRelationshipID + ''">{{ r.benRelationshipType }}</z-select-item>
@@ -282,69 +282,69 @@
         </label>
 
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>State <span class="text-destructive">*</span></span>
-          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange($event)">
+          <span>{{ 'state' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="state" [zPlaceholder]="'selectState' | t" (zValueChange)="onStateChange($event)">
             @for (s of states(); track s.stateID) {
               <z-select-item [zValue]="s.stateID + ''">{{ s.stateName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>District <span class="text-destructive">*</span></span>
-          <z-select formControlName="district" zPlaceholder="Select district" (zValueChange)="onDistrictChange($event)">
+          <span>{{ 'district' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="district" [zPlaceholder]="'selectDistrict' | t" (zValueChange)="onDistrictChange($event)">
             @for (d of districts(); track d.districtID) {
               <z-select-item [zValue]="d.districtID + ''">{{ d.districtName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Taluk</span>
-          <z-select formControlName="taluk" zPlaceholder="Select taluk" (zValueChange)="onTalukChange($event)">
+          <span>{{ 'taluk' | t }}</span>
+          <z-select formControlName="taluk" [zPlaceholder]="'selectTaluk' | t" (zValueChange)="onTalukChange($event)">
             @for (t of taluks(); track t.blockID) {
               <z-select-item [zValue]="t.blockID + ''">{{ t.blockName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Village</span>
-          <z-select formControlName="village" zPlaceholder="Select village">
+          <span>{{ 'village' | t }}</span>
+          <z-select formControlName="village" [zPlaceholder]="'SelectPanchayatORVillage' | t">
             @for (v of villages(); track v.districtBranchID) {
               <z-select-item [zValue]="v.districtBranchID + ''">{{ v.villageName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Pincode</span>
+          <span>{{ 'pincode' | t }}</span>
           <input z-input formControlName="pincode" type="text" maxlength="6" placeholder="6-digit pincode" [appRestrictInput]="mobileNumberBlock" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Alternate Number 1</span>
+          <span>{{ 'alternateNumber' | t }} 1</span>
           <input z-input formControlName="alternateNumber1" type="text" maxlength="10" placeholder="Alternate mobile" [appRestrictInput]="mobileNumberBlock" />
         </label>
         <!-- Old app: alternate numbers 2-5 unlock only once the previous one is filled. -->
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Alternate Number 2</span>
+          <span>{{ 'alternateNumber' | t }} 2</span>
           <input z-input formControlName="alternateNumber2" type="text" maxlength="10" placeholder="Alternate mobile"
             [readonly]="!form.controls.alternateNumber1.value" [appRestrictInput]="mobileNumberBlock" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Alternate Number 3</span>
+          <span>{{ 'alternateNumber' | t }} 3</span>
           <input z-input formControlName="alternateNumber3" type="text" maxlength="10" placeholder="Alternate mobile"
             [readonly]="!form.controls.alternateNumber2.value" [appRestrictInput]="mobileNumberBlock" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Alternate Number 4</span>
+          <span>{{ 'alternateNumber' | t }} 4</span>
           <input z-input formControlName="alternateNumber4" type="text" maxlength="10" placeholder="Alternate mobile"
             [readonly]="!form.controls.alternateNumber3.value" [appRestrictInput]="mobileNumberBlock" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Alternate Number 5</span>
+          <span>{{ 'alternateNumber' | t }} 5</span>
           <input z-input formControlName="alternateNumber5" type="text" maxlength="10" placeholder="Alternate mobile"
             [readonly]="!form.controls.alternateNumber4.value" [appRestrictInput]="mobileNumberBlock" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Preferred Language <span class="text-destructive">*</span></span>
-          <z-select formControlName="preferredLanguage" zPlaceholder="Select language">
+          <span>{{ 'preferredLanguage' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="preferredLanguage" [zPlaceholder]="'preferredLanguage' | t">
             @for (l of languages(); track l.languageID) {
               <z-select-item [zValue]="l.languageID + ''">{{ l.languageName }}</z-select-item>
             }
@@ -358,7 +358,7 @@
             Editing {{ editingRecord()?.firstName }} {{ editingRecord()?.lastName }} (ID {{ editingRecord()?.beneficiaryID }})
           </span>
         }
-        <button z-button zType="outline" type="button" (click)="toggleMode()">Back to search</button>
+        <button z-button zType="outline" type="button" (click)="toggleMode()">{{ 'back' | t }}</button>
         <button
           z-button
           type="submit"

@@ -40,12 +40,14 @@ import { EverwellAdherenceComponent } from '../everwell/everwell-adherence.compo
 import { CoServicesComponent } from '../services-tab/co-services.component';
 import { GrievanceResolutionComponent } from '../grievance/grievance-resolution.component';
 import { UpdatesFromBeneficiaryComponent } from '../updates/updates-from-beneficiary.component';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import {
   ENCRYPTED_KEYS,
   SessionStorageService,
 } from '@/app-modules/core/services/session-storage.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 
 /**
  * CO call wizard — faithful port of the old `1097-co` bs-wizard + jQuery carousel, driven
@@ -58,6 +60,7 @@ import { CallStore } from '@/app-modules/core/state/call.store';
 @Component({
   selector: 'app-call-wizard',
   imports: [
+    TranslatePipe,
     ZardButtonComponent,
     BeneficiaryRegistrationComponent,
     CoServicesComponent,
@@ -74,6 +77,7 @@ export class CallWizardComponent implements OnInit {
   private readonly storage = inject(SessionStorageService);
   private readonly callStore = inject(CallStore);
   private readonly router = inject(Router);
+  private readonly lang = inject(LanguageStore);
 
   /** Which carousel variant is active (old `#myCarousel` / `Everwell` / `Grievance`). */
   protected readonly variant = signal<'standard' | 'everwell' | 'grievance'>('standard');
@@ -81,11 +85,16 @@ export class CallWizardComponent implements OnInit {
   protected readonly steps = computed<string[]>(() => {
     switch (this.variant()) {
       case 'everwell':
-        return ['Beneficiary Details', 'Closure'];
+        return [this.lang.t('beneficiaryDetails'), this.lang.t('closure')];
       case 'grievance':
-        return ['Complaint Details', 'Closure'];
+        return [this.lang.t('complaintDetails'), this.lang.t('closure')];
       default:
-        return ['Search Beneficiary', 'Provide Services', 'Other Details', 'Closure'];
+        return [
+          this.lang.t('create_searchBeneficiary'),
+          this.lang.t('provideServices'),
+          this.lang.t('otherDetails'),
+          this.lang.t('closure'),
+        ];
     }
   });
 
@@ -208,7 +217,7 @@ export class CallWizardComponent implements OnInit {
 
   /** Old `openDialog()` (and its Everwell/grievance twins) — confirm, then reset to step 0. */
   protected cancel(): void {
-    this.notify.confirm('Do you want to cancel?', 'Cancel Call').subscribe((confirmed) => {
+    this.notify.confirm(this.lang.t('doYouWantToCancel'), 'Cancel Call').subscribe((confirmed) => {
       if (!confirmed) {
         return;
       }
@@ -225,7 +234,7 @@ export class CallWizardComponent implements OnInit {
   /** Old `openDialogClosure()` — confirm, then jump to the Closure step. */
   protected closure(): void {
     this.notify
-      .confirm('Do you want to close the call?', 'Closure')
+      .confirm(this.lang.t('doYouWantToCloseTheCall'), 'Closure')
       .subscribe((confirmed) => {
         if (!confirmed) {
           return;

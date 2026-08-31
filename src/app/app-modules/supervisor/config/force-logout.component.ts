@@ -27,7 +27,9 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 
 import { ConfigApiService } from './config-api.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /**
@@ -37,25 +39,25 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
  */
 @Component({
   selector: 'app-force-logout',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective],
+  imports: [ReactiveFormsModule, TranslatePipe, ZardButtonComponent, ZardInputDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex max-w-md flex-col gap-4">
-      <h2 class="text-base font-semibold">Force Logout</h2>
+      <h2 class="text-base font-semibold">{{ 'forceLogout' | t }}</h2>
       <p class="text-sm text-muted-foreground">
         Enter the username of the user to be logged out of all sessions.
       </p>
       <form class="flex flex-col gap-3" [formGroup]="form">
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>User Name <span class="text-destructive">*</span></span>
-          <input z-input formControlName="userName" placeholder="Username" />
+          <span>{{ 'userName' | t }} <span class="text-destructive">*</span></span>
+          <input z-input formControlName="userName" [placeholder]="'username' | t" />
           @if (form.controls.userName.touched && form.controls.userName.errors?.['required']) {
-            <span class="text-destructive">User name is required</span>
+            <span class="text-destructive">{{ 'userNameRequired' | t }}</span>
           }
         </label>
         <div>
           <button z-button type="button" [zDisabled]="form.invalid || busy()" (click)="kickout()">
-            Kickout
+            {{ 'kickout' | t }}
           </button>
         </div>
       </form>
@@ -66,6 +68,7 @@ export class ForceLogoutComponent {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ConfigApiService);
   private readonly notify = inject(NotificationService);
+  private readonly lang = inject(LanguageStore);
   private readonly sessionStore = inject(SessionStore);
 
   protected readonly busy = signal(false);
@@ -84,7 +87,7 @@ export class ForceLogoutComponent {
     if (serviceId == null || this.form.invalid) {
       return;
     }
-    this.notify.confirm(`Do you really want to kickout ${userName}?`).subscribe((ok) => {
+    this.notify.confirm(`${this.lang.t('doYouReallyWantToKickout')} ${userName}?`).subscribe((ok) => {
       if (!ok) {
         return;
       }
@@ -95,7 +98,7 @@ export class ForceLogoutComponent {
           // Old app only reacts to a "success" response; anything else is a silent no-op.
           const response = (res?.data as { response?: string } | undefined)?.response ?? '';
           if (response.toLowerCase() === 'success') {
-            this.notify.alert('User logged out successfully', 'success');
+            this.notify.alert(this.lang.t('userLoggedOutSuccessfully'), 'success');
             this.form.reset({ userName: '' });
           }
         },

@@ -35,8 +35,9 @@ import { lucideClock, lucideCoffee, lucidePhone, lucidePhoneCall } from '@ng-ico
 import { cardImports } from '@common-ui/ui/card';
 
 import { AgentCallStatsData, CtiService } from '@/app-modules/core/services/cti.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 
-/** One call-statistics metric tile. */
+/** One call-statistics metric tile (`label` is an i18n key). */
 interface StatTile {
   label: string;
   value: string;
@@ -52,7 +53,7 @@ interface StatTile {
  */
 @Component({
   selector: 'app-call-statistics',
-  imports: [...cardImports, NgIcon],
+  imports: [...cardImports, NgIcon, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucidePhone, lucideCoffee, lucideClock, lucidePhoneCall })],
   template: `
@@ -65,9 +66,9 @@ interface StatTile {
               <span class="text-2xl font-semibold text-foreground">
                 {{ blank() ? '—' : tile.value }}
               </span>
-              <span class="text-xs text-muted-foreground">{{ tile.label }}</span>
+              <span class="text-xs text-muted-foreground">{{ tile.label | t }}</span>
               @if (tile.time) {
-                <span class="text-[11px] tracking-wider text-muted-foreground/80">Hrs : Mins : Secs</span>
+                <span class="text-[11px] tracking-wider text-muted-foreground/80">{{ 'hrs' | t }} : {{ 'mins' | t }} : {{ 'secs' | t }}</span>
               }
             </div>
           </z-card-content>
@@ -92,25 +93,25 @@ export class CallStatisticsComponent implements OnInit {
       field != null ? String(field) : placeholder;
     return [
       {
-        label: 'Call Duration',
+        label: 'callDuration',
         value: value(stats?.total_call_duration, '00:00:00'),
         time: true,
         icon: 'lucidePhone',
       },
       {
-        label: 'Break Time',
+        label: 'breakTime',
         value: value(stats?.total_break_time, '00:00:00'),
         time: true,
         icon: 'lucideCoffee',
       },
       {
-        label: 'Free Time',
+        label: 'freeTime',
         value: value(stats?.total_free_time, '00:00:00'),
         time: true,
         icon: 'lucideClock',
       },
       {
-        label: 'Total Calls',
+        label: 'totalCalls',
         value: value(stats?.total_calls, '0'),
         time: false,
         icon: 'lucidePhoneCall',

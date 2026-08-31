@@ -37,7 +37,9 @@ import {
   FeedbackStatus,
   FeedbackType,
 } from './feedback-api.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 interface HistoryRow {
@@ -133,6 +135,7 @@ function detailDate(row: FeedbackRow): string {
     ZardButtonComponent,
     ZardInputDirective,
     RestrictInputDirective,
+    TranslatePipe,
     ...ZardSelectImports,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -145,6 +148,7 @@ export class FeedbackTrackingComponent implements OnInit {
   private readonly api = inject(FeedbackApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
+  private readonly lang = inject(LanguageStore);
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
 
@@ -420,7 +424,7 @@ export class FeedbackTrackingComponent implements OnInit {
     this.api.updateResponse(body).subscribe({
       next: () => {
         this.saving.set(false);
-        this.notify.alert('Successfully updated', 'success');
+        this.notify.alert(this.lang.t('successfullyUpdated'), 'success');
         this.backToList();
       },
       error: (err: { errorMessage?: string }) => {

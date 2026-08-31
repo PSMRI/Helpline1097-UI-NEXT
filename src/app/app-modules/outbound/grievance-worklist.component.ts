@@ -32,10 +32,12 @@ import { ZardInputDirective } from '@common-ui/ui/input';
 import { OutboundDialService } from './outbound-dial.service';
 import { formatWorklistDateTime } from './worklist-date';
 import { WorklistTable } from './worklist-table';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { OutboundApiService } from '@/app-modules/core/services/outbound-api.service';
 import { ENCRYPTED_KEYS } from '@/app-modules/core/services/session-storage.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /** `severety` and `beneficiaryRegId` are the backend's field names, kept verbatim. */
@@ -57,7 +59,7 @@ interface GrievanceRow {
  * reproduces the old md2DataTable: 4/page, sortable columns, serial number. */
 @Component({
   selector: 'app-grievance-worklist',
-  imports: [NgIcon, ReactiveFormsModule, ZardButtonComponent, ZardInputDirective],
+  imports: [NgIcon, ReactiveFormsModule, TranslatePipe, ZardButtonComponent, ZardInputDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucideEye, lucidePhoneOutgoing })],
   template: `
@@ -68,7 +70,7 @@ interface GrievanceRow {
             z-input
             type="text"
             class="w-64"
-            placeholder="Search"
+            [placeholder]="'inTableSearch' | t"
             [formControl]="search"
             (input)="filter()"
           />
@@ -76,34 +78,34 @@ interface GrievanceRow {
           <span></span>
         }
         <button z-button zType="outline" type="button" (click)="backToDashboard()">
-          Back to Dashboard
+          {{ 'backToDashboard' | t }}
         </button>
       </div>
       <div class="overflow-x-auto rounded-md border border-border">
         <table class="w-full text-sm">
           <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
-              <th class="px-3 py-2">S.No</th>
+              <th class="px-3 py-2">{{ 'sno' | t }}</th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('complaintId')">
-                Complaint ID {{ table.sortIndicator('complaintId') }}
+                {{ 'complaintID' | t }} {{ table.sortIndicator('complaintId') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('subject')">
-                Subject of Complaint {{ table.sortIndicator('subject') }}
+                {{ 'subjectOfComplaint' | t }} {{ table.sortIndicator('subject') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('state')">
-                State {{ table.sortIndicator('state') }}
+                {{ 'state' | t }} {{ table.sortIndicator('state') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('severity')">
-                Severity {{ table.sortIndicator('severity') }}
+                {{ 'severety' | t }} {{ table.sortIndicator('severity') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('lastCall')">
-                Last Call {{ table.sortIndicator('lastCall') }}
+                {{ 'lastCall' | t }} {{ table.sortIndicator('lastCall') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('callCount')">
-                Call Count {{ table.sortIndicator('callCount') }}
+                {{ 'callCount' | t }} {{ table.sortIndicator('callCount') }}
               </th>
-              <th class="px-3 py-2">View</th>
-              <th class="px-3 py-2">Call</th>
+              <th class="px-3 py-2">{{ 'view' | t }}</th>
+              <th class="px-3 py-2">{{ 'call' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -120,8 +122,8 @@ interface GrievanceRow {
                   <button
                     type="button"
                     class="text-muted-foreground hover:text-foreground"
-                    title="View complaint"
-                    aria-label="View complaint"
+                    [title]="'viewComplaintDescription' | t"
+                    [attr.aria-label]="'viewComplaintDescription' | t"
                     (click)="viewComplaint(row)"
                   >
                     <ng-icon name="lucideEye" size="18" aria-hidden="true" />
@@ -131,8 +133,8 @@ interface GrievanceRow {
                   <button
                     type="button"
                     class="text-primary hover:text-primary/80"
-                    title="Call Beneficiary"
-                    aria-label="Call Beneficiary"
+                    [title]="'callBeneficiary' | t"
+                    [attr.aria-label]="'callBeneficiary' | t"
                     (click)="dial(row)"
                   >
                     <ng-icon name="lucidePhoneOutgoing" size="18" aria-hidden="true" />
@@ -142,7 +144,7 @@ interface GrievanceRow {
             } @empty {
               <tr>
                 <td colspan="9" class="px-3 py-6 text-center text-muted-foreground">
-                  No Records Found
+                  {{ 'noRecordsFound' | t }}
                 </td>
               </tr>
             }
@@ -150,7 +152,7 @@ interface GrievanceRow {
         </table>
       </div>
       <div class="flex items-center justify-between gap-3 text-sm">
-        <span class="text-muted-foreground">Total Count: {{ table.sorted().length }}</span>
+        <span class="text-muted-foreground">{{ 'totalCount' | t }}: {{ table.sorted().length }}</span>
         @if (table.sorted().length) {
           <div class="flex items-center gap-3">
             <span class="text-muted-foreground">Page {{ table.pageIndex() + 1 }} of {{ table.pageCount() }}</span>
@@ -165,7 +167,7 @@ interface GrievanceRow {
               [zDisabled]="table.pageIndex() >= table.pageCount() - 1"
               (click)="table.next()"
             >
-              Next
+              {{ 'next' | t }}
             </button>
           </div>
         }
@@ -180,6 +182,7 @@ export class GrievanceWorklistComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
+  private readonly lang = inject(LanguageStore);
 
   protected readonly rows = signal<GrievanceRow[]>([]);
   protected readonly table = new WorklistTable<GrievanceRow>(4);
@@ -238,7 +241,7 @@ export class GrievanceWorklistComponent implements OnInit {
 
   protected viewComplaint(row: GrievanceRow): void {
     if (row.complaint == null || row.complaint === '') {
-      this.notify.alert('No complaint description found', 'info');
+      this.notify.alert(this.lang.t('noComplaintDescriptionFound'), 'info');
       return;
     }
     this.notify.info(row.complaint, `Complaint ${row.complaintID ?? ''}`);

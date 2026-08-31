@@ -22,29 +22,29 @@
 
 <div class="flex flex-col gap-4">
   <div class="flex items-center justify-between gap-3">
-    <h2 class="text-base font-semibold">Emergency Contacts</h2>
+    <h2 class="text-base font-semibold">{{ 'emergencyContacts' | t }}</h2>
     @if (mode() === 'list') {
-      <button z-button type="button" (click)="startCreate()">Add New</button>
+      <button z-button type="button" (click)="startCreate()">{{ 'createContactInformation' | t }}</button>
     } @else {
-      <button z-button zType="outline" type="button" (click)="cancelForm()">Back to List</button>
+      <button z-button zType="outline" type="button" (click)="cancelForm()">{{ 'back' | t }}</button>
     }
   </div>
 
   @if (mode() === 'list') {
     <label class="flex max-w-xs flex-col gap-1.5 text-sm">
-      <span>Search</span>
-      <input z-input type="text" placeholder="Name, number or location" (input)="onSearch($event)" />
+      <span>{{ 'search' | t }}</span>
+      <input z-input type="text" [placeholder]="'inTableSearch' | t" (input)="onSearch($event)" />
     </label>
 
     <div class="overflow-x-auto rounded-md border border-border">
       <table class="w-full text-sm">
         <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
           <tr>
-            <th class="px-3 py-2">Name</th>
-            <th class="px-3 py-2">Designation</th>
-            <th class="px-3 py-2">Location</th>
-            <th class="px-3 py-2">Contact Number</th>
-            <th class="px-3 py-2">Status</th>
+            <th class="px-3 py-2">{{ 'contactName' | t }}</th>
+            <th class="px-3 py-2">{{ 'designation' | t }}</th>
+            <th class="px-3 py-2">{{ 'location' | t }}</th>
+            <th class="px-3 py-2">{{ 'contactNumber' | t }}</th>
+            <th class="px-3 py-2">{{ 'status' | t }}</th>
             <th class="px-3 py-2"></th>
           </tr>
         </thead>
@@ -63,17 +63,17 @@
               <td class="px-3 py-2 text-right">
                 <div class="flex justify-end gap-2">
                   <button z-button zSize="sm" zType="outline" type="button" (click)="startEdit(row)">
-                    Edit
+                    {{ 'edit' | t }}
                   </button>
                   <button z-button zSize="sm" zType="outline" type="button" (click)="toggleActive(row)">
-                    {{ row.deleted ? 'Activate' : 'Deactivate' }}
+                    {{ (row.deleted ? 'activate' : 'deactivate') | t }}
                   </button>
                 </div>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="px-3 py-6 text-center text-muted-foreground">No Records Found</td>
+              <td colspan="6" class="px-3 py-6 text-center text-muted-foreground">{{ 'noRecordsFound' | t }}</td>
             </tr>
           }
         </tbody>
@@ -82,28 +82,28 @@
   } @else if (mode() === 'create') {
     <form class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" [formGroup]="createForm">
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Name <span class="text-destructive">*</span></span>
+        <span>{{ 'name' | t }} <span class="text-destructive">*</span></span>
         <input z-input formControlName="name" maxlength="50" [appRestrictInput]="nameWithSpaceBlock" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Designation <span class="text-destructive">*</span></span>
-        <z-select formControlName="designation" zPlaceholder="Select designation">
+        <span>{{ 'designation' | t }} <span class="text-destructive">*</span></span>
+        <z-select formControlName="designation" [zPlaceholder]="'designation' | t">
           @for (d of designations(); track d.designationID) {
             <z-select-item [zValue]="d.designationID + ''">{{ d.designationName }}</z-select-item>
           }
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Location <span class="text-destructive">*</span></span>
+        <span>{{ 'location' | t }} <span class="text-destructive">*</span></span>
         <input z-input formControlName="location" [appRestrictInput]="textAreaBlock" maxlength="90" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Contact Number <span class="text-destructive">*</span></span>
+        <span>{{ 'mobileNumber' | t }} <span class="text-destructive">*</span></span>
         <input z-input formControlName="contactNumber" maxlength="10" inputmode="numeric" [appRestrictInput]="mobileNumberBlock" />
       </label>
       <div class="flex items-end sm:col-span-2 lg:col-span-4">
         <button z-button zType="outline" type="button" [zDisabled]="createForm.invalid" (click)="addToBuffer()">
-          Add
+          {{ 'add' | t }}
         </button>
       </div>
     </form>
@@ -112,10 +112,10 @@
       <table class="w-full text-sm">
         <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
           <tr>
-            <th class="px-3 py-2">Name</th>
-            <th class="px-3 py-2">Designation</th>
-            <th class="px-3 py-2">Location</th>
-            <th class="px-3 py-2">Contact Number</th>
+            <th class="px-3 py-2">{{ 'contactName' | t }}</th>
+            <th class="px-3 py-2">{{ 'designation' | t }}</th>
+            <th class="px-3 py-2">{{ 'location' | t }}</th>
+            <th class="px-3 py-2">{{ 'contactNumber' | t }}</th>
             <th class="px-3 py-2"></th>
           </tr>
         </thead>
@@ -128,7 +128,7 @@
               <td class="px-3 py-2">{{ row.emergContactNo }}</td>
               <td class="px-3 py-2 text-right">
                 <button z-button zSize="sm" zType="destructive" type="button" (click)="removeFromBuffer($index)">
-                  Remove
+                  {{ 'remove' | t }}
                 </button>
               </td>
             </tr>
@@ -145,37 +145,37 @@
 
     <div class="flex items-center gap-3">
       <button z-button type="button" [zDisabled]="buffer().length === 0 || saving()" (click)="saveBuffer()">
-        Save
+        {{ 'save' | t }}
       </button>
-      <button z-button zType="outline" type="button" (click)="cancelForm()">Cancel</button>
+      <button z-button zType="outline" type="button" (click)="cancelForm()">{{ 'cancel' | t }}</button>
     </div>
   } @else {
     <form class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" [formGroup]="editForm">
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Name <span class="text-destructive">*</span></span>
+        <span>{{ 'name' | t }} <span class="text-destructive">*</span></span>
         <input z-input formControlName="name" maxlength="50" [appRestrictInput]="nameWithSpaceBlock" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Designation <span class="text-destructive">*</span></span>
-        <z-select formControlName="designation" zPlaceholder="Select designation">
+        <span>{{ 'designation' | t }} <span class="text-destructive">*</span></span>
+        <z-select formControlName="designation" [zPlaceholder]="'designation' | t">
           @for (d of designations(); track d.designationID) {
             <z-select-item [zValue]="d.designationID + ''">{{ d.designationName }}</z-select-item>
           }
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Location <span class="text-destructive">*</span></span>
+        <span>{{ 'location' | t }} <span class="text-destructive">*</span></span>
         <input z-input formControlName="location" [appRestrictInput]="textAreaBlock" maxlength="90" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Contact Number <span class="text-destructive">*</span></span>
+        <span>{{ 'mobileNumber' | t }} <span class="text-destructive">*</span></span>
         <input z-input formControlName="contactNumber" maxlength="10" inputmode="numeric" [appRestrictInput]="mobileNumberBlock" />
       </label>
       <div class="flex items-center gap-3 sm:col-span-2 lg:col-span-4">
         <button z-button type="button" [zDisabled]="editForm.invalid || saving()" (click)="update()">
-          Update
+          {{ 'update' | t }}
         </button>
-        <button z-button zType="outline" type="button" (click)="cancelForm()">Cancel</button>
+        <button z-button zType="outline" type="button" (click)="cancelForm()">{{ 'cancel' | t }}</button>
       </div>
     </form>
   }

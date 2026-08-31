@@ -32,6 +32,8 @@ import {
 
 import { ZardTabComponent, ZardTabGroupComponent } from '@common-ui/ui/tabs';
 
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
+
 import { CoCategoryServiceComponent } from './co-category-service.component';
 import { CoFeedbackComponent } from './co-feedback.component';
 import { CoReferralComponent } from './co-referral.component';
@@ -59,32 +61,33 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
     CoCategoryServiceComponent,
     CoReferralComponent,
     CoFeedbackComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <z-tab-group>
-      <z-tab label="Information">
+      <z-tab [label]="'informationServices' | t">
         <app-co-category-service
           serviceType="information"
           [serviceTypes]="serviceTypes()"
           (serviceProvided)="serviceProvided.emit()"
         />
       </z-tab>
-      <z-tab label="Counselling">
+      <z-tab [label]="'counsellingServices' | t">
         <app-co-category-service
           serviceType="counselling"
           [serviceTypes]="serviceTypes()"
           (serviceProvided)="serviceProvided.emit()"
         />
       </z-tab>
-      <z-tab label="Referral">
+      <z-tab [label]="'referralServices' | t">
         <app-co-referral
           [serviceTypes]="serviceTypes()"
           [states]="states()"
           (serviceProvided)="serviceProvided.emit()"
         />
       </z-tab>
-      <z-tab label="Feedback">
+      <z-tab [label]="'feedbackSystem' | t">
         <app-co-feedback
           [serviceTypes]="serviceTypes()"
           [states]="states()"

@@ -31,6 +31,8 @@ import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-i
 import { MOBILE_NUMBER_BLOCK, NAME_WITH_SPACE_BLOCK, TEXTAREA_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { CommunicationApiService, Designation } from './communication-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /** An emergency-contact row (getSupervisorEmergencyContacts). */
@@ -68,7 +70,7 @@ interface BufferRow {
  */
 @Component({
   selector: 'app-emergency-contacts',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, TranslatePipe, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './emergency-contacts.component.html',
 })
@@ -80,6 +82,7 @@ export class EmergencyContactsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(CommunicationApiService);
   private readonly notify = inject(NotificationService);
+  private readonly lang = inject(LanguageStore);
   private readonly sessionStore = inject(SessionStore);
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
@@ -197,7 +200,7 @@ export class EmergencyContactsComponent implements OnInit {
     const dupInList = this.contacts().some((c) => c.emergContactNo === v.contactNumber);
     const dupInBuffer = this.buffer().some((b) => b.emergContactNo === v.contactNumber);
     if (dupInList || dupInBuffer) {
-      this.notify.alert('This mobile number already exists', 'info');
+      this.notify.alert(this.lang.t('duplicateMobileNumber'), 'info');
       return;
     }
     const designation = this.designations().find((d) => String(d.designationID) === v.designation);
@@ -229,14 +232,14 @@ export class EmergencyContactsComponent implements OnInit {
     this.api.createEmergencyContacts(this.buffer()).subscribe({
       next: () => {
         this.saving.set(false);
-        this.notify.alert('Emergency contacts saved successfully', 'success');
+        this.notify.alert(this.lang.t('createdSuccessfully'), 'success');
         this.buffer.set([]);
         this.mode.set('list');
         this.loadContacts();
       },
       error: (err: { errorMessage?: string }) => {
         this.saving.set(false);
-        this.notify.alert(err?.errorMessage ?? 'Failed to save', 'error');
+        this.notify.alert(err?.errorMessage ?? this.lang.t('failedToCreate'), 'error');
       },
     });
   }
@@ -273,13 +276,13 @@ export class EmergencyContactsComponent implements OnInit {
     this.api.updateEmergencyContacts(body).subscribe({
       next: () => {
         this.saving.set(false);
-        this.notify.alert('Updated successfully', 'success');
+        this.notify.alert(this.lang.t('editedSuccessfully'), 'success');
         this.mode.set('list');
         this.loadContacts();
       },
       error: (err: { errorMessage?: string }) => {
         this.saving.set(false);
-        this.notify.alert(err?.errorMessage ?? 'Failed to update', 'error');
+        this.notify.alert(err?.errorMessage ?? this.lang.t('failedToEdit'), 'error');
       },
     });
   }
@@ -292,7 +295,7 @@ export class EmergencyContactsComponent implements OnInit {
   protected toggleActive(row: ContactRow): void {
     const next = !row.deleted;
     this.notify
-      .confirm(next ? 'Deactivate this contact?' : 'Activate this contact?')
+      .confirm(this.lang.t(next ? 'wantToDeactivate' : 'wantToActivate'))
       .subscribe((ok) => {
         if (!ok) {
           return;
@@ -302,11 +305,17 @@ export class EmergencyContactsComponent implements OnInit {
           .updateEmergencyContacts({ ...row, deleted: next })
           .subscribe({
             next: () => {
-              this.notify.alert('Updated successfully', 'success');
+              this.notify.alert(
+                this.lang.t(next ? 'deactivatedSuccessfully' : 'activatedSuccessfully'),
+                'success',
+              );
               this.loadContacts();
             },
             error: (err: { errorMessage?: string }) =>
-              this.notify.alert(err?.errorMessage ?? 'Failed to update', 'error'),
+              this.notify.alert(
+                err?.errorMessage ?? this.lang.t(next ? 'failedToDeactivate' : 'failedToActivate'),
+                'error',
+              ),
           });
       });
   }

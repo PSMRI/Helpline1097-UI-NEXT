@@ -43,10 +43,12 @@ import {
   saveBlob,
 } from './reports-api.service';
 import { dayBoundary, localDate } from '../allocation/allocation-api.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { BeneficiaryApiService } from '@/app-modules/core/services/beneficiary-api.service';
 import { LocationApiService } from '@/app-modules/core/services/location-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { DistrictRow, RegistrationData } from '@/app-modules/core/models';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 export type DistributionReportKind = 'age' | 'gender' | 'language' | 'sexualOrientation';
@@ -58,7 +60,12 @@ interface DimensionOption {
 
 interface ReportConfig {
   title: string;
+  /** Old i18n keys: page heading, dimension label, dimension placeholder, downloaded alert. */
+  titleKey: string;
   dimensionLabel: string;
+  dimensionKey: string;
+  placeholderKey: string;
+  downloadedKey: string;
   path: string;
   fileName: string;
   options: (data: RegistrationData) => DimensionOption[];
@@ -78,7 +85,11 @@ const AGE_GROUPS: DimensionOption[] = [
 const REPORTS: Record<DistributionReportKind, ReportConfig> = {
   age: {
     title: 'Caller Age Report',
+    titleKey: 'callerAgeReport',
     dimensionLabel: 'Age Group',
+    dimensionKey: 'ageGroup',
+    placeholderKey: 'selectAgeGroup',
+    downloadedKey: 'callerAgeReportDownloaded',
     path: 'crmReports/getAllByAgeGroup',
     fileName: 'Caller_Age_Group_Report',
     options: () => AGE_GROUPS,
@@ -96,7 +107,11 @@ const REPORTS: Record<DistributionReportKind, ReportConfig> = {
   },
   gender: {
     title: 'Gender Distribution Report',
+    titleKey: 'genderDistributionReport',
     dimensionLabel: 'Gender',
+    dimensionKey: 'gender',
+    placeholderKey: 'gender',
+    downloadedKey: 'genderDistributionReportDownloaded',
     path: 'crmReports/getAllByGender',
     fileName: 'Gender_Distribution_Report',
     options: (d) => [
@@ -107,7 +122,11 @@ const REPORTS: Record<DistributionReportKind, ReportConfig> = {
   },
   language: {
     title: 'Language Distribution Report',
+    titleKey: 'languageDistributionReport',
     dimensionLabel: 'Language',
+    dimensionKey: 'language',
+    placeholderKey: 'language',
+    downloadedKey: 'languageDistributionReportDownloaded',
     path: 'crmReports/getCountsByPreferredLanguage',
     fileName: 'Language_Distribution_Report',
     options: (d) => [
@@ -118,7 +137,11 @@ const REPORTS: Record<DistributionReportKind, ReportConfig> = {
   },
   sexualOrientation: {
     title: 'Sexual Orientation Report',
+    titleKey: 'sexualOrientationReport',
     dimensionLabel: 'Sexual Orientation',
+    dimensionKey: 'sexualOrientation',
+    placeholderKey: 'sexuality',
+    downloadedKey: 'sexualOrientationReportDownloaded',
     path: 'crmReports/getAllBySexualOrientation',
     fileName: 'Sexual_Orientation_Report',
     options: (d) => [
@@ -138,18 +161,24 @@ const REPORTS: Record<DistributionReportKind, ReportConfig> = {
  */
 @Component({
   selector: 'app-distribution-report',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, ...ZardSelectImports],
+  imports: [
+    ReactiveFormsModule,
+    ZardButtonComponent,
+    ZardInputDirective,
+    TranslatePipe,
+    ...ZardSelectImports,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-4">
-      <h2 class="text-base font-semibold">{{ config().title }}</h2>
+      <h2 class="text-base font-semibold">{{ config().titleKey | t }}</h2>
       <form class="flex flex-wrap items-end gap-3" [formGroup]="form">
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Start Date <span class="text-destructive">*</span></span>
+          <span>{{ 'startDate' | t }} <span class="text-destructive">*</span></span>
           <input z-input formControlName="startDate" type="date" [max]="maxDay" (change)="onStartDateChange()" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>End Date <span class="text-destructive">*</span></span>
+          <span>{{ 'endDate' | t }} <span class="text-destructive">*</span></span>
           <input
             z-input
             formControlName="endDate"
@@ -159,31 +188,31 @@ const REPORTS: Record<DistributionReportKind, ReportConfig> = {
           />
         </label>
         <label class="flex min-w-44 flex-col gap-1.5 text-sm">
-          <span>State</span>
-          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange($event)">
+          <span>{{ 'state' | t }}</span>
+          <z-select formControlName="state" [zPlaceholder]="'selectState' | t" (zValueChange)="onStateChange($event)">
             @for (s of states(); track s.stateID) {
               <z-select-item [zValue]="s.stateName + ''">{{ s.stateName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex min-w-44 flex-col gap-1.5 text-sm">
-          <span>District</span>
-          <z-select formControlName="district" zPlaceholder="Select district">
+          <span>{{ 'district' | t }}</span>
+          <z-select formControlName="district" [zPlaceholder]="'selectDistrict' | t">
             @for (d of districts(); track d.districtID) {
               <z-select-item [zValue]="d.districtName + ''">{{ d.districtName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex min-w-44 flex-col gap-1.5 text-sm">
-          <span>{{ config().dimensionLabel }} <span class="text-destructive">*</span></span>
-          <z-select formControlName="dimension" zPlaceholder="Select">
+          <span>{{ config().dimensionKey | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="dimension" [zPlaceholder]="config().placeholderKey | t">
             @for (o of options(); track o.display) {
               <z-select-item [zValue]="o.display">{{ o.display }}</z-select-item>
             }
           </z-select>
         </label>
         <button z-button type="button" [zDisabled]="form.invalid" [zLoading]="downloading()" (click)="download()">
-          Download Report
+          {{ 'downloadReport' | t }}
         </button>
       </form>
     </div>
@@ -196,6 +225,7 @@ export class DistributionReportComponent implements OnInit {
   private readonly locationApi = inject(LocationApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
+  private readonly lang = inject(LanguageStore);
 
   readonly kind = input.required<DistributionReportKind>();
 
@@ -288,17 +318,17 @@ export class DistributionReportComponent implements OnInit {
         this.downloading.set(false);
         if (blob) {
           saveBlob(blob, `${config.fileName}.xlsx`);
-          this.notify.alert(`${config.title} downloaded`, 'success');
+          this.notify.alert(this.lang.t(config.downloadedKey), 'success');
         } else {
-          this.notify.alert('No data found', 'info');
+          this.notify.alert(this.lang.t('noDataFound'), 'info');
         }
       },
       error: (err: { status?: number }) => {
         this.downloading.set(false);
         if (err?.status === 500) {
-          this.notify.alert('No data found', 'info');
+          this.notify.alert(this.lang.t('noDataFound'), 'info');
         } else {
-          this.notify.alert('Error while fetching report', 'error');
+          this.notify.alert(this.lang.t('errorWhileFetchingReport'), 'error');
         }
       },
     });

@@ -36,10 +36,12 @@ import { ZardSelectImports } from '@common-ui/ui/select';
 
 import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
 import { TEXTAREA_BLOCK } from '@/app-modules/core/directives/input-patterns';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { BeneficiaryApiService } from '@/app-modules/core/services/beneficiary-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { BeneficiaryRecord, RegistrationData } from '@/app-modules/core/models';
 import { CallStore } from '@/app-modules/core/state/call.store';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 import { numOrNull } from '@/app-modules/core/utils/select-value';
 
@@ -81,12 +83,19 @@ function asArray(value: string | string[] | null): string[] {
  */
 @Component({
   selector: 'app-updates-from-beneficiary',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
+  imports: [
+    ReactiveFormsModule,
+    TranslatePipe,
+    ZardButtonComponent,
+    ZardInputDirective,
+    RestrictInputDirective,
+    ...ZardSelectImports,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Occupation</span>
+        <span>{{ 'occupation' | t }}</span>
         <z-select formControlName="occupationID" zPlaceholder="Select">
           @for (o of occupations(); track o.occupationID) {
             <z-select-item [zValue]="o.occupationID + ''">{{ o.occupationType }}</z-select-item>
@@ -94,7 +103,7 @@ function asArray(value: string | string[] | null): string[] {
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Education</span>
+        <span>{{ 'qualification' | t }}</span>
         <z-select formControlName="educationID" zPlaceholder="Select">
           @for (e of educations(); track e.educationID) {
             <z-select-item [zValue]="e.educationID + ''">{{ e.educationType }}</z-select-item>
@@ -102,7 +111,7 @@ function asArray(value: string | string[] | null): string[] {
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Sexual Orientation</span>
+        <span>{{ 'sexualOrientation' | t }}</span>
         <z-select formControlName="sexualOrientationID" zPlaceholder="Select">
           @for (s of orientations(); track s.sexualOrientationId) {
             <z-select-item [zValue]="s.sexualOrientationId + ''">{{ s.sexualOrientation }}</z-select-item>
@@ -110,11 +119,11 @@ function asArray(value: string | string[] | null): string[] {
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Place of Work</span>
-        <input z-input formControlName="placeOfWork" type="text" maxlength="25" placeholder="Place of work" [appRestrictInput]="textAreaBlock" />
+        <span>{{ 'workPlace' | t }}</span>
+        <input z-input formControlName="placeOfWork" type="text" maxlength="25" [placeholder]="'workPlace' | t" [appRestrictInput]="textAreaBlock" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>HIV Status</span>
+        <span>{{ 'hivQuestion' | t }} {{ 'hivQuestionCondition' | t }}</span>
         <z-select formControlName="isHIVPos" zPlaceholder="Not disclosed">
           <z-select-item zValue="yes">Yes</z-select-item>
           <z-select-item zValue="no">No</z-select-item>
@@ -122,7 +131,7 @@ function asArray(value: string | string[] | null): string[] {
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Came to know from</span>
+        <span>{{ 'feedbackQuestion' | t }}</span>
         <z-select
           formControlName="sourceOfInformation"
           [zMultiple]="true"
@@ -135,15 +144,15 @@ function asArray(value: string | string[] | null): string[] {
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm sm:col-span-2 lg:col-span-3">
-        <span>Remarks</span>
-        <textarea z-input formControlName="remarks" maxlength="300" rows="2" placeholder="Remarks" [appRestrictInput]="textAreaBlock"></textarea>
+        <span>{{ 'remarks' | t }}</span>
+        <textarea z-input formControlName="remarks" maxlength="300" rows="2" [placeholder]="'remarks' | t" [appRestrictInput]="textAreaBlock"></textarea>
         <span class="self-end text-xs text-muted-foreground">
           {{ form.controls.remarks.value?.length ?? 0 }}/300
         </span>
       </label>
       <div class="flex items-end justify-end sm:col-span-2 lg:col-span-3">
         <button z-button type="submit" [zDisabled]="form.pristine" [zLoading]="saving()">
-          Save Other Details
+          {{ 'update' | t }}
         </button>
       </div>
     </form>
@@ -157,6 +166,7 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
+  private readonly lang = inject(LanguageStore);
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
 
@@ -308,7 +318,7 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
         if (res?.statusCode === 200) {
           this.callStore.beneficiary.set(ben as Record<string, unknown>);
           this.form.markAsPristine();
-          this.notify.alert('Details updated successfully', 'success');
+          this.notify.alert(this.lang.t('DetailsUpdatedSuccessfully'), 'success');
         } else {
           this.notify.alert(res?.errorMessage ?? 'Failed to save details', 'error');
         }

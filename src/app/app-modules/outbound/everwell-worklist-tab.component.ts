@@ -31,10 +31,12 @@ import { ZardInputDirective } from '@common-ui/ui/input';
 
 import { OutboundDialService } from './outbound-dial.service';
 import { WorklistTable } from './worklist-table';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { OutboundApiService } from '@/app-modules/core/services/outbound-api.service';
 import { ENCRYPTED_KEYS } from '@/app-modules/core/services/session-storage.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /** PascalCase fields are the backend's names, kept verbatim. */
@@ -58,7 +60,7 @@ interface EverwellRow {
  * reproduces the old md2DataTable: 4/page, sortable columns, serial number. */
 @Component({
   selector: 'app-everwell-worklist-tab',
-  imports: [NgIcon, ReactiveFormsModule, ZardButtonComponent, ZardInputDirective],
+  imports: [NgIcon, ReactiveFormsModule, TranslatePipe, ZardButtonComponent, ZardInputDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucidePhoneOutgoing })],
   template: `
@@ -69,7 +71,7 @@ interface EverwellRow {
             z-input
             type="text"
             class="w-64"
-            placeholder="Search"
+            [placeholder]="'inTableSearch' | t"
             [formControl]="search"
             (input)="filter()"
           />
@@ -77,36 +79,36 @@ interface EverwellRow {
           <span></span>
         }
         <button z-button zType="outline" type="button" (click)="backToDashboard()">
-          Back to Dashboard
+          {{ 'backToDashboard' | t }}
         </button>
       </div>
       <div class="overflow-x-auto rounded-md border border-border">
         <table class="w-full text-sm">
           <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
-              <th class="px-3 py-2">S.No</th>
+              <th class="px-3 py-2">{{ 'sno' | t }}</th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('id')">
-                Beneficiary ID {{ table.sortIndicator('id') }}
+                {{ 'beneficiaryId' | t }} {{ table.sortIndicator('id') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('name')">
-                Name {{ table.sortIndicator('name') }}
+                {{ 'name' | t }} {{ table.sortIndicator('name') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('state')">
-                State {{ table.sortIndicator('state') }}
+                {{ 'state' | t }} {{ table.sortIndicator('state') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('district')">
-                District {{ table.sortIndicator('district') }}
+                {{ 'district' | t }} {{ table.sortIndicator('district') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('comments')">
-                Comments {{ table.sortIndicator('comments') }}
+                {{ 'comments' | t }} {{ table.sortIndicator('comments') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('lastCall')">
-                Last Call {{ table.sortIndicator('lastCall') }}
+                {{ 'lastCall' | t }} {{ table.sortIndicator('lastCall') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('callCount')">
-                Call Count {{ table.sortIndicator('callCount') }}
+                {{ 'callCount' | t }} {{ table.sortIndicator('callCount') }}
               </th>
-              <th class="px-3 py-2">Call</th>
+              <th class="px-3 py-2">{{ 'call' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -124,8 +126,8 @@ interface EverwellRow {
                   <button
                     type="button"
                     class="text-primary hover:text-primary/80"
-                    title="Call Beneficiary"
-                    aria-label="Call Beneficiary"
+                    [title]="'callBeneficiary' | t"
+                    [attr.aria-label]="'callBeneficiary' | t"
                     (click)="dial(row)"
                   >
                     <ng-icon name="lucidePhoneOutgoing" size="18" aria-hidden="true" />
@@ -135,7 +137,7 @@ interface EverwellRow {
             } @empty {
               <tr>
                 <td colspan="9" class="px-3 py-6 text-center text-muted-foreground">
-                  No Records Found
+                  {{ 'noRecordsFound' | t }}
                 </td>
               </tr>
             }
@@ -143,7 +145,7 @@ interface EverwellRow {
         </table>
       </div>
       <div class="flex items-center justify-between gap-3 text-sm">
-        <span class="text-muted-foreground">Total Count: {{ table.sorted().length }}</span>
+        <span class="text-muted-foreground">{{ 'totalCount' | t }}: {{ table.sorted().length }}</span>
         @if (table.sorted().length) {
           <div class="flex items-center gap-3">
             <span class="text-muted-foreground">Page {{ table.pageIndex() + 1 }} of {{ table.pageCount() }}</span>
@@ -158,7 +160,7 @@ interface EverwellRow {
               [zDisabled]="table.pageIndex() >= table.pageCount() - 1"
               (click)="table.next()"
             >
-              Next
+              {{ 'next' | t }}
             </button>
           </div>
         }
@@ -173,6 +175,7 @@ export class EverwellWorklistTabComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
+  private readonly lang = inject(LanguageStore);
 
   protected readonly rows = signal<EverwellRow[]>([]);
   protected readonly table = new WorklistTable<EverwellRow>(4);
@@ -261,7 +264,7 @@ export class EverwellWorklistTabComponent implements OnInit {
           return;
         }
         if (isCompleted === true) {
-          this.notify.alert('Call is already completed by agent', 'info');
+          this.notify.alert(this.lang.t('callAlreadyCompleted'), 'info');
           return;
         }
         this.dialService.dial(row.PrimaryNumber ?? '', ENCRYPTED_KEYS.isEverwellCall);

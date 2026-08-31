@@ -45,7 +45,9 @@ import {
   AllocationContext,
   FilterAgent,
 } from './allocate-records.component';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 import { numOrNull } from '@/app-modules/core/utils/select-value';
 
@@ -73,6 +75,7 @@ interface AgentRow {
     ZardButtonComponent,
     ZardInputDirective,
     AllocateRecordsComponent,
+    TranslatePipe,
     ...ZardSelectImports,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,16 +83,16 @@ interface AgentRow {
     <div class="flex flex-col gap-4">
       <form class="flex flex-wrap items-end gap-3" [formGroup]="form">
         <label class="flex min-w-44 flex-col gap-1.5 text-sm">
-          <span>Role <span class="text-destructive">*</span></span>
-          <z-select formControlName="roleID" zPlaceholder="Select role" (zValueChange)="onRoleChange($event)">
+          <span>{{ 'role' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="roleID" [zPlaceholder]="'selectRole' | t" (zValueChange)="onRoleChange($event)">
             @for (r of roles(); track r.roleID) {
               <z-select-item [zValue]="r.roleID + ''">{{ r.roleName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex min-w-52 flex-col gap-1.5 text-sm">
-          <span>Agent <span class="text-destructive">*</span></span>
-          <z-select formControlName="agentId" zPlaceholder="Select agent" (zValueChange)="onAgentSelected($event)">
+          <span>{{ 'agent' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="agentId" [zPlaceholder]="'agentName' | t" (zValueChange)="onAgentSelected($event)">
             @for (a of agents(); track a.userID) {
               <z-select-item [zValue]="a.userID + ''">{{ a.firstName }} {{ a.lastName }}</z-select-item>
             }
@@ -102,8 +105,8 @@ interface AgentRow {
           <table class="w-full text-sm">
             <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                <th class="px-3 py-2">Language</th>
-                <th class="px-3 py-2">No. of Records</th>
+                <th class="px-3 py-2">{{ 'language' | t }}</th>
+                <th class="px-3 py-2">{{ 'noOfRecords' | t }}</th>
                 <th class="px-3 py-2"></th>
               </tr>
             </thead>
@@ -116,10 +119,10 @@ interface AgentRow {
                     @if (row.language !== 'All') {
                       <div class="flex justify-end gap-2">
                         <button z-button zSize="sm" zType="outline" type="button" (click)="moveToBin(row)">
-                          Move to Bin
+                          {{ 'moveToBin' | t }}
                         </button>
                         <button z-button zSize="sm" type="button" (click)="startReallocation(row)">
-                          Reallocate
+                          {{ 'reallocate' | t }}
                         </button>
                       </div>
                     }
@@ -147,6 +150,7 @@ export class CallReallocationComponent implements OnInit {
   private readonly api = inject(AllocationApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
+  private readonly lang = inject(LanguageStore);
 
   readonly flavor = input.required<AllocationFlavor>();
 
@@ -218,7 +222,7 @@ export class CallReallocationComponent implements OnInit {
           const rows = Array.isArray(res?.data) ? (res.data as LanguageCountRow[]) : [];
           this.countRows.set(rows);
           if (rows.length === 0) {
-            this.notify.alert('No records available', 'info');
+            this.notify.alert(this.lang.t('noRecordsAvailable'), 'info');
           }
         },
         error: (err: { errorMessage?: string }) =>
@@ -268,7 +272,7 @@ export class CallReallocationComponent implements OnInit {
         })
         .subscribe({
           next: () => {
-            this.notify.alert('Moved to bin successfully', 'success');
+            this.notify.alert(this.lang.t('movedToBinSuccessfully'), 'success');
             this.refresh();
           },
           error: (err: { errorMessage?: string }) =>
@@ -291,7 +295,7 @@ export class CallReallocationComponent implements OnInit {
             : { outboundCallReqIDs: rows.map((r) => r['outboundCallReqID']) };
         this.api.moveToBin(this.flavor(), binBody).subscribe({
           next: () => {
-            this.notify.alert('Moved to bin successfully', 'success');
+            this.notify.alert(this.lang.t('movedToBinSuccessfully'), 'success');
             this.refresh();
           },
           error: (err: { errorMessage?: string }) =>

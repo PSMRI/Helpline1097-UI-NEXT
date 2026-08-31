@@ -21,12 +21,12 @@
 -->
 
 <div class="flex max-w-3xl flex-col gap-4">
-  <h2 class="text-base font-semibold">Knowledge Management</h2>
+  <h2 class="text-base font-semibold">{{ 'knowledgeManagement' | t }}</h2>
 
   <form class="grid gap-3 sm:grid-cols-2" [formGroup]="form">
     <label class="flex flex-col gap-1.5 text-sm">
       <span>Service <span class="text-destructive">*</span></span>
-      <z-select formControlName="service" zPlaceholder="Select service" (zValueChange)="onServiceChange($event)">
+      <z-select formControlName="service" [zPlaceholder]="'selectService' | t" (zValueChange)="onServiceChange($event)">
         @for (s of services(); track s.subServiceID) {
           <z-select-item [zValue]="s.subServiceID + ''">{{ s.subServiceName }}</z-select-item>
         }
@@ -34,10 +34,10 @@
     </label>
 
     <label class="flex flex-col gap-1.5 text-sm">
-      <span>Category <span class="text-destructive">*</span></span>
+      <span>{{ 'category' | t }} <span class="text-destructive">*</span></span>
       <z-select
         formControlName="category"
-        zPlaceholder="Select category"
+        [zPlaceholder]="'selectCategory' | t"
         [zDisabled]="categories().length === 0"
         (zValueChange)="onCategoryChange($event)"
       >
@@ -48,10 +48,10 @@
     </label>
 
     <label class="flex flex-col gap-1.5 text-sm">
-      <span>Sub Category <span class="text-destructive">*</span></span>
+      <span>{{ 'subCategory' | t }} <span class="text-destructive">*</span></span>
       <z-select
         formControlName="subCategory"
-        zPlaceholder="Select sub category"
+        [zPlaceholder]="'selectSubCategory' | t"
         [zDisabled]="subcategories().length === 0"
         (zValueChange)="onSubCategoryChange($event)"
       >
@@ -62,7 +62,7 @@
     </label>
 
     <div class="flex flex-col gap-1.5 text-sm">
-      <span>Previously Uploaded File</span>
+      <span>{{ 'previousUploadedFile' | t }}</span>
       @if (selectedSubcategory()?.subCatFilePath) {
         <a
           class="text-primary underline"
@@ -78,7 +78,7 @@
     </div>
 
     <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
-      <span>File <span class="text-destructive">*</span></span>
+      <span>{{ 'file' | t }} <span class="text-destructive">*</span></span>
       <input
         type="file"
         class="text-sm file:mr-3 file:rounded-md file:border file:border-border file:bg-muted file:px-3 file:py-1.5 file:text-sm"
@@ -98,7 +98,7 @@
         [zDisabled]="form.invalid || !pendingFile() || reading() || saving()"
         (click)="save()"
       >
-        Upload
+        {{ 'save' | t }}
       </button>
     </div>
   </form>

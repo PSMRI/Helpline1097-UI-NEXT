@@ -31,7 +31,9 @@ import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-i
 import { INPUT_FIELD_BLOCK, TEXTAREA_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { EverwellGuidelinesApiService } from './everwell-guidelines-api.service';
 import { ApiResponse } from '@/app-modules/core/models';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /** A row returned by fetchEverwellGuidelines. */
@@ -89,7 +91,14 @@ function endOfDayPlusYears(years: number): Date {
  */
 @Component({
   selector: 'app-everwell-guidelines',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
+  imports: [
+    ReactiveFormsModule,
+    ZardButtonComponent,
+    ZardInputDirective,
+    RestrictInputDirective,
+    TranslatePipe,
+    ...ZardSelectImports,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './everwell-guidelines.component.html',
 })
@@ -101,6 +110,7 @@ export class EverwellGuidelinesComponent implements OnInit {
   private readonly api = inject(EverwellGuidelinesApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
+  private readonly lang = inject(LanguageStore);
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
 
@@ -169,10 +179,7 @@ export class EverwellGuidelinesComponent implements OnInit {
   /** Old `go2form`: blocks the form when two active guidelines already exist. */
   protected startCreate(): void {
     if (this.activeRows().length >= MAX_ACTIVE) {
-      this.notify.alert(
-        'Please delete any existing guidelines to continue',
-        'info',
-      );
+      this.notify.alert(this.lang.t('PleaseDeleteAnyExistingGuidelinesToContinue'), 'info');
       return;
     }
     this.pendingFile.set(null);
@@ -245,7 +252,7 @@ export class EverwellGuidelinesComponent implements OnInit {
       return;
     }
     if (!file) {
-      this.notify.alert('Please upload document', 'info');
+      this.notify.alert(this.lang.t('pleaseUploadDocument'), 'info');
       return;
     }
     const v = this.form.getRawValue();
@@ -277,7 +284,7 @@ export class EverwellGuidelinesComponent implements OnInit {
           this.form.reset({ guidelineName: '', guidelineDesc: '', category: '' });
           this.pendingFile.set(null);
           this.fileError.set(null);
-          this.notify.alert('File uploaded successfully', 'success');
+          this.notify.alert(this.lang.t('fileUploadedSuccessfully'), 'success');
         } else {
           this.notify.alert(String(data ?? 'Failed to upload guideline'), 'error');
         }
@@ -295,7 +302,7 @@ export class EverwellGuidelinesComponent implements OnInit {
     if (serviceId == null) {
       return;
     }
-    this.notify.confirm('Do you want to delete the guideline?').subscribe((ok) => {
+    this.notify.confirm(this.lang.t('doYouWantToDeleteTheGuideline')).subscribe((ok) => {
       if (!ok) {
         return;
       }

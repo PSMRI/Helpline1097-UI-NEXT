@@ -43,6 +43,7 @@ import {
   localDate,
 } from './allocation-api.service';
 import { AllocateRecordsComponent, AllocationContext } from './allocate-records.component';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
@@ -59,25 +60,26 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
     ZardButtonComponent,
     ZardInputDirective,
     AllocateRecordsComponent,
+    TranslatePipe,
     ...ZardSelectImports,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-4">
       <p class="text-sm text-muted-foreground">
-        Default shows calls between today and the next seven days.
+        {{ 'noteDefaultCallsBetweenTodayAndNextSevenDays' | t }}
       </p>
       <form class="flex flex-wrap items-end gap-3" [formGroup]="form">
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Valid From</span>
+          <span>{{ 'validFrom' | t }}</span>
           <input z-input formControlName="startDate" type="date" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Valid Till</span>
+          <span>{{ 'validTill' | t }}</span>
           <input z-input formControlName="endDate" type="date" [min]="form.controls.startDate.value" />
         </label>
         <label class="flex min-w-44 flex-col gap-1.5 text-sm">
-          <span>Language</span>
+          <span>{{ 'language' | t }}</span>
           <z-select formControlName="language" zPlaceholder="All">
             <z-select-item zValue="">All</z-select-item>
             @for (l of languages(); track l.languageID) {
@@ -85,15 +87,17 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
             }
           </z-select>
         </label>
-        <button z-button type="button" [zDisabled]="form.invalid" (click)="search()">Search</button>
+        <button z-button type="button" [zDisabled]="form.invalid" (click)="search()">
+          {{ 'search' | t }}
+        </button>
       </form>
 
       <div class="overflow-x-auto rounded-md border border-border">
         <table class="w-full text-sm">
           <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
-              <th class="px-3 py-2">Language</th>
-              <th class="px-3 py-2">No. of Records</th>
+              <th class="px-3 py-2">{{ 'languageName' | t }}</th>
+              <th class="px-3 py-2">{{ 'noOfRecords' | t }}</th>
               <th class="px-3 py-2"></th>
             </tr>
           </thead>
@@ -111,7 +115,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
                       [zDisabled]="row.count === 0"
                       (click)="startAllocation(row)"
                     >
-                      Allocate
+                      {{ 'allocate' | t }}
                     </button>
                   }
                 </td>
@@ -119,7 +123,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
             } @empty {
               <tr>
                 <td colspan="3" class="px-3 py-6 text-center text-muted-foreground">
-                  No Records Found
+                  {{ 'noRecordsFound' | t }}
                 </td>
               </tr>
             }

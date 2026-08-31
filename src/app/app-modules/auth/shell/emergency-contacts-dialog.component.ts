@@ -27,6 +27,7 @@ import {
   EmergencyContact,
   NotificationApiService,
 } from '@/app-modules/core/services/notification-api.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 const EMERGENCY_CONTACT_TYPE = 'Emergency Contact';
@@ -38,6 +39,7 @@ const EMERGENCY_CONTACT_TYPE = 'Emergency Contact';
  */
 @Component({
   selector: 'app-emergency-contacts-dialog',
+  imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (loading()) {
@@ -45,15 +47,15 @@ const EMERGENCY_CONTACT_TYPE = 'Emergency Contact';
     } @else if (error()) {
       <p class="py-6 text-center text-sm text-destructive">{{ error() }}</p>
     } @else if (contacts().length === 0) {
-      <p class="py-6 text-center text-sm text-muted-foreground">No emergency contacts found.</p>
+      <p class="py-6 text-center text-sm text-muted-foreground">{{ 'noEmergencyContactsExists' | t }}</p>
     } @else {
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b text-left text-muted-foreground">
-            <th class="py-1.5 pr-4 font-medium">Name</th>
-            <th class="py-1.5 pr-4 font-medium">Designation</th>
-            <th class="py-1.5 pr-4 font-medium">Location</th>
-            <th class="py-1.5 font-medium">Contact No.</th>
+            <th class="py-1.5 pr-4 font-medium">{{ 'contactName' | t }}</th>
+            <th class="py-1.5 pr-4 font-medium">{{ 'designation' | t }}</th>
+            <th class="py-1.5 pr-4 font-medium">{{ 'location' | t }}</th>
+            <th class="py-1.5 font-medium">{{ 'contactNumber' | t }}</th>
           </tr>
         </thead>
         <tbody>

@@ -24,6 +24,7 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@ang
 
 import { APP_VERSION } from '@/app-modules/core/app-version';
 import { AppInfoService } from '@/app-modules/core/services/app-info.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 
 /**
  * Help → Version dialog. Shows the UI build version alongside the API's git build info
@@ -32,6 +33,7 @@ import { AppInfoService } from '@/app-modules/core/services/app-info.service';
  */
 @Component({
   selector: 'app-version-dialog',
+  imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <table class="w-full text-sm">
@@ -49,7 +51,7 @@ import { AppInfoService } from '@/app-modules/core/services/app-info.service';
           <td class="py-1.5 text-muted-foreground">—</td>
         </tr>
         <tr>
-          <td class="py-1.5 pr-4 font-medium">API</td>
+          <td class="py-1.5 pr-4 font-medium">{{ 'api' | t }}</td>
           <td class="py-1.5 pr-4">{{ apiVersion() }}</td>
           <td class="py-1.5">{{ apiCommit() }}</td>
         </tr>

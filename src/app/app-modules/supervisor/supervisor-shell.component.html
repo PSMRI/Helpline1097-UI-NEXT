@@ -27,7 +27,7 @@
     aria-label="Supervisor activities"
   >
     <button z-button zType="ghost" type="button" [zMenuTriggerFor]="activitiesMenuRef">
-      Activities
+      {{ 'activities' | t }}
     </button>
     <z-menu #activitiesMenuRef>
       <ng-container
@@ -36,7 +36,7 @@
     </z-menu>
 
     <button z-button zType="ghost" type="button" [zMenuTriggerFor]="reportsMenuRef">
-      Reports
+      {{ 'reports' | t }}
     </button>
     <z-menu #reportsMenuRef>
       <ng-container
@@ -45,7 +45,7 @@
     </z-menu>
 
     <button z-button zType="ghost" type="button" [zMenuTriggerFor]="configMenuRef">
-      Configurations
+      {{ 'configurations' | t }}
     </button>
     <z-menu #configMenuRef>
       <ng-container
@@ -54,7 +54,7 @@
     </z-menu>
 
     <a z-button zType="outline" class="ml-auto" routerLink="/MultiRoleScreenComponent/dashboard">
-      Back to Dashboard
+      {{ 'backToDashboard' | t }}
     </a>
   </nav>
 
@@ -65,12 +65,16 @@
         @case ('item') {
           <!-- requestClose: old md-menu auto-closed on item pick; z-menu needs it explicit. -->
           <button z-menu-item (click)="show(entry.page!); menu.requestClose()">
-            {{ pages[entry.page!].label }}
+            @if (pages[entry.page!].labelKey; as key) {
+              {{ key | t }}
+            } @else {
+              {{ pages[entry.page!].label }}
+            }
           </button>
         }
         @case ('group') {
           <div class="px-3 pb-0.5 pt-2 text-xs font-semibold uppercase text-muted-foreground">
-            {{ entry.label }}
+            {{ entry.labelKey ? (entry.labelKey | t) : entry.label }}
           </div>
         }
         @case ('divider') {
@@ -162,8 +166,12 @@
         <!-- Not-yet-migrated pages land slice-by-slice (see PAGES map) -->
         <div class="flex min-h-[500px] items-center justify-center">
           <p class="max-w-md text-center text-sm text-muted-foreground">
-            {{ pages[activityNumber()]?.label ?? 'This screen' }} — arrives in
-            {{ pages[activityNumber()]?.arrives ?? 'a later slice' }}.
+            @if (pages[activityNumber()]?.labelKey; as key) {
+              {{ key | t }}
+            } @else {
+              {{ pages[activityNumber()]?.label ?? 'This screen' }}
+            }
+            — arrives in {{ pages[activityNumber()]?.arrives ?? 'a later slice' }}.
           </p>
         </div>
       }

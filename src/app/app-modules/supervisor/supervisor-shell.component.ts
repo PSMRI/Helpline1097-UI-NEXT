@@ -44,12 +44,15 @@ import { FeedbackTrackingComponent } from './feedback/feedback-tracking.componen
 import { CallTypeReportComponent } from './reports/call-type-report.component';
 import { DistributionReportComponent } from './reports/distribution-report.component';
 import { TelephonyIframeComponent } from './telephony-iframe.component';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { ConfigService } from '@/app-modules/core/services/config.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /** One numbered supervisor page (labels = old English i18n values, verbatim). */
 interface SupervisorPage {
   label: string;
+  /** Old `currentLanguageSet` key for this menu label; menu-less pages (4/6/8) have none. */
+  labelKey?: string;
   /** Which migration slice builds the screen; pages built in 7b have no placeholder. */
   arrives?: string;
 }
@@ -61,34 +64,37 @@ interface SupervisorPage {
  * cases 11/25 never existed.
  */
 const PAGES: Record<string, SupervisorPage> = {
-  '1': { label: 'Feedback Tracking' },
-  '2': { label: 'Agent Status' },
-  '3': { label: 'Blacklist a Number' },
+  '1': { label: 'Feedback Tracking', labelKey: 'feedbackTracking' },
+  '2': { label: 'Agent Status', labelKey: 'agentStatus' },
+  '3': { label: 'Blacklist a Number', labelKey: 'blacklistANumber' },
   '4': { label: 'Dial Beneficiary', arrives: 'a later phase (menu-less in the old app)' },
-  '5': { label: 'Call Auditing' },
+  '5': { label: 'Call Auditing', labelKey: 'callAuditing' },
   '6': { label: 'Supervisor Notifications', arrives: 'a later phase (menu-less in the old app)' },
-  '7': { label: 'Telephony Reports' },
+  '7': { label: 'Telephony Reports', labelKey: 'telephonyReports' },
   '8': { label: 'Supervisor Configurations', arrives: 'a later phase (menu-less in the old app)' },
-  '9': { label: 'Call Type Report' },
-  '10': { label: 'Knowledge Management' },
-  '12': { label: 'Outbound Call List' },
-  '13': { label: 'Outbound Call Re-Allocation' },
-  '14': { label: 'Campaign Status' },
-  '15': { label: 'Caller Age Report' },
-  '16': { label: 'Sexual Orientation Report' },
-  '17': { label: 'Language Distribution Report' },
-  '18': { label: 'Gender Distribution Report' },
-  '19': { label: 'Alerts and Notifications' },
-  '20': { label: 'Location Messages' },
-  '21': { label: 'Training Resource' },
-  '22': { label: 'Emergency Contacts' },
-  '23': { label: 'Force Logout' },
-  '24': { label: 'SMS Templates' },
-  '26': { label: 'Everwell Call Allocation' },
-  '27': { label: 'Everwell Call Re-Allocation' },
-  '28': { label: 'Everwell Guidelines Upload' },
-  '29': { label: 'Grievance Outbound Call Allocation' },
-  '30': { label: 'Grievance Outbound Call Re-Allocation' },
+  '9': { label: 'Call Type Report', labelKey: 'callTypeReport' },
+  '10': { label: 'Knowledge Management', labelKey: 'knowledgeManagement' },
+  '12': { label: 'Outbound Call List', labelKey: 'outboundCallList' },
+  '13': { label: 'Outbound Call Re-Allocation', labelKey: 'outboundCallReallocation' },
+  '14': { label: 'Campaign Status', labelKey: 'campaignStatus' },
+  '15': { label: 'Caller Age Report', labelKey: 'callerAgeReport' },
+  '16': { label: 'Sexual Orientation Report', labelKey: 'sexualOrientationReport' },
+  '17': { label: 'Language Distribution Report', labelKey: 'languageDistributionReport' },
+  '18': { label: 'Gender Distribution Report', labelKey: 'genderDistributionReport' },
+  '19': { label: 'Alerts and Notifications', labelKey: 'alertsAndNotifications' },
+  '20': { label: 'Location Messages', labelKey: 'locationMessages' },
+  '21': { label: 'Training Resource', labelKey: 'trainingResource' },
+  '22': { label: 'Emergency Contacts', labelKey: 'emergencyContacts' },
+  '23': { label: 'Force Logout', labelKey: 'forceLogout' },
+  '24': { label: 'SMS Templates', labelKey: 'smsTemplates' },
+  '26': { label: 'Everwell Call Allocation', labelKey: 'everwellCallAllocation' },
+  '27': { label: 'Everwell Call Re-Allocation', labelKey: 'everwellCallRe_allocation' },
+  '28': { label: 'Everwell Guidelines Upload', labelKey: 'everwellGuidelinesUpload' },
+  '29': { label: 'Grievance Outbound Call Allocation', labelKey: 'grievanceOutboundCallAllocation' },
+  '30': {
+    label: 'Grievance Outbound Call Re-Allocation',
+    labelKey: 'grievanceOutboundCallReAllocation',
+  },
 };
 
 /** A dropdown entry: a page item, a labeled group heading (old submenu), or a divider. */
@@ -98,6 +104,8 @@ interface MenuEntry {
   page?: string;
   /** Heading text for `kind: 'group'`. */
   label?: string;
+  /** Old `currentLanguageSet` key for the group heading. */
+  labelKey?: string;
 }
 
 // Menu contents in the old navbar order; item labels come from PAGES (one source of truth).
@@ -114,7 +122,7 @@ const ACTIVITIES_MENU: MenuEntry[] = [
   { kind: 'item', page: '28' },
   { kind: 'item', page: '1' },
   { kind: 'item', page: '14' },
-  { kind: 'group', label: 'Communication' }, // old Communication submenu
+  { kind: 'group', label: 'Communication', labelKey: 'communication' }, // old Communication submenu
   { kind: 'item', page: '19' },
   { kind: 'item', page: '20' },
   { kind: 'item', page: '21' },
@@ -125,7 +133,7 @@ const ACTIVITIES_MENU: MenuEntry[] = [
 
 const REPORTS_MENU: MenuEntry[] = [
   { kind: 'item', page: '7' },
-  { kind: 'group', label: 'Call Reports' }, // old Call Reports submenu
+  { kind: 'group', label: 'Call Reports', labelKey: 'callReports' }, // old Call Reports submenu
   { kind: 'item', page: '9' },
   { kind: 'item', page: '15' },
   { kind: 'item', page: '16' },
@@ -173,6 +181,7 @@ const CONFIGURATIONS_MENU: MenuEntry[] = [
     FeedbackTrackingComponent,
     CallTypeReportComponent,
     DistributionReportComponent,
+    TranslatePipe,
     ...menuImports,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

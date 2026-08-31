@@ -34,6 +34,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideClock, lucideMapPin, lucidePhoneCall, lucideUser } from '@ng-icons/lucide';
 import { Subscription, timer } from 'rxjs';
 
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { OutboundApiService } from '@/app-modules/core/services/outbound-api.service';
 import { CtiService } from '@/app-modules/core/services/cti.service';
@@ -43,6 +44,7 @@ import {
   SessionStorageService,
 } from '@/app-modules/core/services/session-storage.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 import { CallTypeGroup, CloseCallRequest } from '@/app-modules/core/models';
 
@@ -62,7 +64,7 @@ import { SupervisorShellComponent } from '@/app-modules/supervisor/supervisor-sh
  */
 @Component({
   selector: 'app-innerpage',
-  imports: [NgIcon, CallWizardComponent, SupervisorShellComponent],
+  imports: [NgIcon, TranslatePipe, CallWizardComponent, SupervisorShellComponent],
   templateUrl: './innerpage.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucidePhoneCall, lucideMapPin, lucideClock, lucideUser })],
@@ -78,6 +80,7 @@ export class InnerpageComponent implements OnInit {
   private readonly callStore = inject(CallStore);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly lang = inject(LanguageStore);
 
   protected readonly callerNumber = this.callStore.cli;
   protected readonly callCategory = this.callStore.callCategory;
@@ -218,7 +221,7 @@ export class InnerpageComponent implements OnInit {
     this.callApi.getCallTypes(serviceId, this.callStore.currentCampaign()).subscribe({
       next: (res) => this.extractCallTypeIds(res?.data ?? []),
       error: (err: { errorMessage?: string }) => {
-        this.notify.alert(err?.errorMessage ?? 'Failed to get call types', 'error');
+        this.notify.alert(err?.errorMessage ?? this.lang.t('failedToGetCallTypes'), 'error');
       },
     });
   }
@@ -252,7 +255,7 @@ export class InnerpageComponent implements OnInit {
       }
     }
     if (!this.disconnectCallID()) {
-      this.notify.alert('Failed to get call types', 'error');
+      this.notify.alert(this.lang.t('failedToGetCallTypes'), 'error');
     }
     // Old fallback: transfer falls back to the disconnect (valid) id.
     if (!this.transferCallID()) {
@@ -386,7 +389,7 @@ export class InnerpageComponent implements OnInit {
         if (this.callStatus().toLowerCase().trim() === 'closure') {
           this.closeCall(
             'Call disconnect from customer.',
-            'Call closed successfully',
+            this.lang.t('callClosedSuccessfully'),
             this.wrapupCallID(),
           );
         }
@@ -495,7 +498,7 @@ export class InnerpageComponent implements OnInit {
     }
     this.callApi.closeCall(request).subscribe({
       next: () => {
-        this.notify.alert(message ?? 'Call closed successfully', 'success');
+        this.notify.alert(message ?? this.lang.t('callClosedSuccessfully'), 'success');
         this.storage.removeItem(ENCRYPTED_KEYS.isOnCall);
         this.storage.removeItem(ENCRYPTED_KEYS.isEverwellCall);
         this.storage.removeItem(ENCRYPTED_KEYS.isGrievanceCall);

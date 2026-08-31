@@ -26,6 +26,8 @@ import { lucideFileText } from '@ng-icons/lucide';
 
 import { cardImports } from '@common-ui/ui/card';
 
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
+
 /**
  * Reports panel. In the OLD app this is a STATIC placeholder table (dummy rows, a
  * non-functional "More…" link) — preserved faithfully here until a real reports
@@ -33,7 +35,7 @@ import { cardImports } from '@common-ui/ui/card';
  */
 @Component({
   selector: 'app-reports-panel',
-  imports: [...cardImports, NgIcon],
+  imports: [...cardImports, NgIcon, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucideFileText })],
   template: `
@@ -41,16 +43,16 @@ import { cardImports } from '@common-ui/ui/card';
       <z-card-header class="border-b pb-3">
         <z-card-title class="flex items-center gap-2 text-base font-semibold">
           <ng-icon name="lucideFileText" class="text-lg text-primary" />
-          Reports
+          {{ 'reports' | t }}
         </z-card-title>
       </z-card-header>
       <z-card-content class="pt-4">
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b text-left text-muted-foreground">
-              <th class="py-2 pr-4 font-medium">S.No</th>
-              <th class="py-2 pr-4 font-medium">Report Name</th>
-              <th class="py-2 text-right font-medium">Date</th>
+              <th class="py-2 pr-4 font-medium">{{ 'sno' | t }}</th>
+              <th class="py-2 pr-4 font-medium">{{ 'reportName' | t }}</th>
+              <th class="py-2 text-right font-medium">{{ 'date' | t }}</th>
             </tr>
           </thead>
           <tbody>

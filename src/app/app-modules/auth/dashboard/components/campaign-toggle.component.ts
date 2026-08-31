@@ -40,7 +40,9 @@ import {
   ENCRYPTED_KEYS,
   SessionStorageService,
 } from '@/app-modules/core/services/session-storage.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { CallStore } from '@/app-modules/core/state/call.store';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /** Old radio values kept verbatim: '1' = INBOUND, '0' = OUTBOUND. */
@@ -54,15 +56,15 @@ type CampaignValue = '1' | '0';
  */
 @Component({
   selector: 'app-campaign-toggle',
-  imports: [ReactiveFormsModule, ZardRadioComponent],
+  imports: [ReactiveFormsModule, ZardRadioComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex items-center gap-5" role="radiogroup" aria-label="Campaign mode">
       @if (showInbound()) {
-        <label z-radio name="inOutBound" value="1" [formControl]="control">Inbound</label>
+        <label z-radio name="inOutBound" value="1" [formControl]="control">{{ 'inbound' | t }}</label>
       }
       @if (showOutbound()) {
-        <label z-radio name="inOutBound" value="0" [formControl]="control">Outbound</label>
+        <label z-radio name="inOutBound" value="0" [formControl]="control">{{ 'outbound' | t }}</label>
       }
     </div>
   `,
@@ -73,6 +75,7 @@ export class CampaignToggleComponent implements OnInit {
   private readonly sessionStore = inject(SessionStore);
   private readonly storage = inject(SessionStorageService);
   private readonly notify = inject(NotificationService);
+  private readonly lang = inject(LanguageStore);
   private readonly destroyRef = inject(DestroyRef);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
@@ -152,7 +155,7 @@ export class CampaignToggleComponent implements OnInit {
   private onToggle(value: CampaignValue): void {
     const inbound = value === '1';
     this.notify
-      .confirm(inbound ? 'Switch to Inbound?' : 'Switch to Outbound?')
+      .confirm(inbound ? this.lang.t('switchToInbound') : this.lang.t('switchToOutbound'))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (confirmed) => {

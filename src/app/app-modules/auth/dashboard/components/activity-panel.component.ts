@@ -42,6 +42,7 @@ import { cardImports } from '@common-ui/ui/card';
 import { CtiService } from '@/app-modules/core/services/cti.service';
 import { NotificationApiService } from '@/app-modules/core/services/notification-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
@@ -53,7 +54,7 @@ const KM_TYPE = 'KM';
  */
 @Component({
   selector: 'app-activity-panel',
-  imports: [...cardImports, NgIcon],
+  imports: [...cardImports, NgIcon, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucideGraduationCap, lucidePhoneOutgoing })],
   template: `
@@ -61,7 +62,7 @@ const KM_TYPE = 'KM';
       <z-card-header class="border-b pb-3">
         <z-card-title class="flex items-center gap-2 text-base font-semibold">
           <ng-icon name="lucideGraduationCap" class="text-lg text-primary" />
-          Activity for this week
+          {{ 'activityForThisWeek' | t }}
         </z-card-title>
       </z-card-header>
       <z-card-content class="pt-4">
@@ -72,7 +73,7 @@ const KM_TYPE = 'KM';
             (click)="openOutboundWorklist()"
           >
             <ng-icon name="lucidePhoneOutgoing" class="text-base" aria-hidden="true" />
-            Outbound Worklist
+            {{ 'outboundWorklist' | t }}
           </button>
         }
         @let c = trainingCount();
@@ -82,7 +83,7 @@ const KM_TYPE = 'KM';
           class="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-accent"
           (click)="openTrainingDialog()"
         >
-          <span class="text-sm">Training Resources</span>
+          <span class="text-sm">{{ 'trainingResource' | t }}</span>
           <span
             class="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-medium"
             [class.bg-primary]="c > 0"

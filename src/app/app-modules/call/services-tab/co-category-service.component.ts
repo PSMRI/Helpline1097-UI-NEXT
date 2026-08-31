@@ -41,6 +41,7 @@ import { ZardSelectImports } from '@common-ui/ui/select';
 import { formatUtcDateTime } from '@/app-modules/outbound/worklist-date';
 import { CoServicesApiService } from '@/app-modules/core/services/co-services-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { CoCategory, CoSubCategory, SubServiceType } from '@/app-modules/core/models';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
@@ -57,23 +58,23 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
  */
 @Component({
   selector: 'app-co-category-service',
-  imports: [ReactiveFormsModule, ZardButtonComponent, NgIcon, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, ZardButtonComponent, NgIcon, TranslatePipe, ...ZardSelectImports],
   viewProviders: [provideIcons({ lucideDownload })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-4">
       <form [formGroup]="form" class="flex flex-wrap items-end gap-3">
         <label class="flex min-w-48 flex-col gap-1.5 text-sm">
-          <span>Category <span class="text-destructive">*</span></span>
-          <z-select formControlName="categoryId" zPlaceholder="Select category" (zValueChange)="onCategoryChange($event)">
+          <span>{{ 'category' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="categoryId" [zPlaceholder]="'selectCategory' | t" (zValueChange)="onCategoryChange($event)">
             @for (c of categories(); track c.categoryID) {
               <z-select-item [zValue]="c.categoryID + ''">{{ c.categoryName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex min-w-48 flex-col gap-1.5 text-sm">
-          <span>Sub-Category <span class="text-destructive">*</span></span>
-          <z-select formControlName="subCategoryId" zPlaceholder="Select sub-category">
+          <span>{{ 'subHyphenCategory' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="subCategoryId" [zPlaceholder]="'selectSubCategory' | t">
             @for (s of subCategories(); track s.subCategoryID) {
               <z-select-item [zValue]="s.subCategoryID + ''">{{ s.subCategoryName }}</z-select-item>
             }
@@ -86,7 +87,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
           [zLoading]="saving()"
           (click)="provideService()"
         >
-          Get Details
+          {{ 'getDetails' | t }}
         </button>
       </form>
 
@@ -109,7 +110,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
                     <span>{{ f.subCategoryName }}@if (f.subCategoryDesc) {: {{ f.subCategoryDesc }}}</span>
                   </a>
                 } @else {
-                  <span class="text-muted-foreground">{{ f.subCategoryName }} — No document available</span>
+                  <span class="text-muted-foreground">{{ f.subCategoryName }} — {{ 'noDocumentAvailable' | t }}</span>
                 }
               </li>
             }
@@ -121,10 +122,16 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
         <table class="w-full text-sm">
           <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
-              <th class="px-3 py-2">Category</th>
-              <th class="px-3 py-2">Sub-Category</th>
-              <th class="px-3 py-2">By</th>
-              <th class="px-3 py-2">Date</th>
+              <th class="px-3 py-2">{{ 'category' | t }}</th>
+              <th class="px-3 py-2">
+                {{ (serviceType() === 'information' ? 'subHyphenCategory' : 'subCategory') | t }}
+              </th>
+              <th class="px-3 py-2">
+                {{ (serviceType() === 'information' ? 'informationProvidedBy' : 'counsellingProvidedBy') | t }}
+              </th>
+              <th class="px-3 py-2">
+                {{ (serviceType() === 'information' ? 'informationProvidedOn' : 'counsellingProvidedOn') | t }}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -138,7 +145,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
             } @empty {
               <tr>
                 <td colspan="4" class="px-3 py-4 text-center text-muted-foreground">
-                  No {{ serviceType() }} services recorded yet.
+                  {{ 'noRecordsFound' | t }}
                 </td>
               </tr>
             }
