@@ -52,6 +52,11 @@
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>{{ 'inboundOrOutboundCall' | t }}</span>
+        <!-- z-select-item reads its label ONCE from the DOM (Common-UI `linkedSignal`, no
+             reactive dep), so the TRIGGER text for a selected option keeps the language that was
+             active when the list first rendered. The open list re-renders fine, and the "" option
+             is unselectable (selectItem rejects ''), so only inbound/outbound can go stale.
+             Needs the Common-UI fix, not a per-template workaround. -->
         <z-select formControlName="inboundOutbound" [zPlaceholder]="'all' | t">
           <z-select-item zValue="">{{ 'all' | t }}</z-select-item>
           <z-select-item zValue="inbound">{{ 'inbound' | t }}</z-select-item>

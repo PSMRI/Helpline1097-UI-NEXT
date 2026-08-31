@@ -91,7 +91,7 @@ interface EverwellRow {
                 {{ 'beneficiaryId' | t }} {{ table.sortIndicator('id') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('name')">
-                {{ 'name' | t }} {{ table.sortIndicator('name') }}
+                {{ 'beneficiaryName' | t }} {{ table.sortIndicator('name') }}
               </th>
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('state')">
                 {{ 'state' | t }} {{ table.sortIndicator('state') }}

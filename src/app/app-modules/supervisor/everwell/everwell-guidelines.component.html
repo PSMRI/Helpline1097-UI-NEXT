@@ -140,8 +140,9 @@
       </label>
 
       <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
-        <!-- Old label composite: uploadFileSizeLimitInMb + maxFileSize + mb + supportedFormat -->
-        <span>{{ 'uploadFileSizeLimitInMb' | t }} :5 {{ 'mb' | t }}) {{ 'supportedFormat' | t }}- .pdf</span>
+        <!-- Old label composite: uploadFileSizeLimitInMb + the 5 MB cap + mb + supportedFormat.
+             The key's value already ends in a space, so no separator is added before ":5". -->
+        <span>{{ 'uploadFileSizeLimitInMb' | t }}:5 {{ 'mb' | t }}) {{ 'supportedFormat' | t }}- .pdf</span>
         <input
           type="file"
           accept="application/pdf"
