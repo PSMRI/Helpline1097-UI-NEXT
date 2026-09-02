@@ -200,7 +200,8 @@ export class EverwellAdherenceComponent implements OnInit {
   protected readonly dosesDates = signal<Date[]>([]);
   protected readonly pageIndex = signal(0);
 
-  private feedbackDetails: EverwellFeedbackRow[] = [];
+  // Signal, not a plain field: chip colours re-render when the HTTP response lands (zoneless).
+  private readonly feedbackDetails = signal<EverwellFeedbackRow[]>([]);
   private srcPath: string | null = null;
   private fileName: string | null = null;
 
@@ -350,8 +351,8 @@ export class EverwellAdherenceComponent implements OnInit {
 
   /** Old `getEverwellGuidelines` — the PDF for the member's adherence band (data.data nest). */
   private fetchGuidelines(ben: EverwellFamilyRow): void {
-    this.srcPath = null;
-    this.fileName = null;
+    // Old quirk kept: srcPath/fileName are NOT cleared first, so a member with no guideline
+    // still links the previously fetched PDF (flagged for the UX backlog, not fixed here).
     this.api.fetchGuidelines(ben.AdherencePercentage, ben.providerServiceMapId).subscribe({
       next: (res) => {
         const list = (res?.data as { data?: { fileContent?: string; fileName?: string }[] })?.data;
@@ -369,8 +370,9 @@ export class EverwellAdherenceComponent implements OnInit {
   private fetchFeedback(ben: EverwellFamilyRow): void {
     this.api.getFeedbackDetails(ben.Id).subscribe({
       next: (res) => {
-        this.feedbackDetails =
-          ((res?.data as { feedbackDetails?: EverwellFeedbackRow[] })?.feedbackDetails ?? []);
+        this.feedbackDetails.set(
+          (res?.data as { feedbackDetails?: EverwellFeedbackRow[] })?.feedbackDetails ?? [],
+        );
       },
       error: (err: { errorMessage?: string }) =>
         this.notify.alert(err?.errorMessage ?? 'Failed to load feedback details', 'error'),
@@ -395,7 +397,7 @@ export class EverwellAdherenceComponent implements OnInit {
       return '';
     }
     let result: string | null = null;
-    for (const entry of this.feedbackDetails) {
+    for (const entry of this.feedbackDetails()) {
       const d = new Date(entry.dateOfAction ?? '');
       if (d.getDate() === day) {
         if (entry.subCategory === 'Dose not taken') {
@@ -429,7 +431,7 @@ export class EverwellAdherenceComponent implements OnInit {
       fileName: this.fileName,
       previousDay,
       benData: ben,
-      previousFeedback: this.feedbackDetails,
+      previousFeedback: this.feedbackDetails(),
       onClosed: () => this.afterDialogClosed(ben),
     };
     this.dialog.create({

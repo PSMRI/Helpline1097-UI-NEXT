@@ -35,6 +35,7 @@ import { lucideClock, lucideMapPin, lucidePhoneCall, lucideUser } from '@ng-icon
 import { Subscription, timer } from 'rxjs';
 
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
+import { OutboundApiService } from '@/app-modules/core/services/outbound-api.service';
 import { CtiService } from '@/app-modules/core/services/cti.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import {
@@ -45,6 +46,7 @@ import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 import { CallTypeGroup, CloseCallRequest } from '@/app-modules/core/models';
 
+import { buildEverwellCompletionEntries, EverwellApiService } from '../everwell/everwell-api.service';
 import { CallWizardComponent } from '../wizard/call-wizard.component';
 import { SupervisorShellComponent } from '@/app-modules/supervisor/supervisor-shell.component';
 
@@ -68,6 +70,8 @@ import { SupervisorShellComponent } from '@/app-modules/supervisor/supervisor-sh
 export class InnerpageComponent implements OnInit {
   private readonly cti = inject(CtiService);
   private readonly callApi = inject(CallApiService);
+  private readonly outboundApi = inject(OutboundApiService);
+  private readonly everwellApi = inject(EverwellApiService);
   private readonly notify = inject(NotificationService);
   private readonly storage = inject(SessionStorageService);
   private readonly sessionStore = inject(SessionStore);
@@ -399,13 +403,63 @@ export class InnerpageComponent implements OnInit {
    * Old innerpage `closeCall(remarks, message?, wrapupCallID?)` — the main `call/closeCall`
    * path. Field set and semantics are verbatim (incl. the misspelled `prefferedDateTime` and
    * the `session_id === custdisconnectCallID` guard). The Everwell/grievance outbound
-   * pre-closure branches arrive with their worklists in Phase 6.
+   * pre-closure completion posts open the method, exactly where the old closeCall had them.
    */
   protected closeCall(
     remarks: string,
     message?: string,
     wrapupCallId?: number | string | null,
   ): void {
+    // Old closeCall opened with the everwell/grievance worklist-completion posts —
+    // fire-and-forget, BEFORE the session guard, parallel to the closeCall below.
+    // Everwell completes ONLY the dialed member (not the touched-family list the Closure
+    // form posts) and only once a feedback was saved (old `everwellSubmitBtn`).
+    const everwellData = this.callStore.outboundEverwellData();
+    if (
+      this.isEverwell() === 'yes' &&
+      this.callStore.checkEverwellResponse() &&
+      everwellData != null
+    ) {
+      const entries = buildEverwellCompletionEntries([everwellData], {
+        userId: this.sessionStore.userId(),
+        callId: this.callStore.callId(),
+        // This path stringifies the Wrapup call-type id (or null) — unlike the closure form.
+        callTypeID: this.wrapupCallID() != null ? String(this.wrapupCallID()) : null,
+        benCallID: this.callStore.benCallID(),
+        providerServiceMapID: this.sessionStore.currentServiceId(),
+        createdBy: this.sessionStore.user()?.userName,
+      });
+      this.everwellApi.completeOutboundCall(entries).subscribe({
+        next: () => {},
+        error: (err: { status?: number }) => this.notify.alert(String(err?.status ?? 'error'), 'error'),
+      });
+    } else if (this.isGrievance() === 'yes') {
+      const grievanceData = this.callStore.outboundGrievanceData() ?? {};
+      // Old wrap-up grievance completion — a DIFFERENT shape from the Closure form's
+      // completeGrievanceCall (assignedUserID / lowercase beneficiaryRegId / callId /
+      // requestedServiceID / preferredLanguageName), same endpoint. Keys in old order.
+      this.outboundApi
+        .completeGrievanceCall({
+          complaintID: grievanceData['complaintID'],
+          assignedUserID: this.sessionStore.userId(),
+          isCompleted: true,
+          // Old read ONLY the capital-ID key; the worklist row carries lowercase
+          // beneficiaryRegId, so this is usually undefined and the key drops from the JSON.
+          beneficiaryRegId: grievanceData['beneficiaryRegID'],
+          callTypeID: this.wrapupCallID() != null ? String(this.wrapupCallID()) : null,
+          benCallID: this.callStore.benCallID(),
+          callId: this.callStore.callId(),
+          providerServiceMapId: this.sessionStore.currentServiceId(),
+          requestedServiceID: null,
+          preferredLanguageName: 'All',
+          createdBy: this.sessionStore.user()?.userName,
+        })
+        .subscribe({
+          next: () => {},
+          error: (err: { status?: number }) => this.notify.alert(String(err?.status ?? 'error'), 'error'),
+        });
+    }
+
     const transfer = this.transferInProgress();
     // Old stringified the id on the normal paths ('.toString()'); '' remarks stays '' —
     // only null/undefined becomes null.

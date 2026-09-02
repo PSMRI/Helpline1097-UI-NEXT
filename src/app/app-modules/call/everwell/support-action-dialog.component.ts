@@ -97,13 +97,13 @@ const SUBCATEGORIES_NOT_CONNECTED = [
       <form [formGroup]="form" class="grid gap-3 sm:grid-cols-2">
         <label class="flex flex-col gap-1.5">
           <span>Category <span class="text-destructive">*</span></span>
-          <z-select formControlName="category" zPlaceholder="Category">
+          <z-select formControlName="category" zPlaceholder="Category" [zDisabled]="isEdit() && locked()">
             <z-select-item [zValue]="CATEGORY">{{ CATEGORY }}</z-select-item>
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5">
           <span>Sub - Category <span class="text-destructive">*</span></span>
-          <z-select formControlName="subCategory" zPlaceholder="Sub - Category">
+          <z-select formControlName="subCategory" zPlaceholder="Sub - Category" [zDisabled]="isEdit() && locked()">
             @for (item of subcategories; track item) {
               <z-select-item [zValue]="item">{{ item }}</z-select-item>
             }
@@ -111,7 +111,7 @@ const SUBCATEGORIES_NOT_CONNECTED = [
         </label>
         <label class="flex flex-col gap-1.5">
           <span>Action Taken <span class="text-destructive">*</span></span>
-          <z-select formControlName="actionTaken" zPlaceholder="Action Taken">
+          <z-select formControlName="actionTaken" zPlaceholder="Action Taken" [zDisabled]="isEdit() && locked()">
             <z-select-item [zValue]="ACTION_TAKEN">{{ ACTION_TAKEN }}</z-select-item>
           </z-select>
         </label>
@@ -243,7 +243,9 @@ export class SupportActionDialogComponent implements OnInit, OnDestroy {
     this.applyLock();
   }
 
-  /** Edit mode: everything except the unlock toggle is disabled while locked. */
+  /** Edit mode: everything except the unlock toggle is disabled while locked. The three
+   * z-selects ALSO bind [zDisabled] in the template — the library's setDisabledState is a
+   * no-op, so the reactive disable() alone would leave them clickable. */
   private applyLock(): void {
     const controls = this.form.controls;
     for (const c of [controls.category, controls.subCategory, controls.actionTaken, controls.dob, controls.comments, controls.addMblNum, controls.mblNum]) {

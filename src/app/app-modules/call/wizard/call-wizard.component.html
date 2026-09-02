@@ -61,11 +61,17 @@
       <app-grievance-resolution />
     } @else if (variant() === 'grievance' && step() === 1) {
       <app-closure (callClosed)="onCallClosed()" (closedContinue)="onClosedContinue()" />
-    } @else if (variant() === 'everwell' && step() === 1) {
-      <app-closure (callClosed)="onCallClosed()" (closedContinue)="onClosedContinue()" />
     } @else {
-      <!-- Everwell step 0 (old app-everwell-worklist inside #myCarouselEverwell) -->
-      <app-everwell-adherence />
+      <!-- Everwell (old #myCarouselEverwell): the carousel kept BOTH slides mounted and only
+           slid between them, so Cancel/Closure jumps never re-ran the slide's init (family
+           refetch off the reassigned outboundEverwellData would corrupt the Self row) — hide,
+           don't destroy. -->
+      <app-everwell-adherence [class.hidden]="step() !== 0" />
+      <app-closure
+        [class.hidden]="step() !== 1"
+        (callClosed)="onCallClosed()"
+        (closedContinue)="onClosedContinue()"
+      />
     }
   </div>
 
