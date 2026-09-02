@@ -64,14 +64,8 @@
     } @else if (variant() === 'everwell' && step() === 1) {
       <app-closure (callClosed)="onCallClosed()" (closedContinue)="onClosedContinue()" />
     } @else {
-      <!-- Everwell step 0 (adherence-calendar worklist + support-action feedback) is a large
-           outbound-only surface; it lands with the Everwell module in Phase 8. -->
-      <div class="flex min-h-64 items-center justify-center">
-        <p class="max-w-md text-center text-sm text-muted-foreground">
-          {{ steps()[step()] }} — the Everwell adherence worklist arrives with the Everwell
-          module (Phase 8).
-        </p>
-      </div>
+      <!-- Everwell step 0 (old app-everwell-worklist inside #myCarouselEverwell) -->
+      <app-everwell-adherence />
     }
   </div>
 
@@ -101,7 +95,7 @@
         z-button
         zType="destructive"
         type="button"
-        [zDisabled]="isClosureDisable()"
+        [zDisabled]="closureDisabled()"
         (click)="closure()"
       >
         Closure

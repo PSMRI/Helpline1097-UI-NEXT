@@ -79,6 +79,22 @@ export class InnerpageComponent implements OnInit {
   protected readonly callCategory = this.callStore.callCategory;
   protected readonly isCO = computed(() => this.sessionStore.currentRole() === 'CO');
 
+  /** Old `getEverwellSelectedBenDetails` header fields — id/name/gender of the member
+   * picked on the adherence slide (old benId showed the row's beneficiaryID). */
+  protected readonly everwellBenInfo = computed(() => {
+    const row = this.callStore.everwellSelectedBen();
+    if (!row) {
+      return null;
+    }
+    const first = (row['FirstName'] as string | undefined) ?? '';
+    const last = (row['LastName'] as string | undefined) ?? '';
+    return {
+      benId: row['beneficiaryID'],
+      name: (first + ' ' + last).trim(),
+      gender: row['Gender'] as string | undefined,
+    };
+  });
+
   /** Selected/registered beneficiary shown in the caller strip (old innerpage header). Names
    * come from a search-result object; a freshly-created one may carry only ids until re-fetched. */
   protected readonly beneficiaryInfo = computed(() => {
@@ -318,6 +334,9 @@ export class InnerpageComponent implements OnInit {
         this.callStore.custDisconnected.update((n) => n + 1);
       }
       this.startCallWrapup();
+      // Old: an early customer disconnect marks the everwell call as not connected, which
+      // switches the support-action dialog to its not-reachable subcategory list.
+      this.callStore.everwellCallNotConnected.set('yes');
     } else if (parts.length > 3 && parts[3] === 'OUTBOUND') {
       this.callStore.isOutbound.set(true);
     }

@@ -78,6 +78,12 @@ export class CallStore {
   readonly everwellCallNotConnected = signal<string | null>(null);
   readonly feedbackData = signal<Record<string, unknown>[]>([]);
   readonly updatedFeedbackList = signal<unknown[]>([]);
+  /** Old `everwellFeedbackCallData` — family rows touched by a saved feedback; closure posts
+   * one everwellCall/completeOutboundCall entry per row. */
+  readonly everwellFeedbackCallData = signal<Record<string, unknown>[]>([]);
+  /** The family member picked on the adherence slide (old innerpage `everwellSelectedBenData`
+   * header strip). */
+  readonly everwellSelectedBen = signal<Record<string, unknown> | null>(null);
   /**
    * Old `dataService.custDisconnectCall$`/`enablePreviousOnCustDisconnect` subject — bumped
    * by the innerpage's CustDisconnect handler; the wizard reacts (jump to Closure, lock nav).
@@ -173,6 +179,8 @@ export class CallStore {
     this.everwellCallNotConnected.set(null);
     this.feedbackData.set([]);
     this.updatedFeedbackList.set([]);
+    this.everwellFeedbackCallData.set([]);
+    this.everwellSelectedBen.set(null);
     this.custDisconnected.set(0);
     this.onlyOutboundAvailable.set(false);
     this.isOutBoundSelected.set(false);
