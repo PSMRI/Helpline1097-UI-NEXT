@@ -108,7 +108,13 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
       return of(event);
     }),
     catchError((error: unknown) => {
-      if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+      if (
+        error instanceof HttpErrorResponse &&
+        (error.status === 401 || error.status === 403) &&
+        // Platform-feedback is anonymous (old bare-Http bypass): a gateway rejection there
+        // must surface inline on the public page, not bounce the visitor to login.
+        !req.url.includes('platform-feedback')
+      ) {
         notify.alert('Your session has expired. Please login again.', 'error');
         auth.removeToken();
         sessionStorage.clear();

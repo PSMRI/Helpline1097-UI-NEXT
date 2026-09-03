@@ -53,7 +53,8 @@ export class FeedbackPublicPageComponent {
   );
 
   protected readonly serviceLine = computed<ServiceLine>(
-    () => this.slParam() ?? detectFromLocation(),
+    // || not ??: /feedback?sl= yields an EMPTY string, which the old code fell through on.
+    () => this.slParam() || detectFromLocation(),
   );
 }
 

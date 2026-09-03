@@ -48,10 +48,11 @@ describe('Platform-feedback dialog', () => {
     api.submitFeedback.and.returnValue(of({ id: 'fb-1' }) as never);
     storage = jasmine.createSpyObj<SessionStorageService>('SessionStorageService', [
       'getItem',
+      'getPlain',
       'setItem',
       'removeItem',
     ]);
-    storage.getItem.and.callFake((key: string) =>
+    storage.getPlain.and.callFake((key: string) =>
       key === PLAIN_KEYS.userId ? (opts?.userId ?? null) : null,
     );
     TestBed.configureTestingModule({

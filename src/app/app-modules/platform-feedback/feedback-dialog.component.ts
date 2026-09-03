@@ -40,8 +40,9 @@ const STAR_LABELS = ['Terrible', 'Bad', 'Okay', 'Good', 'Great'];
  * anonymity consent, posted to the un-authenticated platform-feedback API.
  *
  * Old semantics kept:
- *  - "logged in" means a `userID` remains in sessionStorage — the old LOGOUT deliberately
- *    left it there, so the post-logout page still offers identified submission;
+ *  - "logged in" means a `userID` exists in sessionStorage — but NOTHING in either app has
+ *    ever written that key, so the identified path (title, consent box, userId in the
+ *    payload) is faithfully-ported dead code: the page always behaves anonymously;
  *  - `isAnonymous` defaults to true in every case; `userId` is attached only when the box
  *    is unchecked AND a stored id exists (parsed to a number when numeric);
  *  - rating min 1 (star click only), category required, comment max 2000;
@@ -198,7 +199,7 @@ export class FeedbackDialogComponent implements OnInit {
 
   ngOnInit(): void {
     try {
-      this.storedUserId = this.storage.getItem(PLAIN_KEYS.userId) || undefined;
+      this.storedUserId = this.storage.getPlain(PLAIN_KEYS.userId) || undefined;
       this.isLoggedIn = !!this.storedUserId;
     } catch {
       this.isLoggedIn = false;

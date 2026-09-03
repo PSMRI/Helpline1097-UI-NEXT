@@ -24,6 +24,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import { skipLoader } from '@/app-modules/core/http/http-context';
+
 /** Old `ServiceLine` union — the platform's service lines. */
 export type ServiceLine = '1097' | '104' | 'AAM' | 'MMU' | 'TM' | 'ECD';
 
@@ -63,6 +65,7 @@ export class FeedbackApiService {
   listCategories(serviceLine: ServiceLine): Observable<CategoryDto[]> {
     return this.http.get<CategoryDto[]>(
       `${this.apiBase}/platform-feedback/categories?serviceLine=${encodeURIComponent(serviceLine || '')}`,
+      { context: skipLoader() },
     );
   }
 
@@ -71,6 +74,7 @@ export class FeedbackApiService {
     return this.http.post<{ id: string; createdAt?: string }>(
       `${this.apiBase}/platform-feedback`,
       payload,
+      { context: skipLoader() },
     );
   }
 }
