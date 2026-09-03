@@ -109,15 +109,21 @@ export class TrainingDocsDialogComponent implements OnInit {
 
 const TLDS = ['.com', '.co', '.in', '.org', '.net', '.int', '.edu'];
 
-/** Old `checkForURL` — space→comma→newline tokenizer + prefix/TLD whitelist, verbatim. */
+/** Old `checkForURL` — space→comma→newline tokenizer + prefix/TLD whitelist, verbatim.
+ * The prefix checks are CASE-SENSITIVE like the old six branches (all-lower or all-upper
+ * only — "Www.example.com" was dropped); only the https:// prepend test is case-blind. */
 function checkForUrl(text: string): string[] {
   const result: string[] = [];
   for (const bySpace of text.split(' ')) {
     for (const byComma of bySpace.split(',')) {
       for (const token of byComma.split('\n')) {
-        const upper = token.toUpperCase();
         const hasTld = TLDS.some((tld) => token.endsWith(tld));
-        if (hasTld && (upper.startsWith('WWW') || upper.startsWith('HTTP'))) {
+        const hasPrefix =
+          token.startsWith('www') ||
+          token.startsWith('WWW') ||
+          token.startsWith('http') ||
+          token.startsWith('HTTP');
+        if (hasTld && hasPrefix) {
           result.push(token);
         }
       }

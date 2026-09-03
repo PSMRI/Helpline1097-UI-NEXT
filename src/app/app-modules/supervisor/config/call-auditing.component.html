@@ -69,7 +69,7 @@
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Beneficiary Phone No</span>
-        <input z-input formControlName="benPhoneNo" inputmode="numeric" maxlength="10" />
+        <input z-input formControlName="benPhoneNo" [appRestrictInput]="mobileNumberBlock" inputmode="numeric" maxlength="10" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Call Type <span class="text-destructive">*</span></span>
@@ -175,9 +175,16 @@
 } @else {
   <!-- Read-only case-sheet summary (old inline panel + browser print) -->
   <div class="flex flex-col gap-4">
-    <div class="flex items-center justify-between gap-3 print:hidden">
-      <h2 class="text-base font-semibold">Case Sheet</h2>
-      <div class="flex gap-2">
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <h2 class="text-base font-semibold">Case Sheet</h2>
+        <!-- Old "Service Type 1097" sub-heading + the date stamp (deliberately PRINTED,
+             LOCAL time — the old li carried no noprint). -->
+        <div class="text-sm font-semibold">Service Type 1097</div>
+        <div class="text-sm">Date : {{ caseSheetDate | date: 'dd/MM/yyyy' }}</div>
+      </div>
+      <!-- Old noprint chrome — hidden in the printed sheet. -->
+      <div class="flex gap-2 print:hidden">
         <button z-button type="button" (click)="print()">Print</button>
         <button z-button zType="outline" type="button" (click)="closeCaseSheet()">Back</button>
       </div>
@@ -210,7 +217,8 @@
 
     <!-- Old "Service Requested" printTables (per-item detail rows, section rendered only
          when that service list is non-empty). -->
-    @if (caseSheet(); as cs) {
+    <!-- Old gated the WHOLE block (heading included) on non-empty service details. -->
+    @if (hasServiceItems()) {
       <div class="flex flex-col gap-3">
         <h3 class="font-semibold">Service Requested</h3>
         @if (infoItems().length > 0) {

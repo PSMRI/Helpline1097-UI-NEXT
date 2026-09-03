@@ -726,7 +726,8 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       // Old app hardcoded govtIdentityTypeID = 1 on CREATE only; on UPDATE it re-sent the
       // beneficiary's loaded value (undefined drops the key) — hardcoding here would silently
       // reset an existing beneficiary's ID type on every profile update.
-      govtIdentityNo: '',
+      // Same per-path rule as the type: '' on CREATE, the loaded number on UPDATE.
+      govtIdentityNo: editing ? (editing.govtIdentityNo ?? '') : '',
       govtIdentityTypeID: editing ? editing.govtIdentityTypeID : 1,
       i_bendemographics: {
         ...(editing?.i_bendemographics ?? {}),

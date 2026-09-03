@@ -95,7 +95,7 @@
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Location <span class="text-destructive">*</span></span>
-        <input z-input formControlName="location" maxlength="90" />
+        <input z-input formControlName="location" [appRestrictInput]="textAreaBlock" maxlength="90" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Contact Number <span class="text-destructive">*</span></span>
@@ -165,7 +165,7 @@
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Location <span class="text-destructive">*</span></span>
-        <input z-input formControlName="location" maxlength="90" />
+        <input z-input formControlName="location" [appRestrictInput]="textAreaBlock" maxlength="90" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Contact Number <span class="text-destructive">*</span></span>

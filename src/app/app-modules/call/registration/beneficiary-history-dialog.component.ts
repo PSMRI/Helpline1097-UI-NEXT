@@ -154,7 +154,8 @@ export class BeneficiaryHistoryDialogComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    const calledServiceID = this.sessionStore.currentServiceId();
+    // Old dialog read current_service.providerServiceMapID (the 4th of the 4 old call sites).
+    const calledServiceID = this.sessionStore.currentProviderServiceMapId();
     if (calledServiceID == null) {
       return;
     }

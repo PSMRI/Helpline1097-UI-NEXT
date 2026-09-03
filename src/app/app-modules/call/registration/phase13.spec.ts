@@ -67,7 +67,7 @@ describe('Phase 13 contracts', () => {
           },
         ],
       });
-      TestBed.inject(SessionStore).currentServiceId.set(1722);
+      TestBed.inject(SessionStore).currentProviderServiceMapId.set(1722);
       TestBed.inject(CallStore).benCallID.set(777);
       const fixture = TestBed.createComponent(BeneficiaryHistoryDialogComponent);
       fixture.detectChanges();

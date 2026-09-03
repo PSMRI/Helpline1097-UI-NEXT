@@ -237,7 +237,7 @@
         <div class="flex gap-2">
           <label class="flex flex-1 flex-col gap-1.5 text-sm">
             <span>Age</span>
-            <input z-input formControlName="age" type="number" min="0" max="150" placeholder="Age" (input)="onAgeChange()" />
+            <input z-input formControlName="age" type="number" min="0" max="150" placeholder="Age" (input)="onAgeChange()" [appRestrictInput]="mobileNumberBlock" />
           </label>
           <label class="flex flex-1 flex-col gap-1.5 text-sm">
             <span>Unit</span>

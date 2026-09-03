@@ -28,7 +28,7 @@ import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
 import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
-import { MOBILE_NUMBER_BLOCK, NAME_WITH_SPACE_BLOCK } from '@/app-modules/core/directives/input-patterns';
+import { MOBILE_NUMBER_BLOCK, NAME_WITH_SPACE_BLOCK, TEXTAREA_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { CommunicationApiService, Designation } from './communication-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
@@ -74,6 +74,7 @@ interface BufferRow {
 })
 export class EmergencyContactsComponent implements OnInit {
   protected readonly nameWithSpaceBlock = NAME_WITH_SPACE_BLOCK;
+  protected readonly textAreaBlock = TEXTAREA_BLOCK;
   protected readonly mobileNumberBlock = MOBILE_NUMBER_BLOCK;
 
   private readonly fb = inject(FormBuilder);

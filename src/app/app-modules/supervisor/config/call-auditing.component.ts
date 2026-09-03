@@ -30,6 +30,8 @@ import { ZardSelectImports } from '@common-ui/ui/select';
 
 import { ConfigApiService, tzShift } from './config-api.service';
 import { localDate } from '../allocation/allocation-api.service';
+import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
+import { MOBILE_NUMBER_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
@@ -132,7 +134,7 @@ const DAY_MS = 86400000;
  */
 @Component({
   selector: 'app-call-auditing',
-  imports: [ReactiveFormsModule, DatePipe, ZardButtonComponent, ZardInputDirective, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, DatePipe, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './call-auditing.component.html',
 })
@@ -163,6 +165,7 @@ export class CallAuditingComponent implements OnInit {
   protected readonly audioUrl = signal<string | null>(null);
 
   // Case sheet
+  protected readonly mobileNumberBlock = MOBILE_NUMBER_BLOCK;
   protected readonly caseSheet = signal<CaseSheet | null>(null);
   protected readonly caseSheetBen = signal<CallRecord | null>(null);
 
@@ -182,6 +185,18 @@ export class CallAuditingComponent implements OnInit {
   protected readonly referralItems = computed(
     () => (this.caseSheet()?.referrals ?? []) as ReferralItem[],
   );
+
+  /** Old gate: the Service Requested block (heading included) renders only with data. */
+  protected readonly hasServiceItems = computed(
+    () =>
+      this.infoItems().length > 0 ||
+      this.counsellingItems().length > 0 ||
+      this.feedbackItems().length > 0 ||
+      this.referralItems().length > 0,
+  );
+
+  /** Old `current_date` — stamped on the printed sheet (LOCAL time, deliberately). */
+  protected readonly caseSheetDate = new Date();
 
   /** Old address-part ternaries: every missing fragment prints "-". */
   protected dash(value: unknown): string {
@@ -453,7 +468,9 @@ export class CallAuditingComponent implements OnInit {
         const arr = res?.data as CaseSheet[] | undefined;
         this.caseSheet.set(Array.isArray(arr) && arr.length > 0 ? arr[0] : {});
       },
-      error: () => {},
+      // Old set showCaseSheet BEFORE the request, so a failed fetch still showed the
+      // beneficiary panel — an empty sheet reproduces that.
+      error: () => this.caseSheet.set({}),
     });
   }
 
