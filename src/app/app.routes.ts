@@ -54,6 +54,15 @@ export const routes: Routes = [
       ),
   },
   {
+    // Public platform-feedback page (old `FeedbackPublicPageComponent`) — NO guard; the
+    // logout flow lands here with ?sl=1097.
+    path: 'feedback',
+    loadComponent: () =>
+      import('./app-modules/platform-feedback/feedback-public-page.component').then(
+        (m) => m.FeedbackPublicPageComponent,
+      ),
+  },
+  {
     path: 'setQuestions',
     loadComponent: () =>
       import('./app-modules/auth/set-security-questions/set-security-questions.component').then(
