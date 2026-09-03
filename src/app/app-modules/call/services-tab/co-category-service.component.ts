@@ -270,7 +270,9 @@ export class CoCategoryServiceComponent implements OnInit {
 
   private loadHistory(): void {
     const beneficiaryRegID = this.beneficiaryRegID();
-    const serviceId = this.serviceId();
+    // Old history fetches posted current_service.providerServiceMapID (not .serviceID) as
+    // calledServiceID — equal on UAT (both 1722), kept to the old field source.
+    const serviceId = this.sessionStore.currentProviderServiceMapId();
     if (beneficiaryRegID == null || serviceId == null) {
       return;
     }

@@ -36,6 +36,8 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
+import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
+import { TEXTAREA_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { CtiService } from '@/app-modules/core/services/cti.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
@@ -59,7 +61,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
  */
 @Component({
   selector: 'app-closure',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-4">
@@ -111,7 +113,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
 
         <label class="flex flex-col gap-1.5 text-sm sm:col-span-2 lg:col-span-3">
           <span>Remarks</span>
-          <input z-input formControlName="remarks" type="text" maxlength="100" placeholder="Remarks" />
+          <input z-input formControlName="remarks" type="text" maxlength="100" placeholder="Remarks" [appRestrictInput]="textAreaBlock" />
         </label>
 
         <!-- Old IVR-feedback checkbox: Valid calls only, hidden on Everwell -->
@@ -143,7 +145,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
             </label>
             <label class="flex flex-col gap-1.5 text-sm">
               <span>Reason <span class="text-destructive">*</span></span>
-              <input z-input formControlName="requestedFor" type="text" maxlength="200" placeholder="Follow-up reason" />
+              <input z-input formControlName="requestedFor" type="text" maxlength="200" placeholder="Follow-up reason" [appRestrictInput]="textAreaBlock" />
             </label>
             <label class="flex flex-col gap-1.5 text-sm">
               <span>Language <span class="text-destructive">*</span></span>
@@ -201,6 +203,8 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
   `,
 })
 export class ClosureComponent implements OnInit {
+  protected readonly textAreaBlock = TEXTAREA_BLOCK;
+
   private readonly fb = inject(FormBuilder);
   private readonly callApi = inject(CallApiService);
   private readonly cti = inject(CtiService);
@@ -479,7 +483,8 @@ export class ClosureComponent implements OnInit {
         skill: v.campaignSkill,
         callType: v.callType,
         callTypeID: (v.callSubType ?? '').split(',')[0],
-        agentIPAddress: undefined,
+        // Old transferCall sent the populated agent IP (same source as closeCall).
+        agentIPAddress: this.ipAddress(),
         benCallID: this.callStore.benCallID(),
       })
       .subscribe({

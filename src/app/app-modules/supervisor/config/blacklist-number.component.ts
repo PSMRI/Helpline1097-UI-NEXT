@@ -27,6 +27,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 
+import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
+import { MOBILE_NUMBER_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { ConfigApiService } from './config-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
@@ -71,11 +73,13 @@ const ROWS_PER_PAGE = 5;
  */
 @Component({
   selector: 'app-blacklist-number',
-  imports: [ReactiveFormsModule, DatePipe, ZardButtonComponent, ZardInputDirective],
+  imports: [ReactiveFormsModule, DatePipe, ZardButtonComponent, ZardInputDirective, RestrictInputDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './blacklist-number.component.html',
 })
 export class BlacklistNumberComponent implements OnInit {
+  protected readonly mobileNumberBlock = MOBILE_NUMBER_BLOCK;
+
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ConfigApiService);
   private readonly notify = inject(NotificationService);

@@ -27,6 +27,8 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
+import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
+import { INPUT_FIELD_BLOCK, TEXTAREA_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { EverwellGuidelinesApiService } from './everwell-guidelines-api.service';
 import { ApiResponse } from '@/app-modules/core/models';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
@@ -87,11 +89,14 @@ function endOfDayPlusYears(years: number): Date {
  */
 @Component({
   selector: 'app-everwell-guidelines',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './everwell-guidelines.component.html',
 })
 export class EverwellGuidelinesComponent implements OnInit {
+  protected readonly inputFieldBlock = INPUT_FIELD_BLOCK;
+  protected readonly textAreaBlock = TEXTAREA_BLOCK;
+
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(EverwellGuidelinesApiService);
   private readonly notify = inject(NotificationService);

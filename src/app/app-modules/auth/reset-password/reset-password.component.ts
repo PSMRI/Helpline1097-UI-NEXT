@@ -38,7 +38,7 @@ import { ZardInputDirective } from '@common-ui/ui/input';
 
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 
-import { RestrictInputDirective } from '../directives/restrict-input.directive';
+import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
 import { SecurityQuestion, SecurityQuestionAnswer } from '../models/auth.models';
 import { AuthApiService } from '../services/auth-api.service';
 import { AuthFlowStore } from '../state/auth-flow.store';

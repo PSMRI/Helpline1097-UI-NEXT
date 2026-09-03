@@ -36,6 +36,8 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
+import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
+import { TEXTAREA_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { OutboundApiService } from '@/app-modules/core/services/outbound-api.service';
@@ -57,7 +59,7 @@ const RESOLUTION_OPTIONS = ['Resolved', 'Unresolved'];
  */
 @Component({
   selector: 'app-grievance-resolution',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-4">
@@ -118,11 +120,12 @@ const RESOLUTION_OPTIONS = ['Resolved', 'Unresolved'];
           <textarea
             z-input
             formControlName="remark"
-            maxlength="300"
+            maxlength="5000"
             rows="3"
             placeholder="Resolution remarks"
+            [appRestrictInput]="textAreaBlock"
           ></textarea>
-          <span class="self-end text-xs text-muted-foreground">{{ remarkCount() }}/300</span>
+          <span class="self-end text-xs text-muted-foreground">{{ remarkCount() }}/5000</span>
         </label>
         <div class="flex items-end justify-end sm:col-span-2">
           <button z-button type="submit" [zDisabled]="form.invalid" [zLoading]="saving()">
@@ -134,6 +137,8 @@ const RESOLUTION_OPTIONS = ['Resolved', 'Unresolved'];
   `,
 })
 export class GrievanceResolutionComponent implements OnInit {
+  protected readonly textAreaBlock = TEXTAREA_BLOCK;
+
   private readonly fb = inject(FormBuilder);
   private readonly outboundApi = inject(OutboundApiService);
   private readonly callApi = inject(CallApiService);
@@ -189,6 +194,19 @@ export class GrievanceResolutionComponent implements OnInit {
     this.form.controls.remark.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((v) => this.remarkCount.set((v ?? '').length));
+    // Old template: `[required]="complaintResolution === 'Unresolved'"` — an Unresolved
+    // disposition cannot be submitted without remarks.
+    this.form.controls.complaintResolution.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((value) => {
+        const remark = this.form.controls.remark;
+        if (value === 'Unresolved') {
+          remark.addValidators(Validators.required);
+        } else {
+          remark.removeValidators(Validators.required);
+        }
+        remark.updateValueAndValidity();
+      });
   }
 
   private startOutboundCall(): void {

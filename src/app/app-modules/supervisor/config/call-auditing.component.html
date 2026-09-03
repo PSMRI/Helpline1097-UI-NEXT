@@ -183,41 +183,103 @@
       </div>
     </div>
 
+    <!-- Old "Beneficiary Details" printTable — bound off the worklist row's nested
+         beneficiaryModel exactly like the old benData reads. -->
     @if (caseSheetBen(); as ben) {
       <div class="rounded-md border border-border p-3 text-sm">
-        <h3 class="mb-2 font-semibold">Beneficiary</h3>
-        <div class="grid gap-2 sm:grid-cols-3">
-          <div><span class="text-muted-foreground">Beneficiary ID:</span> {{ ben.beneficiaryID }}</div>
-          <div><span class="text-muted-foreground">Name:</span> {{ ben.name }}</div>
-          <div><span class="text-muted-foreground">Phone:</span> {{ ben.phoneNo }}</div>
-          <div><span class="text-muted-foreground">Call ID:</span> {{ ben.benCallID }}</div>
-          <div>
-            <span class="text-muted-foreground">Call Time:</span>
-            {{ ben.callTime | date: 'dd/MM/yyyy hh:mm a' : 'UTC' }}
+        <h3 class="mb-2 font-semibold">Beneficiary Details</h3>
+        <div class="grid gap-2 sm:grid-cols-2">
+          <div><strong>Call Id :</strong> {{ ben.benCallID }}</div>
+          <div><strong>Agent Id :</strong> {{ ben.agentID }}</div>
+          <div><strong>First Name :</strong> {{ benModel().firstName }}</div>
+          <div><strong>Last Name :</strong> {{ benModel().lastName }}</div>
+          <div><strong>Age :</strong> {{ benModel().actualAge }} {{ benModel().ageUnits }}</div>
+          <div><strong>Gender :</strong> {{ benModel().m_gender?.genderName }}</div>
+          <div class="sm:col-span-2">
+            <strong>Address :</strong>
+            {{ dash(benModel().i_bendemographics?.districtBranchName) }},
+            {{ dash(benModel().i_bendemographics?.blockName) }},
+            {{ dash(benModel().i_bendemographics?.districtName) }},
+            {{ dash(benModel().i_bendemographics?.stateName) }} -
+            {{ dash(benModel().i_bendemographics?.pinCode) }} | India
           </div>
-          <div><span class="text-muted-foreground">Call Type:</span> {{ ben.callType }}</div>
+          <div><strong>Beneficiary Id :</strong> {{ benModel().beneficiaryID }}</div>
         </div>
       </div>
     }
 
+    <!-- Old "Service Requested" printTables (per-item detail rows, section rendered only
+         when that service list is non-empty). -->
     @if (caseSheet(); as cs) {
-      <div class="grid gap-3 sm:grid-cols-2">
-        <div class="rounded-md border border-border p-3 text-sm">
-          <h3 class="mb-1 font-semibold">Information Services</h3>
-          <p class="text-muted-foreground">{{ cs.informations?.length ?? 0 }} record(s)</p>
-        </div>
-        <div class="rounded-md border border-border p-3 text-sm">
-          <h3 class="mb-1 font-semibold">Counselling Services</h3>
-          <p class="text-muted-foreground">{{ cs.counsellings?.length ?? 0 }} record(s)</p>
-        </div>
-        <div class="rounded-md border border-border p-3 text-sm">
-          <h3 class="mb-1 font-semibold">Feedback Services</h3>
-          <p class="text-muted-foreground">{{ cs.feedbacks?.length ?? 0 }} record(s)</p>
-        </div>
-        <div class="rounded-md border border-border p-3 text-sm">
-          <h3 class="mb-1 font-semibold">Referral Services</h3>
-          <p class="text-muted-foreground">{{ cs.referrals?.length ?? 0 }} record(s)</p>
-        </div>
+      <div class="flex flex-col gap-3">
+        <h3 class="font-semibold">Service Requested</h3>
+        @if (infoItems().length > 0) {
+          <div class="rounded-md border border-border p-3 text-sm">
+            <h4 class="mb-2 font-semibold">Information Service</h4>
+            @for (item of infoItems(); track $index) {
+              <div class="grid gap-2 border-t border-border/60 py-2 first:border-t-0 sm:grid-cols-2">
+                <div><strong>Category :</strong> {{ item.categoryDetails?.categoryName }}</div>
+                <div><strong>Sub Category :</strong> {{ item.subCategoryName }}</div>
+              </div>
+            }
+          </div>
+        }
+        @if (counsellingItems().length > 0) {
+          <div class="rounded-md border border-border p-3 text-sm">
+            <h4 class="mb-2 font-semibold">Counselling Service</h4>
+            @for (item of counsellingItems(); track $index) {
+              <div class="grid gap-2 border-t border-border/60 py-2 first:border-t-0 sm:grid-cols-2">
+                <div><strong>Category :</strong> {{ item.categoryDetails?.categoryName }}</div>
+                <div><strong>Sub Category :</strong> {{ item.subCategoryName }}</div>
+              </div>
+            }
+          </div>
+        }
+        @if (feedbackItems().length > 0) {
+          <div class="rounded-md border border-border p-3 text-sm">
+            <h4 class="mb-2 font-semibold">Feedback Service</h4>
+            @for (item of feedbackItems(); track $index) {
+              <div class="grid gap-2 border-t border-border/60 py-2 first:border-t-0 sm:grid-cols-2">
+                <div><strong>State :</strong> {{ item.states?.stateName }}</div>
+                <div><strong>District :</strong> {{ item.district?.districtName }}</div>
+                <div><strong>Sub District :</strong> {{ item.districtBlock?.blockName }}</div>
+                <!-- Old template hardcoded "-" for Institute Name. -->
+                <div><strong>Institute Name :</strong> -</div>
+                <div><strong>Designation :</strong> {{ item.designation?.designationName }}</div>
+                <div><strong>Type of Feedback :</strong> {{ item.FeedbackTypeID?.feedbackTypeName }}</div>
+                <div>
+                  <strong>Incident Date :</strong>
+                  {{ item.serviceAvailDate | date: 'dd/MM/yyyy' : 'UTC' }}
+                </div>
+                <div><strong>Severity :</strong> {{ item.severity?.severityTypeName }}</div>
+                <div><strong>Feedback Description :</strong> {{ item.feedback }}</div>
+                <div><strong>Feedback Id :</strong> {{ item.feedbackID }}</div>
+              </div>
+            }
+          </div>
+        }
+        @if (referralItems().length > 0) {
+          <div class="rounded-md border border-border p-3 text-sm">
+            <h4 class="mb-2 font-semibold">Referral Service</h4>
+            <!-- Old bindings here had NO null-safety and threw on a sparse referral record,
+                 blanking the sheet; `?.` renders blanks instead (declared deviation). -->
+            @for (item of referralItems(); track $index) {
+              <div class="grid gap-2 border-t border-border/60 py-2 first:border-t-0 sm:grid-cols-2">
+                <div><strong>State :</strong> {{ item.institutionDetails?.states?.stateName }}</div>
+                <div><strong>District :</strong> {{ item.institutionDetails?.m_district?.districtName }}</div>
+                <div><strong>Sub District :</strong> {{ item.institutionDetails?.block?.blockName }}</div>
+                <div>
+                  <strong>Information Required :</strong>
+                  {{ item.directory?.instituteDirectoryName }},{{ item.subDirectory?.instituteSubDirectoryName }}
+                </div>
+                <div class="sm:col-span-2">
+                  <strong>Results :</strong>
+                  {{ item.institutionDetails?.institutionName }},{{ item.institutionDetails?.address }}
+                </div>
+              </div>
+            }
+          </div>
+        }
       </div>
     }
   </div>

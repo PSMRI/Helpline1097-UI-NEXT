@@ -28,6 +28,8 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
+import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
+import { TEXTAREA_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { localDate } from '../allocation/allocation-api.service';
 import {
   CommunicationApiService,
@@ -96,12 +98,15 @@ function asArray(value: string | string[]): string[] {
     DatePipe,
     ZardButtonComponent,
     ZardInputDirective,
+    RestrictInputDirective,
     ...ZardSelectImports,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './alerts-notifications.component.html',
 })
 export class AlertsNotificationsComponent implements OnInit {
+  protected readonly textAreaBlock = TEXTAREA_BLOCK;
+
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(CommunicationApiService);
   private readonly notify = inject(NotificationService);

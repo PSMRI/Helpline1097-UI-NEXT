@@ -29,6 +29,10 @@ import {
   signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
+
+import { ZardDialogService } from '@common-ui/ui/dialog';
+
+import { KmDoc, TrainingDocsDialogComponent } from './training-docs-dialog.component';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideGraduationCap, lucidePhoneOutgoing } from '@ng-icons/lucide';
 import { switchMap } from 'rxjs/operators';
@@ -45,7 +49,7 @@ const KM_TYPE = 'KM';
 
 /**
  * "Activity for this week" panel (old `activity-this-week`): Training Resources count and
- * the CO-on-OUTBOUND "Outbound Worklist" link. The training-doc dialog is a later phase.
+ * the CO-on-OUTBOUND "Outbound Worklist" link, and the KM training-docs dialog (old openTrainingDialog).
  */
 @Component({
   selector: 'app-activity-panel',
@@ -72,7 +76,12 @@ const KM_TYPE = 'KM';
           </button>
         }
         @let c = trainingCount();
-        <div class="flex items-center justify-between rounded-md px-2 py-2 hover:bg-accent">
+        <!-- Old row opened the KM-docs dialog (openTrainingDialog). -->
+        <button
+          type="button"
+          class="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-accent"
+          (click)="openTrainingDialog()"
+        >
           <span class="text-sm">Training Resources</span>
           <span
             class="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-medium"
@@ -83,7 +92,7 @@ const KM_TYPE = 'KM';
           >
             {{ c }}
           </span>
-        </div>
+        </button>
       </z-card-content>
     </z-card>
   `,
@@ -95,13 +104,27 @@ export class ActivityPanelComponent implements OnInit {
   private readonly cti = inject(CtiService);
   private readonly notify = inject(NotificationService);
   private readonly router = inject(Router);
+  private readonly dialog = inject(ZardDialogService);
 
   protected readonly trainingCount = signal(0);
+  /** Old kmFiles — the fetched KM docs, shown by the training-docs dialog. */
+  private readonly kmFiles = signal<KmDoc[]>([]);
   protected readonly showOutboundLink = computed(
     () =>
       this.sessionStore.currentRole() === 'CO' &&
       this.callStore.currentCampaign() === 'OUTBOUND',
   );
+
+  /** Old `openTrainingDialog` — the KM docs dialog (700px, mask-closable like the old). */
+  protected openTrainingDialog(): void {
+    this.dialog.create({
+      zTitle: 'KM Docs',
+      zContent: TrainingDocsDialogComponent,
+      zData: { kmdocs: this.kmFiles() },
+      zWidth: '700px',
+      zHideFooter: true,
+    });
+  }
 
   /** Old `agentLoginStatus()` — the "already in MANUAL mode" error still navigates. */
   protected openOutboundWorklist(): void {
@@ -146,7 +169,9 @@ export class ActivityPanelComponent implements OnInit {
       )
       .subscribe({
         next: (res) => {
-          this.trainingCount.set((res?.data ?? []).length);
+          const docs = (res?.data ?? []) as KmDoc[];
+          this.kmFiles.set(docs);
+          this.trainingCount.set(docs.length);
         },
         error: () => {
           /* leave count at 0 */

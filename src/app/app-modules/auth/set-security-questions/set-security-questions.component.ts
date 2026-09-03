@@ -38,7 +38,7 @@ import { NotificationService } from '@/app-modules/core/services/notification.se
 import { SessionStore } from '@/app-modules/core/state/session.store';
 import { encryptPassword } from '@/app-modules/core/utils/password-crypto';
 
-import { RestrictInputDirective } from '../directives/restrict-input.directive';
+import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
 import { SaveSecurityQuestion, SecurityQuestionMaster } from '../models/auth.models';
 import { AuthApiService } from '../services/auth-api.service';
 import { ANSWER_BLOCK_PATTERN, PASSWORD_PATTERN } from '../utils/auth-validators';

@@ -54,7 +54,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
 import { encryptPassword } from '@/app-modules/core/utils/password-crypto';
 
 import { CaptchaComponent } from '../captcha/captcha.component';
-import { RestrictInputDirective } from '../directives/restrict-input.directive';
+import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
 import { AuthenticateResponse } from '../models/auth.models';
 import { AuthApiService } from '../services/auth-api.service';
 import { USERNAME_BLOCK_PATTERN } from '../utils/auth-validators';

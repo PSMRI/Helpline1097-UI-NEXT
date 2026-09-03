@@ -105,6 +105,17 @@ export class CoServicesApiService {
     );
   }
 
+  /** POST {1097}services/getBeneficiaryCallsHistory — prior calls for the history dialog. */
+  getBeneficiaryCallsHistory(
+    beneficiaryRegID: number | string,
+    calledServiceID: number,
+  ): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(
+      `${this.config.helpline1097BaseURL}services/getBeneficiaryCallsHistory`,
+      { beneficiaryRegID, calledServiceID },
+    );
+  }
+
   /** POST {1097}services/getInformationsHistory. */
   getInformationHistory(
     beneficiaryRegID: number | string,

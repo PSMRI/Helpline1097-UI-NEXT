@@ -74,6 +74,7 @@ export class RoleSelectionComponent {
       this.sessionStore.currentRoleId.set(role.RoleID ?? null);
       this.sessionStore.currentServiceName.set(service.serviceName ?? null);
       this.sessionStore.currentServiceId.set(service.serviceID ?? null);
+      this.sessionStore.currentProviderServiceMapId.set(service.providerServiceMapID ?? null);
       const agentId = role.agentID ?? this.sessionStore.agentId();
       this.sessionStore.agentId.set(agentId != null ? Number(agentId) : null);
       // Persist the choice so a reload can restore it (sessionHydrationGuard) — the old

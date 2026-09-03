@@ -130,7 +130,7 @@
 
       <label class="flex flex-col gap-1.5 text-sm sm:col-span-2 lg:col-span-3">
         <span>Subject <span class="text-destructive">*</span></span>
-        <input z-input formControlName="subject" maxlength="100" placeholder="Subject (5-100 chars)" />
+        <input z-input formControlName="subject" maxlength="100" placeholder="Subject (5-100 chars)" [appRestrictInput]="textAreaBlock" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm sm:col-span-2 lg:col-span-3">
         <span>Message <span class="text-destructive">*</span></span>
@@ -140,6 +140,7 @@
           rows="3"
           maxlength="300"
           placeholder="Message (5-300 chars)"
+          [appRestrictInput]="textAreaBlock"
         ></textarea>
       </label>
 

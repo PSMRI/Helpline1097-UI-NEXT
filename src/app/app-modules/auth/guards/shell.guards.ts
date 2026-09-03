@@ -99,6 +99,7 @@ function restoreSelectedRole(
       store.currentRoleId.set(roleId);
       store.currentServiceName.set(service.serviceName ?? null);
       store.currentServiceId.set(service.serviceID ?? null);
+      store.currentProviderServiceMapId.set(service.providerServiceMapID ?? null);
       const agentId = role.agentID ?? store.agentId();
       store.agentId.set(agentId != null ? Number(agentId) : null);
       return;

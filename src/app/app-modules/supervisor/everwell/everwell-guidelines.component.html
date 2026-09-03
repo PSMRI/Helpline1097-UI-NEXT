@@ -113,6 +113,7 @@
           formControlName="guidelineName"
           maxlength="100"
           placeholder="Enter guideline name"
+          [appRestrictInput]="inputFieldBlock"
         />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
@@ -132,6 +133,7 @@
           rows="3"
           maxlength="300"
           placeholder="Enter guideline description (max 300 chars)"
+          [appRestrictInput]="textAreaBlock"
         ></textarea>
       </label>
 

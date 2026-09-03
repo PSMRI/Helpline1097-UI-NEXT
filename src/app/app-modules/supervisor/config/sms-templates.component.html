@@ -96,7 +96,7 @@
     <form class="grid gap-3 sm:grid-cols-2" [formGroup]="form">
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Template Name <span class="text-destructive">*</span></span>
-        <input z-input formControlName="templateName" maxlength="40" />
+        <input z-input formControlName="templateName" maxlength="40" [appRestrictInput]="inputFieldBlock" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Template Type <span class="text-destructive">*</span></span>
@@ -108,7 +108,7 @@
       </label>
       <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
         <span>Template <span class="text-destructive">*</span></span>
-        <textarea z-input formControlName="smsTemplate" rows="3" maxlength="160" placeholder="Use $$TOKEN$$ placeholders (20-160 chars)"></textarea>
+        <textarea z-input formControlName="smsTemplate" rows="3" maxlength="160" placeholder="Use $$TOKEN$$ placeholders (20-160 chars)" [appRestrictInput]="smsTemplatePasteBlock" [allowScannedPaste]="true"></textarea>
         <span class="text-xs text-muted-foreground">{{ form.controls.smsTemplate.value.length }}/160</span>
       </label>
 

@@ -36,8 +36,11 @@ import { lucideX } from '@ng-icons/lucide';
 import { ZardButtonComponent } from '@common-ui/ui/button';
 import { cardImports } from '@common-ui/ui/card';
 import { ZardInputDirective } from '@common-ui/ui/input';
+import { ZardDialogService } from '@common-ui/ui/dialog';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
+import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
+import { MOBILE_NUMBER_BLOCK, NAME_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { BeneficiaryApiService } from '@/app-modules/core/services/beneficiary-api.service';
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { LocationApiService } from '@/app-modules/core/services/location-api.service';
@@ -55,6 +58,10 @@ import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 import { numOrNull } from '@/app-modules/core/utils/select-value';
 import { buildStartCallRequest, captureStartCallResponse } from '../start-call.helpers';
+import {
+  BeneficiaryHistoryData,
+  BeneficiaryHistoryDialogComponent,
+} from './beneficiary-history-dialog.component';
 
 /**
  * Beneficiary registration — wizard slide 0 (old `beneficiary-registration`, ~1827 lines).
@@ -64,10 +71,9 @@ import { buildStartCallRequest, captureStartCallResponse } from '../start-call.h
  * (old `setUniqueCallIDForInBound` guard) so `benCallID` exists for the closeCall/service
  * saves. Location is a state→district→taluk→village cascade.
  *
- * Deferred within Phase 6 (flagged in the plan, not demo-critical): the advanced-search
- * form, edit/update mode, the DOB↔age tri-directional auto-sync, and the post-create SMS
- * dialog. The old `govtIdentityTypeID`-hardcoded-to-1 quirk is intentionally NOT replicated
- * (the field is not captured here).
+ * The old `govtIdentityTypeID` quirk is kept per path: hardcoded 1 on CREATE, the loaded
+ * value re-sent on UPDATE. Row-select shows the call-history dialog before linking (old
+ * `BeneficiaryHistoryComponent` flow).
  */
 @Component({
   selector: 'app-beneficiary-registration',
@@ -75,6 +81,7 @@ import { buildStartCallRequest, captureStartCallResponse } from '../start-call.h
     ReactiveFormsModule,
     ZardButtonComponent,
     ZardInputDirective,
+    RestrictInputDirective,
     NgIcon,
     ...ZardSelectImports,
     ...cardImports,
@@ -84,12 +91,16 @@ import { buildStartCallRequest, captureStartCallResponse } from '../start-call.h
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BeneficiaryRegistrationComponent implements OnInit {
+  protected readonly nameBlock = NAME_BLOCK;
+  protected readonly mobileNumberBlock = MOBILE_NUMBER_BLOCK;
+
   private readonly fb = inject(FormBuilder);
   private readonly beneficiaryApi = inject(BeneficiaryApiService);
   private readonly callApi = inject(CallApiService);
   private readonly locationApi = inject(LocationApiService);
   private readonly notify = inject(NotificationService);
   private readonly smsApi = inject(SmsApiService);
+  private readonly dialogService = inject(ZardDialogService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
 
@@ -415,9 +426,34 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     );
   }
 
-  /** Row select → link the beneficiary to the open call, then advance the wizard. */
+  /**
+   * Row select — old `selectBeneficiary` (non-'update' branch): FIRST show the call-history
+   * dialog (`disableClose` in the old app: only OK/X dismiss it), and only after it closes
+   * link the beneficiary to the call and advance the wizard. The edit path (below) skips
+   * the dialog, exactly like the old `Type === 'update'` branch.
+   */
   protected selectBeneficiary(beneficiary: BeneficiaryRecord): void {
-    this.linkBeneficiaryToCall(beneficiary);
+    const regId =
+      beneficiary.beneficiaryRegID ??
+      (beneficiary.i_bendemographics as { beneficiaryRegID?: number | string } | undefined)
+        ?.beneficiaryRegID;
+    if (regId == null) {
+      // No reg id to query history with — link directly (the old dialog would have errored).
+      this.linkBeneficiaryToCall(beneficiary);
+      return;
+    }
+    const data: BeneficiaryHistoryData = {
+      beneficiaryRegID: regId,
+      onClosed: () => this.linkBeneficiaryToCall(beneficiary),
+    };
+    this.dialogService.create({
+      zTitle: 'Beneficiary History',
+      zContent: BeneficiaryHistoryDialogComponent,
+      zData: data,
+      zWidth: '900px',
+      zMaskClosable: false,
+      zHideFooter: true,
+    });
   }
 
   /** Old edit action (row `mode_edit`) — load the beneficiary into the register form to update it. */
@@ -687,9 +723,11 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       dOB: v.dOB ? `${v.dOB}T00:00:00.000Z` : undefined,
       maritalStatusID: numOrNull(v.maritalStatusID),
       benPhoneMaps: phoneMaps,
-      // Old app hardcoded govtIdentityTypeID = 1 and sent an empty govtIdentityNo.
+      // Old app hardcoded govtIdentityTypeID = 1 on CREATE only; on UPDATE it re-sent the
+      // beneficiary's loaded value (undefined drops the key) — hardcoding here would silently
+      // reset an existing beneficiary's ID type on every profile update.
       govtIdentityNo: '',
-      govtIdentityTypeID: 1,
+      govtIdentityTypeID: editing ? editing.govtIdentityTypeID : 1,
       i_bendemographics: {
         ...(editing?.i_bendemographics ?? {}),
         communityID: numOrNull(v.community),
@@ -749,6 +787,9 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       ...beneficiary,
       actualAge: age != null && age !== '' ? Number(age) : undefined,
       ageUnits: ageUnit,
+      // Old update sent a duplicate lowercase `dob` alongside `dOB` (`updatedObj.dob =
+      // updatedObj.dOB`) — kept for byte parity.
+      dob: beneficiary.dOB,
       changeInSelfDetails: true,
       changeInAddress: true,
       changeInContacts: true,
