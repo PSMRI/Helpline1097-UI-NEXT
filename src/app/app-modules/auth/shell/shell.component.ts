@@ -84,6 +84,14 @@ export class ShellComponent {
   constructor() {
     // Shell-wide CZentrix call-event listener (see CtiCallEventsService for why).
     this.ctiEvents.attach(this.shellDestroyRef);
+
+    // Old multi-role-screen back-button blocker: any browser-back inside the
+    // authenticated shell is bounced forward (protects in-call state). Old attached it
+    // via PlatformLocation.onPopState and leaked it past logout; scoping to the shell's
+    // lifetime is the only deviation.
+    const blockBack = () => window.history.forward();
+    window.addEventListener('popstate', blockBack);
+    this.shellDestroyRef.onDestroy(() => window.removeEventListener('popstate', blockBack));
   }
   private readonly cti = inject(CtiService);
   private readonly config = inject(ConfigService);
