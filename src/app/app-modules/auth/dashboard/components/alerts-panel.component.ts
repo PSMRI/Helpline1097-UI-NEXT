@@ -28,7 +28,10 @@ import { cardImports } from '@common-ui/ui/card';
 
 import { ZardDialogService } from '@common-ui/ui/dialog';
 
-import { AlertsNotificationsDialogComponent } from './alerts-notifications-dialog.component';
+import {
+  AlertsNotificationsDialogComponent,
+  AlertsNotificationsDialogData,
+} from './alerts-notifications-dialog.component';
 import {
   NotificationApiService,
   NotificationType,
@@ -136,6 +139,9 @@ export class AlertsPanelComponent implements OnInit {
     this.notificationApi
       .getAlertsAndNotificationDetail(userId, roleId, typeId, serviceId)
       .subscribe({
+        error: () => {
+          /* old console-logged only */
+        },
         next: (res) => {
           const messages = (res?.data ?? []).filter((m) => m.notificationState !== 'future');
           if (messages.length === 0) {
@@ -150,10 +156,14 @@ export class AlertsPanelComponent implements OnInit {
               messages,
               notificationTypeID: typeId,
               onClosed: () => this.getCount(),
-            },
+            } satisfies AlertsNotificationsDialogData,
             zWidth: '600px',
             zOkText: null,
             zCancelText: null,
+            zHideFooter: true,
+            // Deviation from old disableClose:false — a backdrop click otherwise falls
+            // through the nested delete-confirm and closes this dialog under it.
+            zMaskClosable: false,
           });
         },
       });

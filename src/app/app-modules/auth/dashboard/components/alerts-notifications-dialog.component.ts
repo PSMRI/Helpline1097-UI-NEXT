@@ -24,10 +24,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   OnDestroy,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideRefreshCw, lucideTrash2 } from '@ng-icons/lucide';
 
@@ -62,7 +64,7 @@ const ROWS_PER_PAGE = 3;
   viewProviders: [provideIcons({ lucideCheck, lucideRefreshCw, lucideTrash2 })],
   template: `
     <div class="flex min-h-[300px] flex-col gap-3 text-sm">
-      @for (row of pagedRows(); track row.userNotificationMapID) {
+      @for (row of pagedRows(); track row.userNotificationMapID ?? row) {
         <div class="flex items-start gap-2 border-b border-border pb-3 last:border-b-0">
           <div class="min-w-0 flex-1" [class.font-semibold]="row.notificationState === 'unread'">
             <h4>{{ row.notification?.notification }}</h4>
@@ -136,6 +138,7 @@ export class AlertsNotificationsDialogComponent implements OnDestroy {
   private readonly notificationApi = inject(NotificationApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly dialogRef = inject(ZardDialogRef);
 
   protected readonly heading = this.data.msgType.toLowerCase();
@@ -168,6 +171,9 @@ export class AlertsNotificationsDialogComponent implements OnDestroy {
       next: (res) => {
         if (res?.data?.status === 'success') this.reInitialize();
       },
+      error: () => {
+        /* old console-logged only */
+      },
     });
   }
 
@@ -176,18 +182,27 @@ export class AlertsNotificationsDialogComponent implements OnDestroy {
       next: (res) => {
         if (res?.data?.status === 'success') this.reInitialize();
       },
+      error: () => {
+        /* old console-logged only */
+      },
     });
   }
 
   protected deleteNotification(id: number): void {
-    this.notify.confirm('Are you sure you want to delete?', '').subscribe((ok) => {
-      if (!ok) return;
-      this.notificationApi.markDeleteNotification([id]).subscribe({
-        next: (res) => {
-          if (res?.data?.status === 'success') this.reInitialize();
-        },
+    this.notify
+      .confirm('Are you sure you want to delete?', '')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((ok) => {
+        if (!ok) return;
+        this.notificationApi.markDeleteNotification([id]).subscribe({
+          next: (res) => {
+            if (res?.data?.status === 'success') this.reInitialize();
+          },
+          error: () => {
+            /* old console-logged only */
+          },
+        });
       });
-    });
   }
 
   /** Old `reInitialize` — refetch this type's rows, dropping `'future'` ones. */
@@ -207,6 +222,9 @@ export class AlertsNotificationsDialogComponent implements OnDestroy {
           const rows = (res?.data ?? []).filter((m) => m.notificationState !== 'future');
           this.messages.set(rows);
           this.pageIndex.update((i) => Math.min(i, this.pageCount() - 1));
+        },
+        error: () => {
+          /* old console-logged only */
         },
       });
   }
