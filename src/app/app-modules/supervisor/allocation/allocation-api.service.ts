@@ -125,11 +125,8 @@ export class AllocationApiService {
     userID: number | string,
   ): Observable<ApiResponse> {
     if (flavor === 'grievance') {
-      // Old sent the select's raw STRING value for userID.
-      return this.post('allocatedGrievanceRecordsCount', {
-        providerServiceMapID,
-        userID: String(userID),
-      });
+      // Old bound the whole user object and sent `.userID` — a JSON number.
+      return this.post('allocatedGrievanceRecordsCount', { providerServiceMapID, userID });
     }
     if (flavor === 'everwell') {
       return this.post('everwellCall/outboundCallCount', {

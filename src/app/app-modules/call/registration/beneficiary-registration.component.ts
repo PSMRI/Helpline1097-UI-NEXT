@@ -189,7 +189,10 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     lastName: this.fb.control('', { nonNullable: true }),
     genderID: this.fb.control<string | null>(null, Validators.required),
     // dd/MM/yyyy display format (old md2 datepicker); converted to ISO at the payload edge.
-    dOB: this.fb.control<string | null>(null, Validators.pattern(/^\d{2}\/\d{2}\/\d{4}$/)),
+    // Calendar-validated so an impossible date (31/02) blocks submit instead of posting.
+    dOB: this.fb.control<string | null>(null, (c) =>
+      !c.value || this.parseDob(c.value as string) ? null : { dobInvalid: true },
+    ),
     age: this.fb.control<string | null>(null),
     ageUnit: this.fb.control('Years', { nonNullable: true }),
     maritalStatusID: this.fb.control<string | null>(null),
@@ -418,7 +421,8 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       // (fatherName, beneficiaryID, blockID) were `undefined` and dropped from the JSON.
       this.beneficiaryApi.advancedSearch({
         firstName: v.firstName || undefined,
-        lastName: v.lastName || null,
+        // Old bound `LastName = ''` — an empty field posted `lastName: ""`.
+        lastName: v.lastName || '',
         genderID: numOrNull(v.genderID) ?? undefined,
         stateID: numOrNull(v.state) ?? undefined,
         districtID: numOrNull(v.district) ?? undefined,
@@ -710,10 +714,12 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       : null;
   }
 
-  /** dd/MM/yyyy → `yyyy-MM-ddT00:00:00.000Z` (the shape the backend deserializes). */
+  /** dd/MM/yyyy → `yyyy-MM-ddT00:00:00.000Z` (the shape the backend deserializes).
+   * Calendar-validated — an impossible date (31/02) yields undefined, never a bad ISO. */
   private dobToIso(s: string): string | undefined {
-    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);
-    return m ? `${m[3]}-${m[2]}-${m[1]}T00:00:00.000Z` : undefined;
+    return this.parseDob(s)
+      ? `${s.slice(6)}-${s.slice(3, 5)}-${s.slice(0, 2)}T00:00:00.000Z`
+      : undefined;
   }
 
   /** Old `registerBeneficiary`: build the create payload, persist, then link to the call. */

@@ -237,6 +237,9 @@
             class="w-full"
             (change)="onDobChange()"
           />
+          @if (form.controls.dOB.invalid && form.controls.dOB.touched) {
+            <span class="text-xs text-destructive">Enter a valid date as DD/MM/YYYY</span>
+          }
         </label>
         <div class="flex gap-2">
           <label class="flex flex-1 flex-col gap-1.5 text-sm">

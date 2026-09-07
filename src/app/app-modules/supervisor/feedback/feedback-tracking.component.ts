@@ -331,11 +331,16 @@ export class FeedbackTrackingComponent implements OnInit {
     this.search();
   }
 
-  private commonDetailFields(row: FeedbackRow): Record<string, unknown> {
+  /** Old requestFeedback vs updateResponse patched a few fields DIFFERENTLY:
+   * edit = muser name + LAST request's summary; update = beneficiary name + FIRST. */
+  private commonDetailFields(row: FeedbackRow, mode: 'edit' | 'update'): Record<string, unknown> {
     const v = this.detailForm.getRawValue();
     return {
-      feedbackSupSummary: detailSummary(row),
-      beneficiaryName: detailBeneficiaryName(row),
+      feedbackSupSummary:
+        mode === 'edit'
+          ? detailSummary(row)
+          : row.feedbackRequests?.[0]?.feedbackSupSummary || row.feedback || '',
+      beneficiaryName: mode === 'edit' ? detailBeneficiaryName(row) : beneficiaryName(row),
       comments: v.comments.trim(),
       createdBy: row.createdBy,
       // Old prefill: the ROW's original createdDate, not today (an absent createdDate posts
@@ -344,7 +349,8 @@ export class FeedbackTrackingComponent implements OnInit {
       feedbackTypeName: row.feedbackType?.feedbackTypeName,
       feedbackStatus: undefined,
       emailStatus: undefined,
-      institutionName: detailInstitution(row),
+      // Old only set this control when instituteType existed — otherwise it stayed null.
+      institutionName: row.instituteType ? detailInstitution(row) : null,
       designationName: detailDesignation(row),
       severityTypeName: detailSeverity(row),
       modifiedBy: this.sessionStore.user()?.userName,
@@ -361,7 +367,7 @@ export class FeedbackTrackingComponent implements OnInit {
       return;
     }
     const body: Record<string, unknown> = {
-      ...this.commonDetailFields(row),
+      ...this.commonDetailFields(row, 'edit'),
       feedbackID: row.feedbackID,
       createdDate: null,
       supUserID: null,
@@ -390,10 +396,14 @@ export class FeedbackTrackingComponent implements OnInit {
       return;
     }
     const body: Record<string, unknown> = {
-      ...this.commonDetailFields(row),
+      ...this.commonDetailFields(row, 'update'),
       feedbackID: row.feedbackID,
       feedbackRequestID: row.feedbackRequests?.[0]?.feedbackRequestID,
       feedbackResponseID: undefined,
+      // Old posted the reset form verbatim — these rode along as null on every update.
+      createdDate: null,
+      supUserID: null,
+      updateResponse: null,
     };
     const file = this.pendingFile();
     if (file) {
