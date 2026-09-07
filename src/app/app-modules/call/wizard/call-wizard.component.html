@@ -61,17 +61,17 @@
       <app-grievance-resolution />
     } @else if (variant() === 'grievance' && step() === 1) {
       <app-closure (callClosed)="onCallClosed()" (closedContinue)="onClosedContinue()" />
-    } @else if (variant() === 'everwell' && step() === 1) {
-      <app-closure (callClosed)="onCallClosed()" (closedContinue)="onClosedContinue()" />
     } @else {
-      <!-- Everwell step 0 (adherence-calendar worklist + support-action feedback) is a large
-           outbound-only surface; it lands with the Everwell module in Phase 8. -->
-      <div class="flex min-h-64 items-center justify-center">
-        <p class="max-w-md text-center text-sm text-muted-foreground">
-          {{ steps()[step()] }} — the Everwell adherence worklist arrives with the Everwell
-          module (Phase 8).
-        </p>
-      </div>
+      <!-- Everwell (old #myCarouselEverwell): the carousel kept BOTH slides mounted and only
+           slid between them, so Cancel/Closure jumps never re-ran the slide's init (family
+           refetch off the reassigned outboundEverwellData would corrupt the Self row) — hide,
+           don't destroy. -->
+      <app-everwell-adherence [class.hidden]="step() !== 0" />
+      <app-closure
+        [class.hidden]="step() !== 1"
+        (callClosed)="onCallClosed()"
+        (closedContinue)="onClosedContinue()"
+      />
     }
   </div>
 
@@ -101,7 +101,7 @@
         z-button
         zType="destructive"
         type="button"
-        [zDisabled]="isClosureDisable()"
+        [zDisabled]="closureDisabled()"
         (click)="closure()"
       >
         Closure

@@ -36,6 +36,7 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 
 import { BeneficiaryRegistrationComponent } from '../registration/beneficiary-registration.component';
 import { ClosureComponent } from '../closure/closure.component';
+import { EverwellAdherenceComponent } from '../everwell/everwell-adherence.component';
 import { CoServicesComponent } from '../services-tab/co-services.component';
 import { GrievanceResolutionComponent } from '../grievance/grievance-resolution.component';
 import { UpdatesFromBeneficiaryComponent } from '../updates/updates-from-beneficiary.component';
@@ -63,6 +64,7 @@ import { CallStore } from '@/app-modules/core/state/call.store';
     UpdatesFromBeneficiaryComponent,
     GrievanceResolutionComponent,
     ClosureComponent,
+    EverwellAdherenceComponent,
   ],
   templateUrl: './call-wizard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -99,6 +101,15 @@ export class CallWizardComponent implements OnInit {
   protected readonly disableBack = signal(false);
 
   private readonly lastStepIndex = computed(() => this.steps().length - 1);
+
+  /** Old everwell Closure button (`[disabled]="isClosureDisable || !submitCheck"`) — locked
+   * until at least one support-action feedback saved (checkEverwellResponse). Other variants
+   * use the plain flag. */
+  protected readonly closureDisabled = computed(
+    () =>
+      this.isClosureDisable() ||
+      (this.variant() === 'everwell' && !this.callStore.checkEverwellResponse()),
+  );
 
   constructor() {
     // Old ngOnInit subscription to `custDisconnectCall$`: lock nav onto the closure step.

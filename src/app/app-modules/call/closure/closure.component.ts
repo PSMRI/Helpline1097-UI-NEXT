@@ -40,6 +40,7 @@ import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { CtiService } from '@/app-modules/core/services/cti.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { OutboundApiService } from '@/app-modules/core/services/outbound-api.service';
+import { buildEverwellCompletionEntries, EverwellApiService } from '../everwell/everwell-api.service';
 import {
   ENCRYPTED_KEYS,
   SessionStorageService,
@@ -205,6 +206,7 @@ export class ClosureComponent implements OnInit {
   private readonly callApi = inject(CallApiService);
   private readonly cti = inject(CtiService);
   private readonly outboundApi = inject(OutboundApiService);
+  private readonly everwellApi = inject(EverwellApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
@@ -355,14 +357,17 @@ export class ClosureComponent implements OnInit {
     });
   }
 
-  /** Old `populateCallTypes` — dropdown of group names, minus the "wrapup exceeds" group. */
+  /** Old `populateCallTypes` — dropdown of group names, minus the "wrapup exceeds" group.
+   * On an Everwell call the old app then filtered AGAIN, keeping ONLY "valid". */
   private populateCallTypes(groups: CallTypeGroup[]): void {
     this.callTypeGroups = groups;
-    this.callGroups.set(
-      groups
-        .map((g) => g.callGroupType ?? '')
-        .filter((g) => g && g.toLowerCase() !== 'wrapup exceeds'),
-    );
+    let names = groups
+      .map((g) => g.callGroupType ?? '')
+      .filter((g) => g && g.toLowerCase().trim() !== 'wrapup exceeds');
+    if (this.isEverwell) {
+      names = names.filter((g) => g.toLowerCase().trim() === 'valid');
+    }
+    this.callGroups.set(names);
   }
 
   /**
@@ -592,8 +597,28 @@ export class ClosureComponent implements OnInit {
           });
         return;
       }
-      // Everwell without feedback data posted NOTHING in the old app (silent no-op quirk);
-      // the Phase 8 feedback flow adds the completion branch.
+      // Everwell: one completion entry per family member touched by a saved feedback.
+      // With NO feedback data the old app posted NOTHING at all — the else-if chain simply
+      // ended, so the call never closed (silent no-op quirk, kept).
+      const touched = this.callStore.everwellFeedbackCallData();
+      if (touched.length > 0) {
+        const entries = buildEverwellCompletionEntries(touched, {
+          userId: this.sessionStore.userId(),
+          callId: this.callStore.callId(),
+          callTypeID: request.callTypeID,
+          benCallID: request.benCallID,
+          providerServiceMapID: request.providerServiceMapID,
+          createdBy: this.sessionStore.user()?.userName,
+        });
+        this.everwellApi.completeOutboundCall(entries).subscribe({
+          next: () => this.postCloseCall(request, kind, campaign),
+          error: (err: { status?: number }) => {
+            this.busy.set(false);
+            this.notify.alert(String(err?.status ?? 'error'), 'error');
+          },
+        });
+        return;
+      }
       this.busy.set(false);
       return;
     }
