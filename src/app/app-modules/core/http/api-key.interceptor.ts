@@ -30,7 +30,10 @@ import { AuthService } from '../auth/auth.service';
  */
 export const apiKeyInterceptor: HttpInterceptorFn = (req, next) => {
   const apiKey = inject(AuthService).getApiKey();
-  if (apiKey) {
+  // Platform-feedback is exempt: the old FeedbackService used the BARE Http client (no
+  // wrappers at all), and its categories URL already carries a query string — appending
+  // `?apikey=` here would corrupt `serviceLine` for a logged-in visitor.
+  if (apiKey && !req.url.includes('platform-feedback')) {
     req = req.clone({ url: `${req.url}?apikey=${apiKey}` });
   }
   return next(req);

@@ -202,8 +202,9 @@ export class ShellComponent {
 
   /**
    * Logout — faithful to the old shell: CTI userLogout, clear call flags + apiman key +
-   * language, reset stores, drop the token, then back to login.
-   * (Old app navigated to /feedback?sl=1097; that route isn't migrated yet — TODO restore.)
+   * language, reset stores, drop the token, then land on the public feedback page
+   * (`/feedback?sl=1097`). The old logout deliberately LEFT `userID` in sessionStorage, so
+   * that page can still offer identified feedback — kept.
    */
   protected logout(): void {
     // Old innerpage blocked CO logout during an active call (its own header replaced the
@@ -223,7 +224,8 @@ export class ShellComponent {
     this.storage.removeItem(ENCRYPTED_KEYS.isEverwellCall);
     this.storage.removeItem(ENCRYPTED_KEYS.isGrievanceCall);
     this.storage.removeItem(PLAIN_KEYS.apimanKey);
-    this.storage.removeItem(PLAIN_KEYS.userId);
+    // userID is deliberately NOT removed (old behavior) — /feedback reads it for the
+    // identified-submission consent.
     this.storage.removeItem(ENCRYPTED_KEYS.setLanguage);
     this.storage.removeItem(ENCRYPTED_KEYS.currentRole);
     this.storage.removeItem(ENCRYPTED_KEYS.currentRoleId);
@@ -231,6 +233,6 @@ export class ShellComponent {
     this.auth.removeToken();
     this.sessionStore.reset();
     this.callStore.reset();
-    this.router.navigate(['']);
+    this.router.navigate(['/feedback'], { queryParams: { sl: '1097' } });
   }
 }
