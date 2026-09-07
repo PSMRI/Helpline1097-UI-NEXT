@@ -47,6 +47,16 @@ export interface NotificationCount {
   notificationTypeUnreadCount?: number;
 }
 
+/** One agent notification row from `notification/getAlertsAndNotificationDetail`. */
+export interface UserNotification {
+  userNotificationMapID?: number;
+  notificationState?: string;
+  notification?: {
+    notification?: string;
+    notificationDesc?: string;
+  };
+}
+
 /** A knowledge-management (training) document from `notification/getNotification`. */
 export interface KmDocument {
   notificationID?: number;
@@ -107,6 +117,41 @@ export class NotificationApiService {
     return this.http.post<ApiResponse<KmDocument[]>>(
       `${this.config.commonBaseURL}notification/getNotification`,
       { providerServiceMapID, notificationTypeID, roleIDs: [roleId], validFrom, validTill },
+    );
+  }
+
+  /** POST notification/getAlertsAndNotificationDetail — the agent's rows for one type. */
+  getAlertsAndNotificationDetail(
+    userID: number,
+    roleID: number,
+    notificationTypeID: number,
+    providerServiceMapID: number,
+  ): Observable<ApiResponse<UserNotification[]>> {
+    return this.http.post<ApiResponse<UserNotification[]>>(
+      `${this.config.commonBaseURL}notification/getAlertsAndNotificationDetail`,
+      { userID, roleID, notificationTypeID, providerServiceMapID },
+    );
+  }
+
+  /** POST notification/changeNotificationStatus — mark rows read/unread.
+   * `notficationStatus` (sic) is the backend's field name. */
+  changeNotificationStatus(
+    status: 'read' | 'unread',
+    userNotificationMapIDList: number[],
+  ): Observable<ApiResponse<{ status?: string }>> {
+    return this.http.post<ApiResponse<{ status?: string }>>(
+      `${this.config.commonBaseURL}notification/changeNotificationStatus`,
+      { notficationStatus: status, userNotificationMapIDList },
+    );
+  }
+
+  /** POST notification/markDelete — soft-delete rows for this agent. */
+  markDeleteNotification(
+    userNotificationMapIDList: number[],
+  ): Observable<ApiResponse<{ status?: string }>> {
+    return this.http.post<ApiResponse<{ status?: string }>>(
+      `${this.config.commonBaseURL}notification/markDelete`,
+      { isDeleted: true, userNotificationMapIDList },
     );
   }
 }
