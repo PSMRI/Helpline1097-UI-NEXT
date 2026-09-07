@@ -57,18 +57,7 @@ if (!rawEnvValues.TELEPHONE_SERVER && process.env.TELEPHONY_SERVER) {
   rawEnvValues.TELEPHONE_SERVER = process.env.TELEPHONY_SERVER;
 }
 
-const stringEnvKeys = Object.keys(defaultEnvValues).filter((key) => key !== 'ENABLE_CAPTCHA');
-
-// Pre-serialized for the template's raw `<%- %>` tags (escaping `<%= %>` would
-// HTML-escape `&` in URLs and break the boolean literal).
-const templateValues = {};
-for (const key of stringEnvKeys) {
-  templateValues[key] = JSON.stringify(String(rawEnvValues[key]));
-}
-templateValues.ENABLE_CAPTCHA =
-  rawEnvValues.ENABLE_CAPTCHA === true || rawEnvValues.ENABLE_CAPTCHA === 'true';
-
-const output = ejs.render(environmentTemplate, templateValues);
+const output = ejs.render(environmentTemplate, rawEnvValues);
 fs.writeFileSync(path.join(environmentFilesDirectory, targetEnvironmentFileName), output);
 
 // environment.ts is git-ignored but must exist for the `@env/environment` alias

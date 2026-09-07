@@ -20,16 +20,15 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-// Rendered by scripts/ci-prebuild.js into environment.ci.ts (git-ignored).
-// Values arrive pre-serialized; the raw `<%- %>` tag is required. No secrets here.
-const sessionStorageEncKey = <%- SESSION_STORAGE_ENC_KEY %>;
-const commonAPI = <%- COMMON_API_BASE %>;
-const adminAPI = <%- ADMIN_API_BASE %>;
-const API1097 = <%- API_1097_BASE %>;
-const telephoneServer = <%- TELEPHONE_SERVER %>;
-const siteKey = <%- SITE_KEY %>;
-const captchaChallengeURL = <%- CAPTCHA_CHALLENGE_URL %>;
-const enableCaptcha = <%- ENABLE_CAPTCHA %>;
+// Rendered by scripts/ci-prebuild.js into environment.ci.ts (git-ignored). No secrets here.
+const sessionStorageEncKey = '<%= SESSION_STORAGE_ENC_KEY %>';
+const commonAPI = '<%= COMMON_API_BASE %>';
+const adminAPI = '<%= ADMIN_API_BASE %>';
+const API1097 = '<%= API_1097_BASE %>';
+const telephoneServer = '<%= TELEPHONE_SERVER %>';
+const siteKey = '<%= SITE_KEY %>';
+const captchaChallengeURL = '<%= CAPTCHA_CHALLENGE_URL %>';
+const enableCaptcha = <%= ENABLE_CAPTCHA %>;
 
 export const environment = {
   production: true,
