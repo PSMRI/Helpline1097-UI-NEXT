@@ -54,6 +54,17 @@ const defaultEnvValues = {
 // than passed through as the string "true"/"false"/"".
 const rawEnvValues = Object.assign({}, defaultEnvValues, process.env);
 
+// The OLD Helpline1097-UI pipeline injected these two under different names
+// (HELPLINE1097_API_BASE / TELEPHONY_SERVER); 104-NEXT standardized on
+// API_1097_BASE / TELEPHONE_SERVER. Accept either so both pipeline
+// generations work.
+if (!rawEnvValues.API_1097_BASE && process.env.HELPLINE1097_API_BASE) {
+  rawEnvValues.API_1097_BASE = process.env.HELPLINE1097_API_BASE;
+}
+if (!rawEnvValues.TELEPHONE_SERVER && process.env.TELEPHONY_SERVER) {
+  rawEnvValues.TELEPHONE_SERVER = process.env.TELEPHONY_SERVER;
+}
+
 const stringEnvKeys = Object.keys(defaultEnvValues).filter((key) => key !== 'ENABLE_CAPTCHA');
 
 // The template inserts these via EJS's raw `<%- %>` tag (not the escaping

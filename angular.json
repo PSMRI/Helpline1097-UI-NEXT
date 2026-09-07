@@ -21,6 +21,10 @@
           "builder": "@angular/build:application",
           "options": {
             "browser": "src/main.ts",
+            "outputPath": {
+              "base": "dist/helpline1097-ui-next",
+              "browser": ""
+            },
             "polyfills": [],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
@@ -65,6 +69,7 @@
               ]
             },
             "ci": {
+              "baseHref": "/1097/",
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",

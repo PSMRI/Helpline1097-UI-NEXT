@@ -5,7 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "build-ci": "node scripts/ci-prebuild.js && ng build --configuration=production,ci",
+    "build-ci": "node scripts/ci-prebuild.js && ng build --configuration=production,ci && node scripts/ci-postbuild.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "verify:nostub": "node scripts/verify-nostub.mjs",
