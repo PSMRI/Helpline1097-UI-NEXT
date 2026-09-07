@@ -124,6 +124,15 @@ export const routes: Routes = [
         canActivate: [authGuard, roleSelectedGuard],
         data: { title: 'Outbound Worklist' },
       },
+      {
+        // Old `superAdmin` — the admin/super-admin console. Faithful to the old route, this
+        // carries NO guard and has NO menu entry anywhere, so it is reachable only by typing
+        // the URL (the old app's only link to it was dead code). Approved as-is.
+        path: 'superAdmin',
+        loadComponent: () =>
+          import('./app-modules/admin/super-admin.component').then((m) => m.SuperAdminComponent),
+        data: { title: 'Admin' },
+      },
     ],
   },
 ];
