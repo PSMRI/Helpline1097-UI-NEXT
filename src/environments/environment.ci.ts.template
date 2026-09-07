@@ -20,16 +20,21 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-// CI template. The CI pipeline substitutes the <%= ... %> tokens and writes
-// environment.ci.ts (git-ignored) before building with `--configuration ci`.
-const sessionStorageEncKey = '<%= SESSION_STORAGE_ENC_KEY %>';
-const commonAPI = '<%= COMMON_API_BASE %>';
-const adminAPI = '<%= ADMIN_API_BASE %>';
-const API1097 = '<%= HELPLINE1097_API_BASE %>';
-const telephoneServer = '<%= TELEPHONY_SERVER %>';
-const siteKey = '<%= SITE_KEY %>';
-const captchaChallengeURL = '<%= CAPTCHA_CHALLENGE_URL %>';
-const enableCaptcha = <%= ENABLE_CAPTCHA %>;
+// CI template. `scripts/ci-prebuild.js` substitutes the EJS tokens below from the
+// deploy pipeline's env vars and writes environment.ci.ts (git-ignored), which the
+// `ci` build configuration file-replaces in. Do not put real secrets here.
+
+// Values are pre-serialized (JSON.stringify'd strings, real booleans) by
+// ci-prebuild.js and inserted via EJS's raw `<%- %>` tag — the escaping `<%= %>`
+// tag would HTML-entity-escape `&`/quotes inside URLs and break the boolean.
+const sessionStorageEncKey = <%- SESSION_STORAGE_ENC_KEY %>;
+const commonAPI = <%- COMMON_API_BASE %>;
+const adminAPI = <%- ADMIN_API_BASE %>;
+const API1097 = <%- API_1097_BASE %>;
+const telephoneServer = <%- TELEPHONE_SERVER %>;
+const siteKey = <%- SITE_KEY %>;
+const captchaChallengeURL = <%- CAPTCHA_CHALLENGE_URL %>;
+const enableCaptcha = <%- ENABLE_CAPTCHA %>;
 
 export const environment = {
   production: true,
