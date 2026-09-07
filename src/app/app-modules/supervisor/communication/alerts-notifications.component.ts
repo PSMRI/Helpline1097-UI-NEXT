@@ -60,6 +60,20 @@ function inputDay(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+/**
+ * `yyyy-MM-dd` / `HH:mm` from a stored timestamp's UTC wall-clock. The list renders these
+ * values with `date: … : 'UTC'` and the old edit form read them the same way (`transformDatetoUTC`
+ * plus a raw `split('T')[1]` on the ISO string) — reading them with local getters would prefill
+ * (and re-post) times shifted by the timezone offset.
+ */
+function utcDay(d: Date): string {
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+
+function utcTime(d: Date): string {
+  return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+}
+
 /** Local Date at a given time-of-day for a `yyyy-MM-dd` (+ optional `HH:mm`) pair. */
 function dateAt(dateStr: string, time: string | null, fallback: [number, number, number]): Date {
   const d = localDate(dateStr);
@@ -239,16 +253,14 @@ export class AlertsNotificationsComponent implements OnInit {
     this.editing.set(row);
     const from = row.validFrom ? new Date(row.validFrom) : new Date();
     const till = row.validTill ? new Date(row.validTill) : new Date();
-    const hhmm = (d: Date) =>
-      `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     this.form.reset({
       notificationType: String(row.notificationTypeID),
       role: row.roleID != null ? String(row.roleID) : '',
       offices: [],
-      startDate: inputDay(from),
-      startTime: hhmm(from),
-      endDate: inputDay(till),
-      endTime: hhmm(till),
+      startDate: utcDay(from),
+      startTime: utcTime(from),
+      endDate: utcDay(till),
+      endTime: utcTime(till),
       subject: row.notification ?? '',
       message: row.notificationDesc ?? '',
     });
@@ -316,7 +328,9 @@ export class AlertsNotificationsComponent implements OnInit {
       notification: v.subject.trim() || null,
       notificationDesc: v.message.trim() || null,
       validFrom: tzShift(dateAt(v.startDate, v.startTime || null, [0, 0, 0])),
-      validTill: tzShift(dateAt(v.endDate, v.endTime || null, [0, 0, 0])),
+      // Blank End Time falls back to end-of-day (old app set 23:59:59), NOT midnight —
+      // a midnight fallback would create an already-expired validity window.
+      validTill: tzShift(dateAt(v.endDate, v.endTime || null, [23, 59, 59])),
     };
     if (roleId !== undefined) {
       base['roleID'] = roleId;
@@ -355,7 +369,9 @@ export class AlertsNotificationsComponent implements OnInit {
       return;
     }
     const start = dateAt(v.startDate, v.startTime || null, [0, 0, 0]);
-    const end = dateAt(v.endDate, v.endTime || null, [0, 0, 0]);
+    // Same end-of-day fallback as create() — old `editAlertNotification` set 23:59:59 when
+    // End Time was blank, and the start/end comparison below is driven off that value.
+    const end = dateAt(v.endDate, v.endTime || null, [23, 59, 59]);
     if (end <= start) {
       this.notify.alert('End date must be after start date', 'info');
       return;
