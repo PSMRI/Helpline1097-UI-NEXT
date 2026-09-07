@@ -20,13 +20,8 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-// CI template. `scripts/ci-prebuild.js` substitutes the EJS tokens below from the
-// deploy pipeline's env vars and writes environment.ci.ts (git-ignored), which the
-// `ci` build configuration file-replaces in. Do not put real secrets here.
-
-// Values are pre-serialized (JSON.stringify'd strings, real booleans) by
-// ci-prebuild.js and inserted via EJS's raw `<%- %>` tag — the escaping `<%= %>`
-// tag would HTML-entity-escape `&`/quotes inside URLs and break the boolean.
+// Rendered by scripts/ci-prebuild.js into environment.ci.ts (git-ignored).
+// Values arrive pre-serialized; the raw `<%- %>` tag is required. No secrets here.
 const sessionStorageEncKey = <%- SESSION_STORAGE_ENC_KEY %>;
 const commonAPI = <%- COMMON_API_BASE %>;
 const adminAPI = <%- ADMIN_API_BASE %>;

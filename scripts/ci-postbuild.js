@@ -22,10 +22,8 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-// The old Helpline1097-UI build-ci ended with `mkdir -p dist/WEB-INF && cp -R
-// WEB-INF/* dist/WEB-INF/` so the JBoss deployment picks up jboss-web.xml
-// (context-root /1097 — the path the UAT app serves under). Node instead of
-// shell so the step also works on Windows.
+// Copies WEB-INF (jboss-web.xml, context-root /1097) into dist — the old
+// build-ci's `cp -R WEB-INF/* dist/WEB-INF/` step the JBoss deployment needs.
 
 const fs = require('fs');
 const path = require('path');

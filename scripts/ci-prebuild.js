@@ -31,7 +31,6 @@ const environmentFilesDirectory = path.join(__dirname, '../src/environments');
 const targetEnvironmentTemplateFileName = 'environment.ci.ts.template';
 const targetEnvironmentFileName = 'environment.ci.ts';
 
-// Load template file
 const environmentTemplate = fs.readFileSync(
   path.join(environmentFilesDirectory, targetEnvironmentTemplateFileName),
   { encoding: 'utf-8' },
@@ -48,16 +47,9 @@ const defaultEnvValues = {
   ENABLE_CAPTCHA: false,
 };
 
-// Let real process.env values (injected by the deploy pipeline per target
-// environment) override the defaults above. process.env entries are always
-// strings, so ENABLE_CAPTCHA is normalized to an actual boolean below rather
-// than passed through as the string "true"/"false"/"".
 const rawEnvValues = Object.assign({}, defaultEnvValues, process.env);
 
-// The OLD Helpline1097-UI pipeline injected these two under different names
-// (HELPLINE1097_API_BASE / TELEPHONY_SERVER); 104-NEXT standardized on
-// API_1097_BASE / TELEPHONE_SERVER. Accept either so both pipeline
-// generations work.
+// Old-1097 pipeline env names accepted alongside the 104-NEXT ones.
 if (!rawEnvValues.API_1097_BASE && process.env.HELPLINE1097_API_BASE) {
   rawEnvValues.API_1097_BASE = process.env.HELPLINE1097_API_BASE;
 }
@@ -67,10 +59,8 @@ if (!rawEnvValues.TELEPHONE_SERVER && process.env.TELEPHONY_SERVER) {
 
 const stringEnvKeys = Object.keys(defaultEnvValues).filter((key) => key !== 'ENABLE_CAPTCHA');
 
-// The template inserts these via EJS's raw `<%- %>` tag (not the escaping
-// `<%= %>` tag), so pre-serialize here: JSON.stringify gives each string a
-// valid, self-quoting TS string literal (preserving `&`/quotes in URLs
-// untouched), and ENABLE_CAPTCHA becomes a bare `true`/`false` literal.
+// Pre-serialized for the template's raw `<%- %>` tags (escaping `<%= %>` would
+// HTML-escape `&` in URLs and break the boolean literal).
 const templateValues = {};
 for (const key of stringEnvKeys) {
   templateValues[key] = JSON.stringify(String(rawEnvValues[key]));
@@ -78,17 +68,11 @@ for (const key of stringEnvKeys) {
 templateValues.ENABLE_CAPTCHA =
   rawEnvValues.ENABLE_CAPTCHA === true || rawEnvValues.ENABLE_CAPTCHA === 'true';
 
-// Generate output data
 const output = ejs.render(environmentTemplate, templateValues);
-// Write environment file
 fs.writeFileSync(path.join(environmentFilesDirectory, targetEnvironmentFileName), output);
 
-// The `ci` build configuration's fileReplacements entry swaps
-// environment.ts's content for environment.ci.ts's at bundle time, but
-// TypeScript resolves the `@env/environment` path alias to environment.ts
-// before that swap happens, so the file must exist on disk (its content is
-// irrelevant — it's replaced before compilation reads it). It's git-ignored,
-// so a fresh checkout otherwise has no such file at all.
+// environment.ts is git-ignored but must exist for the `@env/environment` alias
+// to resolve; the ci fileReplacement swaps its content before compilation.
 const placeholderEnvironmentPath = path.join(environmentFilesDirectory, 'environment.ts');
 if (!fs.existsSync(placeholderEnvironmentPath)) {
   fs.writeFileSync(placeholderEnvironmentPath, '');
