@@ -25,6 +25,8 @@ import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowLeftRight, lucideLayoutDashboard } from '@ng-icons/lucide';
 
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
+
 /**
  * Dashboard left navigation rail — always-visible slim icon bar, matching the
  * reviewer-approved Helpline104 design (light gray, full height, icon + tooltip):
@@ -35,7 +37,7 @@ import { lucideArrowLeftRight, lucideLayoutDashboard } from '@ng-icons/lucide';
  */
 @Component({
   selector: 'app-dashboard-sidebar',
-  imports: [NgIcon],
+  imports: [NgIcon, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucideArrowLeftRight, lucideLayoutDashboard })],
   template: `
@@ -47,8 +49,8 @@ import { lucideArrowLeftRight, lucideLayoutDashboard } from '@ng-icons/lucide';
         <button
           type="button"
           class="flex h-10 w-10 items-center justify-center rounded-md hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          title="Activity Area"
-          aria-label="Activity Area"
+          [title]="'activityArea' | t"
+          [attr.aria-label]="'activityArea' | t"
           (click)="goToActivityArea()"
         >
           <ng-icon name="lucideLayoutDashboard" size="22" aria-hidden="true" />
@@ -58,8 +60,8 @@ import { lucideArrowLeftRight, lucideLayoutDashboard } from '@ng-icons/lucide';
       <button
         type="button"
         class="flex h-10 w-10 items-center justify-center rounded-md hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        title="Switch Role"
-        aria-label="Switch Role"
+        [title]="'switchRole' | t"
+        [attr.aria-label]="'switchRole' | t"
         (click)="goToRoleSelection()"
       >
         <ng-icon name="lucideArrowLeftRight" size="22" aria-hidden="true" />

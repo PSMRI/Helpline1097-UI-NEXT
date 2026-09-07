@@ -49,7 +49,9 @@ import {
   PLAIN_KEYS,
   SessionStorageService,
 } from '@/app-modules/core/services/session-storage.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { CallStore } from '@/app-modules/core/state/call.store';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 import { UiStore } from '@/app-modules/core/state/ui.store';
 
@@ -67,7 +69,7 @@ import { VersionDialogComponent } from './version-dialog.component';
  */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, NgIcon, ...ZardSelectImports, ...menuImports],
+  imports: [RouterOutlet, NgIcon, TranslatePipe, ...ZardSelectImports, ...menuImports],
   templateUrl: './shell.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
@@ -84,6 +86,9 @@ export class ShellComponent {
   constructor() {
     // Shell-wide CZentrix call-event listener (see CtiCallEventsService for why).
     this.ctiEvents.attach(this.shellDestroyRef);
+    // Old multi-role-screen ngOnInit: fetch the language list, then load the persisted (or
+    // default) language — i18n starts here, never on the login page.
+    this.lang.init();
 
     // Old multi-role-screen back-button blocker: any browser-back inside the
     // authenticated shell is bounced forward (protects in-call state). Old attached it
@@ -104,9 +109,15 @@ export class ShellComponent {
 
   protected readonly appVersion = APP_VERSION;
 
-  // Language selector is display-only for now (persists the choice); the backend-driven
-  // language list + actual i18n translation arrive in a later phase.
-  protected readonly languages = ['English', 'Hindi', 'Assamese'];
+  protected readonly lang = inject(LanguageStore);
+
+  /** Old dropdown iterated the backend `languageArray` by `languageName` — nothing hardcoded. */
+  protected readonly languages = computed(() =>
+    this.lang
+      .languageList()
+      .map((l) => l.languageName)
+      .filter((n): n is string => !!n),
+  );
 
   protected readonly userName = computed(() => this.sessionStore.user()?.userName ?? '');
 
@@ -167,8 +178,12 @@ export class ShellComponent {
     this.barMinimized.set(!this.barMinimized());
   }
 
+  /** Old selector `(change)="changeLanguage(app_language)"` — loads + persists + broadcasts. */
   protected onLanguageChange(value: string | string[]): void {
-    this.ui.setLanguage(Array.isArray(value) ? (value[0] ?? '') : value);
+    const language = Array.isArray(value) ? (value[0] ?? '') : value;
+    if (language) {
+      this.lang.changeLanguage(language);
+    }
   }
 
   /** Help → Version: UI vs API build info (old `viewVersionDetails`). */
@@ -218,7 +233,7 @@ export class ShellComponent {
     // Old innerpage blocked CO logout during an active call (its own header replaced the
     // shell's mid-call; ours stays visible, so the check lives here).
     if (this.isCO() && this.storage.getItem(ENCRYPTED_KEYS.isOnCall) === 'yes') {
-      this.notify.alert('Cannot logout during an active call.', 'warning');
+      this.notify.alert(this.lang.t('cannotLogoutDuringActiveCall'), 'warning');
       return;
     }
     this.cti.userLogout().subscribe({

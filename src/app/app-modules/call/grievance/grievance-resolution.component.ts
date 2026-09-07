@@ -40,6 +40,7 @@ import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-i
 import { TEXTAREA_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { OutboundApiService } from '@/app-modules/core/services/outbound-api.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
@@ -59,22 +60,22 @@ const RESOLUTION_OPTIONS = ['Resolved', 'Unresolved'];
  */
 @Component({
   selector: 'app-grievance-resolution',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, TranslatePipe, ...ZardSelectImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-4">
       <!-- Complaint (read-only, from the outbound hand-off) -->
       <div class="grid gap-3 sm:grid-cols-2">
         <div class="flex flex-col gap-1 text-sm">
-          <span class="text-muted-foreground">Subject of Complaint</span>
+          <span class="text-muted-foreground">{{ 'subjectOfComplaint' | t }}</span>
           <span class="font-medium">{{ complaintSubject() || '—' }}</span>
         </div>
         <div class="flex flex-col gap-1 text-sm">
-          <span class="text-muted-foreground">Complaint ID</span>
+          <span class="text-muted-foreground">{{ 'complaintID' | t }}</span>
           <span class="font-medium">{{ complaintID() ?? '—' }}</span>
         </div>
         <div class="flex flex-col gap-1 text-sm sm:col-span-2">
-          <span class="text-muted-foreground">Complaint</span>
+          <span class="text-muted-foreground">{{ 'complaint' | t }}</span>
           <span class="whitespace-pre-line font-medium">{{ complaint() || '—' }}</span>
         </div>
       </div>
@@ -86,10 +87,10 @@ const RESOLUTION_OPTIONS = ['Resolved', 'Unresolved'];
             <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
                 <th class="px-3 py-2">S.No</th>
-                <th class="px-3 py-2">Date</th>
-                <th class="px-3 py-2">Comments</th>
-                <th class="px-3 py-2">Status</th>
-                <th class="px-3 py-2">Action Taken By</th>
+                <th class="px-3 py-2">{{ 'date' | t }}</th>
+                <th class="px-3 py-2">{{ 'comments' | t }}</th>
+                <th class="px-3 py-2">{{ 'status' | t }}</th>
+                <th class="px-3 py-2">{{ 'actionTakenBy' | t }}</th>
                 <th class="px-3 py-2">File</th>
               </tr>
             </thead>
@@ -121,15 +122,15 @@ const RESOLUTION_OPTIONS = ['Resolved', 'Unresolved'];
       <!-- Resolution form -->
       <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3 sm:grid-cols-2">
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Resolution <span class="text-destructive">*</span></span>
-          <z-select formControlName="complaintResolution" zPlaceholder="Select resolution">
+          <span>{{ 'complaintResolution' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="complaintResolution" [zPlaceholder]="'complaintResolution' | t">
             @for (r of resolutionOptions; track r) {
               <z-select-item [zValue]="r">{{ r }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
-          <span>Remarks</span>
+          <span>{{ 'remarks' | t }}</span>
           <textarea
             z-input
             formControlName="remark"
@@ -142,7 +143,7 @@ const RESOLUTION_OPTIONS = ['Resolved', 'Unresolved'];
         </label>
         <div class="flex items-end justify-end sm:col-span-2">
           <button z-button type="submit" [zDisabled]="form.invalid" [zLoading]="saving()">
-            Submit Resolution
+            {{ 'submit' | t }}
           </button>
         </div>
       </form>

@@ -26,13 +26,15 @@ import { lucideStar } from '@ng-icons/lucide';
 
 import { cardImports } from '@common-ui/ui/card';
 
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
+
 /**
  * Rating panel — a placeholder in the OLD app too (no live data wired). Kept as a
  * faithful placeholder until a real rating feature is migrated.
  */
 @Component({
   selector: 'app-rating-panel',
-  imports: [...cardImports, NgIcon],
+  imports: [...cardImports, NgIcon, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucideStar })],
   template: `
@@ -40,7 +42,7 @@ import { cardImports } from '@common-ui/ui/card';
       <z-card-header class="border-b pb-3">
         <z-card-title class="flex items-center gap-2 text-base font-semibold">
           <ng-icon name="lucideStar" class="text-lg text-primary" />
-          Rating
+          {{ 'rating' | t }}
         </z-card-title>
       </z-card-header>
       <z-card-content class="pt-4">

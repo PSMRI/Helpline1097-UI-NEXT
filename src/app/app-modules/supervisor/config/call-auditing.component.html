@@ -22,19 +22,19 @@
 
 @if (!caseSheet()) {
   <div class="flex flex-col gap-4">
-    <h2 class="text-base font-semibold">Call Auditing</h2>
+    <h2 class="text-base font-semibold">{{ 'callAuditing' | t }}</h2>
 
     <form class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" [formGroup]="form">
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Start Date <span class="text-destructive">*</span></span>
+        <span>{{ 'validFrom' | t }} <span class="text-destructive">*</span></span>
         <input z-input formControlName="startDate" type="date" [max]="maxDay" (change)="onStartDateChange()" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>End Date <span class="text-destructive">*</span></span>
+        <span>{{ 'validTill' | t }} <span class="text-destructive">*</span></span>
         <input z-input formControlName="endDate" type="date" [min]="form.controls.startDate.value" [max]="maxDay" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Service Line <span class="text-destructive">*</span></span>
+        <span>{{ 'serviceLine' | t }} <span class="text-destructive">*</span></span>
         <z-select formControlName="serviceLine" zPlaceholder="Select">
           @for (s of serviceLines(); track s.serviceID) {
             <z-select-item [zValue]="s.serviceID + ''">{{ s.serviceName }}</z-select-item>
@@ -42,37 +42,42 @@
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Role</span>
-        <z-select formControlName="role" zPlaceholder="All" (zValueChange)="onRoleChange($event)">
-          <z-select-item zValue="">All</z-select-item>
+        <span>{{ 'role' | t }}</span>
+        <z-select formControlName="role" [zPlaceholder]="'all' | t" (zValueChange)="onRoleChange($event)">
+          <z-select-item zValue="">{{ 'all' | t }}</z-select-item>
           @for (r of roles(); track r.roleID) {
             <z-select-item [zValue]="r.roleName + ''">{{ r.roleName }}</z-select-item>
           }
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Inbound / Outbound</span>
-        <z-select formControlName="inboundOutbound" zPlaceholder="All">
-          <z-select-item zValue="">All</z-select-item>
-          <z-select-item zValue="inbound">Inbound</z-select-item>
-          <z-select-item zValue="outbound">Outbound</z-select-item>
+        <span>{{ 'inboundOrOutboundCall' | t }}</span>
+        <!-- z-select-item reads its label ONCE from the DOM (Common-UI `linkedSignal`, no
+             reactive dep), so the TRIGGER text for a selected option keeps the language that was
+             active when the list first rendered. The open list re-renders fine, and the "" option
+             is unselectable (selectItem rejects ''), so only inbound/outbound can go stale.
+             Needs the Common-UI fix, not a per-template workaround. -->
+        <z-select formControlName="inboundOutbound" [zPlaceholder]="'all' | t">
+          <z-select-item zValue="">{{ 'all' | t }}</z-select-item>
+          <z-select-item zValue="inbound">{{ 'inbound' | t }}</z-select-item>
+          <z-select-item zValue="outbound">{{ 'outbound' | t }}</z-select-item>
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Agent</span>
-        <z-select formControlName="agent" zPlaceholder="All">
-          <z-select-item zValue="">All</z-select-item>
+        <span>{{ 'agent' | t }}</span>
+        <z-select formControlName="agent" [zPlaceholder]="'all' | t">
+          <z-select-item zValue="">{{ 'all' | t }}</z-select-item>
           @for (a of agents(); track a.agentID) {
             <z-select-item [zValue]="a.agentID + ''">{{ a.agentID }}</z-select-item>
           }
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Beneficiary Phone No</span>
+        <span>{{ 'beneficiaryPhoneNo' | t }}</span>
         <input z-input formControlName="benPhoneNo" [appRestrictInput]="mobileNumberBlock" inputmode="numeric" maxlength="10" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Call Type <span class="text-destructive">*</span></span>
+        <span>{{ 'callType' | t }} <span class="text-destructive">*</span></span>
         <z-select formControlName="callType" zPlaceholder="Select" (zValueChange)="onCallTypeChange($event)">
           @for (g of callGroups(); track g.callGroupType) {
             <z-select-item [zValue]="g.callGroupType + ''">{{ g.callGroupType }}</z-select-item>
@@ -80,7 +85,7 @@
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Call Sub Type <span class="text-destructive">*</span></span>
+        <span>{{ 'callSubType' | t }} <span class="text-destructive">*</span></span>
         <z-select formControlName="callSubType" zPlaceholder="Select" [zDisabled]="form.controls.callSubType.disabled">
           @for (st of callSubTypes(); track st.callTypeID) {
             <z-select-item [zValue]="st.callTypeID + ''">{{ st.callType }}</z-select-item>
@@ -94,7 +99,7 @@
           [zDisabled]="form.invalid || searching() || form.controls.endDate.value < form.controls.startDate.value"
           (click)="search()"
         >
-          Search
+          {{ 'search' | t }}
         </button>
         <button z-button zType="outline" type="button" (click)="reset()">Reset</button>
       </div>
@@ -104,16 +109,16 @@
       <table class="w-full text-sm">
         <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
           <tr>
-            <th class="px-3 py-2">S.No</th>
-            <th class="px-3 py-2">Call Id</th>
-            <th class="px-3 py-2">Call Date &amp; Time</th>
-            <th class="px-3 py-2">Beneficiary Id</th>
-            <th class="px-3 py-2">Beneficiary Name</th>
-            <th class="px-3 py-2">Phone No</th>
-            <th class="px-3 py-2">Remarks</th>
-            <th class="px-3 py-2">Call Type</th>
-            <th class="px-3 py-2">Case Sheet</th>
-            <th class="px-3 py-2">Voice Record</th>
+            <th class="px-3 py-2">{{ 'sno' | t }}</th>
+            <th class="px-3 py-2">{{ 'callId' | t }}</th>
+            <th class="px-3 py-2">{{ 'callDateandTime' | t }}</th>
+            <th class="px-3 py-2">{{ 'beneficiaryId' | t }}</th>
+            <th class="px-3 py-2">{{ 'beneficiaryName' | t }}</th>
+            <th class="px-3 py-2">{{ 'beneficiaryPhoneNo' | t }}</th>
+            <th class="px-3 py-2">{{ 'callRemarks' | t }}</th>
+            <th class="px-3 py-2">{{ 'callType' | t }}</th>
+            <th class="px-3 py-2">{{ 'caseSheet' | t }}</th>
+            <th class="px-3 py-2">{{ 'voiceRecord' | t }}</th>
           </tr>
         </thead>
         <tbody>
@@ -129,7 +134,7 @@
               <td class="px-3 py-2">{{ rec.callType }}</td>
               <td class="px-3 py-2">
                 <button class="text-primary underline" type="button" (click)="openCaseSheet(rec)">
-                  View
+                  {{ 'view' | t }}
                 </button>
               </td>
               <td class="px-3 py-2">
@@ -140,14 +145,14 @@
                   </audio>
                 } @else {
                   <button class="text-primary underline" type="button" (click)="playAudio(rec, $index)">
-                    Play
+                    {{ 'play' | t }}
                   </button>
                 }
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="10" class="px-3 py-6 text-center text-muted-foreground">No Records Found</td>
+              <td colspan="10" class="px-3 py-6 text-center text-muted-foreground">{{ 'noRecordsFound' | t }}</td>
             </tr>
           }
         </tbody>
@@ -168,7 +173,7 @@
           [zDisabled]="pageNo() >= pageCount()"
           (click)="nextPage()"
         >
-          Next
+          {{ 'next' | t }}
         </button>
       </div>
     }
@@ -178,7 +183,7 @@
   <div class="flex flex-col gap-4">
     <div class="flex items-center justify-between gap-3">
       <div>
-        <h2 class="text-base font-semibold">Case Sheet</h2>
+        <h2 class="text-base font-semibold">{{ 'caseSheet' | t }}</h2>
         <!-- Old "Service Type 1097" sub-heading + the date stamp (deliberately PRINTED,
              LOCAL time — the old li carried no noprint). -->
         <div class="text-sm font-semibold">Service Type 1097</div>
@@ -187,7 +192,7 @@
       <!-- Old noprint chrome — hidden in the printed sheet. -->
       <div class="flex gap-2 print:hidden">
         <button z-button type="button" (click)="print()">Print</button>
-        <button z-button zType="outline" type="button" (click)="closeCaseSheet()">Back</button>
+        <button z-button zType="outline" type="button" (click)="closeCaseSheet()">{{ 'back' | t }}</button>
       </div>
     </div>
 
@@ -195,7 +200,7 @@
          beneficiaryModel exactly like the old benData reads. -->
     @if (caseSheetBen(); as ben) {
       <div class="rounded-md border border-border p-3 text-sm">
-        <h3 class="mb-2 font-semibold">Beneficiary Details</h3>
+        <h3 class="mb-2 font-semibold">{{ 'beneficiaryDetails' | t }}</h3>
         <div class="grid gap-2 sm:grid-cols-2">
           <div><strong>Call Id :</strong> {{ ben.benCallID }}</div>
           <div><strong>Agent Id :</strong> {{ ben.agentID }}</div>
@@ -224,7 +229,7 @@
         <h3 class="font-semibold">Service Requested</h3>
         @if (infoItems().length > 0) {
           <div class="rounded-md border border-border p-3 text-sm">
-            <h4 class="mb-2 font-semibold">Information Service</h4>
+            <h4 class="mb-2 font-semibold">{{ 'informationService' | t }}</h4>
             @for (item of infoItems(); track $index) {
               <div class="grid gap-2 border-t border-border/60 py-2 first:border-t-0 sm:grid-cols-2">
                 <div><strong>Category :</strong> {{ item.categoryDetails?.categoryName }}</div>
@@ -235,7 +240,7 @@
         }
         @if (counsellingItems().length > 0) {
           <div class="rounded-md border border-border p-3 text-sm">
-            <h4 class="mb-2 font-semibold">Counselling Service</h4>
+            <h4 class="mb-2 font-semibold">{{ 'counsellingService' | t }}</h4>
             @for (item of counsellingItems(); track $index) {
               <div class="grid gap-2 border-t border-border/60 py-2 first:border-t-0 sm:grid-cols-2">
                 <div><strong>Category :</strong> {{ item.categoryDetails?.categoryName }}</div>
@@ -246,7 +251,7 @@
         }
         @if (feedbackItems().length > 0) {
           <div class="rounded-md border border-border p-3 text-sm">
-            <h4 class="mb-2 font-semibold">Feedback Service</h4>
+            <h4 class="mb-2 font-semibold">{{ 'feedbackService' | t }}</h4>
             @for (item of feedbackItems(); track $index) {
               <div class="grid gap-2 border-t border-border/60 py-2 first:border-t-0 sm:grid-cols-2">
                 <div><strong>State :</strong> {{ item.states?.stateName }}</div>
@@ -269,7 +274,7 @@
         }
         @if (referralItems().length > 0) {
           <div class="rounded-md border border-border p-3 text-sm">
-            <h4 class="mb-2 font-semibold">Referral Service</h4>
+            <h4 class="mb-2 font-semibold">{{ 'referralService' | t }}</h4>
             <!-- Old bindings here had NO null-safety and threw on a sparse referral record,
                  blanking the sheet; `?.` renders blanks instead (declared deviation). -->
             @for (item of referralItems(); track $index) {

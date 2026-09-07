@@ -37,6 +37,7 @@ import {
   NotificationType,
 } from '@/app-modules/core/services/notification-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /** Rows in old panel order; `key` = count/config type, `msgType` = old dialog msg_type. */
@@ -53,7 +54,7 @@ const ROWS = [
  */
 @Component({
   selector: 'app-alerts-panel',
-  imports: [...cardImports, NgIcon],
+  imports: [...cardImports, NgIcon, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucideBell })],
   template: `
@@ -61,7 +62,7 @@ const ROWS = [
       <z-card-header class="border-b pb-3">
         <z-card-title class="flex items-center gap-2 text-base font-semibold">
           <ng-icon name="lucideBell" class="text-lg text-primary" />
-          Alerts &amp; Notifications
+          {{ 'alertsAndNotifications' | t }}
         </z-card-title>
       </z-card-header>
       <z-card-content class="flex flex-col gap-1 pt-4">

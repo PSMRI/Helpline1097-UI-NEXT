@@ -27,6 +27,7 @@ import { ZardTabComponent, ZardTabGroupComponent } from '@common-ui/ui/tabs';
 import { EverwellWorklistTabComponent } from './everwell-worklist-tab.component';
 import { GenericWorklistComponent } from './generic-worklist.component';
 import { GrievanceWorklistComponent } from './grievance-worklist.component';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 
 /** Outbound worklists hub (old `OutboundCallWorklistsComponent`) — generic / Everwell /
  * grievance tabs; the shell CTI listener opens the call screen after a dial connects. */
@@ -38,18 +39,19 @@ import { GrievanceWorklistComponent } from './grievance-worklist.component';
     GenericWorklistComponent,
     EverwellWorklistTabComponent,
     GrievanceWorklistComponent,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex min-h-full flex-col p-4 md:p-6">
       <z-tab-group>
-        <z-tab label="Outbound Worklist">
+        <z-tab [label]="'outboundWorklist' | t">
           <app-generic-worklist />
         </z-tab>
-        <z-tab label="Everwell Outbound Worklist">
+        <z-tab [label]="'everwellOutboundWorkList' | t">
           <app-everwell-worklist-tab />
         </z-tab>
-        <z-tab label="Grievance Outbound Worklist">
+        <z-tab [label]="'grievanceOutboundWorklist' | t">
           <app-grievance-worklist />
         </z-tab>
       </z-tab-group>

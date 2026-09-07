@@ -26,6 +26,7 @@ import { CtiService } from '@/app-modules/core/services/cti.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { SessionStorageService } from '@/app-modules/core/services/session-storage.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 
 /**
  * Shared worklist-dial handshake (old `manualDialaNumber` success handling). `cli` is set
@@ -37,12 +38,13 @@ export class OutboundDialService {
   private readonly notify = inject(NotificationService);
   private readonly storage = inject(SessionStorageService);
   private readonly callStore = inject(CallStore);
+  private readonly lang = inject(LanguageStore);
 
   dial(phone: string, flagKey?: string): void {
     this.cti.dialBeneficiary(phone).subscribe({
       next: (res) => {
         if (((res as { status?: string })?.status ?? '').toLowerCase() === 'fail') {
-          this.notify.alert('Something went wrong in calling', 'error');
+          this.notify.alert(this.lang.t('somethingWentWrongInCalling'), 'error');
           return;
         }
         this.callStore.cli.set(phone);
@@ -52,7 +54,7 @@ export class OutboundDialService {
         }
       },
       error: (err: { errorMessage?: string }) =>
-        this.notify.alert(err?.errorMessage ?? 'Something went wrong in calling', 'error'),
+        this.notify.alert(err?.errorMessage ?? this.lang.t('somethingWentWrongInCalling'), 'error'),
     });
   }
 }

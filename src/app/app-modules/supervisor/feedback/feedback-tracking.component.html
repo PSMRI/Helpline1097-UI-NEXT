@@ -22,37 +22,37 @@
 
 <div class="flex flex-col gap-4">
   <div class="flex items-center justify-between gap-3">
-    <h2 class="text-base font-semibold">Feedback Tracking</h2>
+    <h2 class="text-base font-semibold">{{ 'feedbackTracking' | t }}</h2>
     @if (mode() !== 'view') {
-      <button z-button zType="outline" type="button" (click)="backToList()">Back to List</button>
+      <button z-button zType="outline" type="button" (click)="backToList()">{{ 'back' | t }}</button>
     }
   </div>
 
   @if (mode() === 'view') {
     <form class="flex flex-wrap items-end gap-3" [formGroup]="searchForm">
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Start Date <span class="text-destructive">*</span></span>
+        <span>{{ 'startDate' | t }} <span class="text-destructive">*</span></span>
         <input z-input formControlName="startDate" type="date" [max]="today" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>End Date <span class="text-destructive">*</span></span>
+        <span>{{ 'endDate' | t }} <span class="text-destructive">*</span></span>
         <input z-input formControlName="endDate" type="date" [min]="searchForm.controls.startDate.value" [max]="today" />
       </label>
       <label class="flex min-w-44 flex-col gap-1.5 text-sm">
-        <span>Feedback Type</span>
-        <z-select formControlName="feedbackTypeID" zPlaceholder="All">
-          <z-select-item zValue="">All</z-select-item>
+        <span>{{ 'feedbackType' | t }}</span>
+        <z-select formControlName="feedbackTypeID" [zPlaceholder]="'all' | t">
+          <z-select-item zValue="">{{ 'all' | t }}</z-select-item>
           @for (t of feedbackTypes(); track t.feedbackTypeID) {
             <z-select-item [zValue]="t.feedbackTypeID + ''">{{ t.feedbackTypeName }}</z-select-item>
           }
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Complaint Id</span>
+        <span>{{ 'enterFeedbackId' | t }}</span>
         <input z-input formControlName="requestID" maxlength="30" />
       </label>
       <button z-button type="button" [zDisabled]="searchForm.invalid || searching()" (click)="search()">
-        Search
+        {{ 'search' | t }}
       </button>
     </form>
 
@@ -60,12 +60,12 @@
       <table class="w-full text-sm">
         <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
           <tr>
-            <th class="px-3 py-2">Feedback Id</th>
-            <th class="px-3 py-2">Feedback Date</th>
-            <th class="px-3 py-2">Beneficiary</th>
-            <th class="px-3 py-2">Type</th>
-            <th class="px-3 py-2">Feedback Status</th>
-            <th class="px-3 py-2">Email Status</th>
+            <th class="px-3 py-2">{{ 'feedbackId' | t }}</th>
+            <th class="px-3 py-2">{{ 'feedbackDate' | t }}</th>
+            <th class="px-3 py-2">{{ 'nameOfBeneficiary' | t }}</th>
+            <th class="px-3 py-2">{{ 'typeOfFeedback' | t }}</th>
+            <th class="px-3 py-2">{{ 'feedbackStatus' | t }}</th>
+            <th class="px-3 py-2">{{ 'emailStatus' | t }}</th>
             <th class="px-3 py-2"></th>
           </tr>
         </thead>
@@ -81,11 +81,11 @@
               <td class="px-3 py-2 text-right">
                 <div class="flex justify-end gap-2">
                   <button z-button zSize="sm" zType="outline" type="button" (click)="startEdit(row)">
-                    Edit
+                    {{ 'edit' | t }}
                   </button>
                   @if ((row.feedbackRequests?.length ?? 0) > 0) {
                     <button z-button zSize="sm" zType="outline" type="button" (click)="startUpdate(row)">
-                      Update
+                      {{ 'update' | t }}
                     </button>
                   }
                 </div>
@@ -93,7 +93,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="7" class="px-3 py-6 text-center text-muted-foreground">No records found</td>
+              <td colspan="7" class="px-3 py-6 text-center text-muted-foreground">{{ 'noRecordsFound' | t }}</td>
             </tr>
           }
         </tbody>
@@ -123,7 +123,7 @@
     <div class="flex max-w-2xl flex-col gap-3">
       <p class="text-sm text-muted-foreground">Send this feedback to the authority emails below.</p>
       <div class="rounded-md border border-border p-3 text-sm">
-        <h3 class="mb-1 font-semibold">Auto Recipients</h3>
+        <h3 class="mb-1 font-semibold">{{ 'emails' | t }}</h3>
         @if (autoEmails().length > 0) {
           <ul class="list-disc pl-5">
             @for (e of autoEmails(); track e) {
@@ -137,10 +137,12 @@
 
       <form class="flex items-end gap-3" [formGroup]="manualEmailForm">
         <label class="flex flex-1 flex-col gap-1.5 text-sm">
-          <span>Add Email</span>
+          <span>{{ 'enterEmail' | t }}</span>
           <input z-input formControlName="email" type="email" placeholder="name@example.org" />
         </label>
-        <button z-button zType="outline" type="button" (click)="addManualEmail()">Add</button>
+        <button z-button zType="outline" type="button" (click)="addManualEmail()">
+          {{ 'addManually' | t }}
+        </button>
       </form>
 
       @if (manualEmails().length > 0) {
@@ -148,28 +150,32 @@
           @for (e of manualEmails(); track $index) {
             <li class="flex items-center justify-between rounded border border-border px-3 py-1.5">
               <span>{{ e }}</span>
-              <button class="text-destructive" type="button" (click)="removeManualEmail($index)">Remove</button>
+              <button class="text-destructive" type="button" (click)="removeManualEmail($index)">
+                {{ 'deleteRow' | t }}
+              </button>
             </li>
           }
         </ul>
       }
 
       <div class="flex items-center gap-3">
-        <button z-button type="button" [zDisabled]="saving()" (click)="sendEmail()">Send Email</button>
-        <button z-button zType="outline" type="button" (click)="backToList()">Skip</button>
+        <button z-button type="button" [zDisabled]="saving()" (click)="sendEmail()">
+          {{ 'sendEmail' | t }}
+        </button>
+        <button z-button zType="outline" type="button" (click)="backToList()">{{ 'close' | t }}</button>
       </div>
     </div>
   } @else {
     <!-- edit / update detail -->
     @if (selected(); as row) {
       <div class="grid gap-2 rounded-md border border-border p-3 text-sm sm:grid-cols-3">
-        <div><span class="text-muted-foreground">Feedback Id:</span> {{ row.requestID }}</div>
+        <div><span class="text-muted-foreground">{{ 'feedbackId' | t }}:</span> {{ row.requestID }}</div>
         <div><span class="text-muted-foreground">Feedback Date:</span> {{ detDate(row) }}</div>
-        <div><span class="text-muted-foreground">Beneficiary:</span> {{ detBenName(row) }}</div>
-        <div><span class="text-muted-foreground">Type:</span> {{ row.feedbackType?.feedbackTypeName }}</div>
-        <div><span class="text-muted-foreground">Institution:</span> {{ detInstitution(row) }}</div>
-        <div><span class="text-muted-foreground">Designation:</span> {{ detDesignation(row) }}</div>
-        <div><span class="text-muted-foreground">Severity:</span> {{ detSeverity(row) }}</div>
+        <div><span class="text-muted-foreground">{{ 'beneficiaryName' | t }}:</span> {{ detBenName(row) }}</div>
+        <div><span class="text-muted-foreground">{{ 'feedbackType' | t }}:</span> {{ row.feedbackType?.feedbackTypeName }}</div>
+        <div><span class="text-muted-foreground">{{ 'institutionType' | t }}:</span> {{ detInstitution(row) }}</div>
+        <div><span class="text-muted-foreground">{{ 'designationName' | t }}:</span> {{ detDesignation(row) }}</div>
+        <div><span class="text-muted-foreground">{{ 'severityType' | t }}:</span> {{ detSeverity(row) }}</div>
         <div><span class="text-muted-foreground">Created By:</span> {{ row.createdBy }}</div>
         <div><span class="text-muted-foreground">Modified By:</span> {{ detModifiedBy() }}</div>
         <div class="sm:col-span-3">
@@ -180,18 +186,18 @@
 
     <form class="grid gap-3 sm:grid-cols-2" [formGroup]="detailForm">
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Feedback Status</span>
-        <z-select formControlName="feedbackStatusID" zPlaceholder="Select">
+        <span>{{ 'feedbackStatus' | t }}</span>
+        <z-select formControlName="feedbackStatusID" [zPlaceholder]="'feedbackStatus' | t">
           @for (s of feedbackStatuses(); track s.feedbackStatusID) {
             <z-select-item [zValue]="s.feedbackStatusID + ''">{{ s.feedbackStatus }}</z-select-item>
           }
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Email Status</span>
+        <span>{{ 'emailStatus' | t }}</span>
         <z-select
           formControlName="emailStatusID"
-          zPlaceholder="Select"
+          [zPlaceholder]="'emailStatus' | t"
           [zDisabled]="detailForm.controls.emailStatusID.disabled"
         >
           @for (s of emailStatuses(); track s.emailStatusID) {
@@ -201,13 +207,16 @@
       </label>
 
       <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
-        <span>{{ mode() === 'update' ? 'Response Received' : 'Comments' }} <span class="text-destructive">*</span></span>
+        <span>
+          {{ mode() === 'update' ? ('responseReceived' | t) : ('commentsDetailsEnteredWillBeSentAsEmail' | t) }}
+          <span class="text-destructive">*</span>
+        </span>
         <textarea z-input formControlName="comments" rows="3" maxlength="500" placeholder="Up to 500 chars" [appRestrictInput]="textAreaBlock"></textarea>
       </label>
 
       @if (mode() === 'update') {
         <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
-          <span>Attachment</span>
+          <span>{{ 'attachment' | t }}</span>
           <input
             type="file"
             class="text-sm file:mr-3 file:rounded-md file:border file:border-border file:bg-muted file:px-3 file:py-1.5 file:text-sm"
@@ -224,7 +233,7 @@
       <div class="flex items-center gap-3 sm:col-span-2">
         @if (mode() === 'edit') {
           <button z-button type="button" [zDisabled]="detailForm.invalid || saving()" (click)="saveEdit()">
-            Save &amp; Email
+            {{ 'saveEmail' | t }}
           </button>
         } @else {
           <button
@@ -233,28 +242,28 @@
             [zDisabled]="detailForm.invalid || saving() || reading() || !!fileError()"
             (click)="saveUpdate()"
           >
-            Update
+            {{ 'update' | t }}
           </button>
         }
-        <button z-button zType="outline" type="button" (click)="backToList()">Cancel</button>
+        <button z-button zType="outline" type="button" (click)="backToList()">{{ 'back' | t }}</button>
       </div>
     </form>
 
     @if (history().length > 0) {
       <div class="flex flex-col gap-2">
-        <h3 class="text-sm font-semibold">Request / Response History</h3>
+        <h3 class="text-sm font-semibold">{{ 'feedbackRequestResponse' | t }}</h3>
         <div class="overflow-x-auto rounded-md border border-border">
           <table class="w-full text-sm">
             <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                <th class="px-3 py-2">S.No</th>
-                <th class="px-3 py-2">Request Id</th>
-                <th class="px-3 py-2">Summary</th>
-                <th class="px-3 py-2">Comments</th>
-                <th class="px-3 py-2">Response</th>
-                <th class="px-3 py-2">Status</th>
-                <th class="px-3 py-2">Forwarded By</th>
-                <th class="px-3 py-2">Date</th>
+                <th class="px-3 py-2">{{ 'sno' | t }}</th>
+                <th class="px-3 py-2">{{ 'feedbackRequestId' | t }}</th>
+                <th class="px-3 py-2">{{ 'feedbackDescription' | t }}</th>
+                <th class="px-3 py-2">{{ 'supervisorComments' | t }}</th>
+                <th class="px-3 py-2">{{ 'responseReceived' | t }}</th>
+                <th class="px-3 py-2">{{ 'lastFeedbackStatus' | t }}</th>
+                <th class="px-3 py-2">{{ 'forwardedBy' | t }}</th>
+                <th class="px-3 py-2">{{ 'forwardedDate' | t }}</th>
               </tr>
             </thead>
             <tbody>

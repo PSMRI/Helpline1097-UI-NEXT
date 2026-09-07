@@ -21,21 +21,21 @@
 -->
 
 <div class="flex flex-col gap-4">
-  <h2 class="text-base font-semibold">Blacklist a Number</h2>
+  <h2 class="text-base font-semibold">{{ 'blacklistANumber' | t }}</h2>
 
   <div class="flex flex-wrap items-end gap-3">
     <label class="flex items-center gap-2 text-sm">
       <input type="checkbox" (change)="toggleSearchByPhone($event)" />
-      <span>Search by phone number</span>
+      <span>{{ 'searchByPhoneNumber' | t }}</span>
     </label>
     @if (searchByPhone()) {
       <form class="flex items-end gap-3" [formGroup]="searchForm">
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Phone Number</span>
+          <span>{{ 'phoneNumber' | t }}</span>
           <input z-input formControlName="phoneNumber" inputmode="numeric" maxlength="10" [appRestrictInput]="mobileNumberBlock" />
         </label>
         <button z-button type="button" [zDisabled]="searchForm.invalid || loading()" (click)="search()">
-          Search
+          {{ 'search' | t }}
         </button>
       </form>
     }
@@ -45,12 +45,12 @@
     <table class="w-full text-sm">
       <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
         <tr>
-          <th class="px-3 py-2">Phone Number</th>
-          <th class="px-3 py-2">Status</th>
-          <th class="px-3 py-2">Call Count</th>
-          <th class="px-3 py-2">Reason</th>
-          <th class="px-3 py-2">Blocked On</th>
-          <th class="px-3 py-2">Blocked Till</th>
+          <th class="px-3 py-2">{{ 'phoneNumber' | t }}</th>
+          <th class="px-3 py-2">{{ 'status' | t }}</th>
+          <th class="px-3 py-2">{{ 'callCount' | t }}</th>
+          <th class="px-3 py-2">{{ 'reason' | t }}</th>
+          <th class="px-3 py-2">{{ 'blockedOn' | t }}</th>
+          <th class="px-3 py-2">{{ 'blockedTill' | t }}</th>
           <th class="px-3 py-2"></th>
         </tr>
       </thead>
@@ -68,7 +68,7 @@
                 0
               }
             </td>
-            <td class="px-3 py-2">Nuisance Call</td>
+            <td class="px-3 py-2">{{ 'nuisanceCall' | t }}</td>
             <td class="px-3 py-2">
               {{ row.isBlocked ? (row.blockStartDate | date: 'dd/MM/yyyy hh:mm a' : 'UTC') : '—' }}
             </td>
@@ -78,16 +78,16 @@
             <td class="px-3 py-2 text-right">
               @if (row.isBlocked) {
                 <button z-button zSize="sm" zType="outline" type="button" (click)="unblock(row)">
-                  Unblock
+                  {{ 'unblock' | t }}
                 </button>
               } @else {
-                <button z-button zSize="sm" type="button" (click)="block(row)">Block</button>
+                <button z-button zSize="sm" type="button" (click)="block(row)">{{ 'block' | t }}</button>
               }
             </td>
           </tr>
         } @empty {
           <tr>
-            <td colspan="7" class="px-3 py-6 text-center text-muted-foreground">No records found</td>
+            <td colspan="7" class="px-3 py-6 text-center text-muted-foreground">{{ 'noRecordsFound' | t }}</td>
           </tr>
         }
       </tbody>
@@ -108,7 +108,7 @@
         [zDisabled]="pageIndex() >= pageCount() - 1"
         (click)="nextPage()"
       >
-        Next
+        {{ 'next' | t }}
       </button>
     </div>
   }
@@ -120,15 +120,15 @@
         <table class="w-full text-sm">
           <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
-              <th class="px-3 py-2">Beneficiary ID</th>
-              <th class="px-3 py-2">Beneficiary Name</th>
-              <th class="px-3 py-2">Age</th>
-              <th class="px-3 py-2">Phone Number</th>
-              <th class="px-3 py-2">Call Id</th>
-              <th class="px-3 py-2">Call Time</th>
-              <th class="px-3 py-2">Agent ID</th>
-              <th class="px-3 py-2">Remarks</th>
-              <th class="px-3 py-2">Audio Recording</th>
+              <th class="px-3 py-2">{{ 'beneficiaryId' | t }}</th>
+              <th class="px-3 py-2">{{ 'beneficiaryName' | t }}</th>
+              <th class="px-3 py-2">{{ 'age' | t }}</th>
+              <th class="px-3 py-2">{{ 'phoneNumber' | t }}</th>
+              <th class="px-3 py-2">{{ 'callId' | t }}</th>
+              <th class="px-3 py-2">{{ 'callTime' | t }}</th>
+              <th class="px-3 py-2">{{ 'agentId' | t }}</th>
+              <th class="px-3 py-2">{{ 'remarks' | t }}</th>
+              <th class="px-3 py-2">{{ 'audioRecording' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -154,7 +154,7 @@
                     </audio>
                   } @else {
                     <button class="text-primary underline" type="button" (click)="playAudio(rec, $index)">
-                      Play
+                      {{ 'play' | t }}
                     </button>
                   }
                 </td>
@@ -162,7 +162,7 @@
             } @empty {
               <tr>
                 <td colspan="9" class="px-3 py-6 text-center text-muted-foreground">
-                  No recordings found
+                  {{ 'noRecordsFound' | t }}
                 </td>
               </tr>
             }

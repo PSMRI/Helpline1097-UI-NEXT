@@ -38,6 +38,7 @@ import { ZardSelectImports } from '@common-ui/ui/select';
 
 import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
 import { TEXTAREA_BLOCK } from '@/app-modules/core/directives/input-patterns';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { CtiService } from '@/app-modules/core/services/cti.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
@@ -49,6 +50,7 @@ import {
 } from '@/app-modules/core/services/session-storage.service';
 import { CallSummary, CallType, CallTypeGroup, CloseCallRequest } from '@/app-modules/core/models';
 import { CallStore } from '@/app-modules/core/state/call.store';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /**
@@ -62,22 +64,29 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
  */
 @Component({
   selector: 'app-closure',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
+  imports: [
+    ReactiveFormsModule,
+    TranslatePipe,
+    ZardButtonComponent,
+    ZardInputDirective,
+    RestrictInputDirective,
+    ...ZardSelectImports,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-4">
       @if (summary(); as s) {
         <div class="grid grid-cols-2 gap-2 rounded-md border border-border p-3 text-sm sm:grid-cols-4">
-          <div><span class="text-muted-foreground">Information:</span> {{ s.informationServices || '—' }}</div>
-          <div><span class="text-muted-foreground">Counselling:</span> {{ s.counsellingServices || '—' }}</div>
-          <div><span class="text-muted-foreground">Referral:</span> {{ s.referralServices || '—' }}</div>
-          <div><span class="text-muted-foreground">Feedback:</span> {{ s.feedbackServices || '—' }}</div>
+          <div><span class="text-muted-foreground">{{ 'information' | t }}:</span> {{ s.informationServices || '—' }}</div>
+          <div><span class="text-muted-foreground">{{ 'counselling' | t }}:</span> {{ s.counsellingServices || '—' }}</div>
+          <div><span class="text-muted-foreground">{{ 'referral' | t }}:</span> {{ s.referralServices || '—' }}</div>
+          <div><span class="text-muted-foreground">{{ 'feedback' | t }}:</span> {{ s.feedbackServices || '—' }}</div>
         </div>
       }
 
       <form [formGroup]="form" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Call Type <span class="text-destructive">*</span></span>
+          <span>{{ 'callType' | t }} <span class="text-destructive">*</span></span>
           <z-select formControlName="callType" zPlaceholder="Select call type" (zValueChange)="onCallTypeChange($event)">
             @for (g of callGroups(); track g) {
               <z-select-item [zValue]="g">{{ g }}</z-select-item>
@@ -85,7 +94,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Call Sub-Type <span class="text-destructive">*</span></span>
+          <span>{{ 'callsubtype' | t }} <span class="text-destructive">*</span></span>
           <z-select formControlName="callSubType" zPlaceholder="Select sub-type" (zValueChange)="onSubTypeChange($event)">
             @for (st of subTypes(); track st.callTypeID) {
               <z-select-item [zValue]="subTypeValue(st)">{{ st.callType }}</z-select-item>
@@ -95,7 +104,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
 
         @if (transferValid()) {
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>Transfer Campaign <span class="text-destructive">*</span></span>
+            <span>{{ 'campaignNames' | t }} <span class="text-destructive">*</span></span>
             <z-select formControlName="campaignName" zPlaceholder="Select campaign" (zValueChange)="onCampaignChange($event)">
               @for (c of campaigns(); track c) {
                 <z-select-item [zValue]="c">{{ c }}</z-select-item>
@@ -103,7 +112,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
             </z-select>
           </label>
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>Skill</span>
+            <span>{{ 'campaignSkills' | t }}</span>
             <z-select formControlName="campaignSkill" zPlaceholder="Select skill">
               @for (s of skills(); track s) {
                 <z-select-item [zValue]="s">{{ s }}</z-select-item>
@@ -113,27 +122,27 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
         }
 
         <label class="flex flex-col gap-1.5 text-sm sm:col-span-2 lg:col-span-3">
-          <span>Remarks</span>
-          <input z-input formControlName="remarks" type="text" maxlength="100" placeholder="Remarks" [appRestrictInput]="textAreaBlock" />
+          <span>{{ 'remarks' | t }}</span>
+          <input z-input formControlName="remarks" type="text" maxlength="100" [placeholder]="'remarks' | t" [appRestrictInput]="textAreaBlock" />
         </label>
 
         <!-- Old IVR-feedback checkbox: Valid calls only, hidden on Everwell -->
         @if (showFeedbackFlag() && !isEverwell) {
           <label class="flex items-center gap-2 text-sm sm:col-span-2 lg:col-span-3">
             <input type="checkbox" formControlName="isFeedback" />
-            <span>IVR Feedback Required</span>
+            <span>{{ 'iVRFeedbackRequired' | t }}</span>
           </label>
         }
 
         @if (showFollowUp()) {
           <label class="flex items-center gap-2 text-sm sm:col-span-2 lg:col-span-3">
             <input type="checkbox" formControlName="isFollowupRequired" />
-            <span>Follow-up required</span>
+            <span>{{ 'followupQuestion' | t }}</span>
           </label>
           <!-- Old "N follow up already taken for {dates}" duplicate-booking warning -->
           @if (form.controls.isFollowupRequired.value && noOfOutbounds()) {
             <p class="text-sm text-destructive sm:col-span-2 lg:col-span-3">
-              {{ noOfOutbounds() }} follow up already taken for
+              {{ noOfOutbounds() }} {{ 'followUpAlreadyTakenFor' | t }}
               @for (d of prefferedDatedTaken(); track $index) {
                 {{ followUpDate(d) }}@if (!$last) {,}
               }
@@ -141,15 +150,15 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
           }
           @if (form.controls.isFollowupRequired.value) {
             <label class="flex flex-col gap-1.5 text-sm">
-              <span>Preferred Date <span class="text-destructive">*</span></span>
+              <span>{{ 'preferredDate' | t }} <span class="text-destructive">*</span></span>
               <input z-input formControlName="prefferedDateTime" type="date" [min]="minDate" />
             </label>
             <label class="flex flex-col gap-1.5 text-sm">
               <span>Reason <span class="text-destructive">*</span></span>
-              <input z-input formControlName="requestedFor" type="text" maxlength="200" placeholder="Follow-up reason" [appRestrictInput]="textAreaBlock" />
+              <input z-input formControlName="requestedFor" type="text" maxlength="200" [placeholder]="'followUpReason' | t" [appRestrictInput]="textAreaBlock" />
             </label>
             <label class="flex flex-col gap-1.5 text-sm">
-              <span>Language <span class="text-destructive">*</span></span>
+              <span>{{ 'language' | t }} <span class="text-destructive">*</span></span>
               <z-select formControlName="preferredLanguageName" zPlaceholder="Select language">
                 @for (l of languages(); track l.languageID) {
                   <z-select-item [zValue]="l.languageName + ''">{{ l.languageName }}</z-select-item>
@@ -157,7 +166,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
               </z-select>
             </label>
             <label class="flex flex-col gap-1.5 text-sm">
-              <span>Requested Service <span class="text-destructive">*</span></span>
+              <span>{{ 'serviceRequested' | t }} <span class="text-destructive">*</span></span>
               <z-select formControlName="requestedServiceID" zPlaceholder="Select service">
                 @for (s of subServices(); track s.subServiceID) {
                   <z-select-item [zValue]="s.subServiceID + ''">{{ s.subServiceName }}</z-select-item>
@@ -178,7 +187,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
             [zLoading]="busy()"
             (click)="transfer()"
           >
-            Transfer
+            {{ 'transfer' | t }}
           </button>
         } @else {
           <!-- Old Submit & Continue: hidden on OUTBOUND; disabled when the customer already
@@ -192,11 +201,11 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
               [zDisabled]="custDisconnected() || invalidType() || form.invalid || busy()"
               (click)="submit('continue')"
             >
-              Submit &amp; Continue
+              {{ 'submitContinue' | t }}
             </button>
           }
           <button z-button zType="destructive" type="button" [zDisabled]="form.invalid || busy()" (click)="submit('close')">
-            Submit &amp; Close
+            {{ 'submitClose' | t }}
           </button>
         }
       </div>
@@ -215,6 +224,7 @@ export class ClosureComponent implements OnInit {
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
   private readonly storage = inject(SessionStorageService);
+  private readonly lang = inject(LanguageStore);
 
   /** Old `callClosed` — emits the campaign; the wizard clears flags and returns to dashboard. */
   readonly callClosed = output<string>();
@@ -508,7 +518,7 @@ export class ClosureComponent implements OnInit {
     }
     if (kind === 'continue') {
       this.notify
-        .confirm('Provide a new service to this beneficiary?', 'Continue')
+        .confirm(this.lang.t('providingNewServiceToBeneficiary'), 'Continue')
         .subscribe((ok) => {
           if (ok) {
             this.closeCall('continue', false);
@@ -562,7 +572,7 @@ export class ClosureComponent implements OnInit {
     }
 
     if (this.callStore.benCallID() == null) {
-      this.notify.alert('Cannot close the call: benCallID missing.', 'error');
+      this.notify.alert(this.lang.t('benCallIDIsNullNotAbleToCloseCall'), 'error');
       // The transfer path arrives here with busy already true — release it or the
       // Transfer button spins forever.
       this.busy.set(false);
@@ -640,7 +650,7 @@ export class ClosureComponent implements OnInit {
     this.callApi.closeCall(request).subscribe({
       next: () => {
         this.busy.set(false);
-        this.notify.alert('Call closed successfully', 'success');
+        this.notify.alert(this.lang.t('callClosedSuccessfully'), 'success');
         if (kind === 'close') {
           this.callClosed.emit(campaign ?? '');
         } else {

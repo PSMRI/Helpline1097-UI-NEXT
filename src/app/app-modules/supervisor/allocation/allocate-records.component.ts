@@ -38,7 +38,9 @@ import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
 import { AllocationApiService, AllocationFlavor, dayBoundary } from './allocation-api.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 import { numOrNull } from '@/app-modules/core/utils/select-value';
 
@@ -78,19 +80,25 @@ interface AgentRow {
  */
 @Component({
   selector: 'app-allocate-records',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, ...ZardSelectImports],
+  imports: [
+    ReactiveFormsModule,
+    ZardButtonComponent,
+    ZardInputDirective,
+    TranslatePipe,
+    ...ZardSelectImports,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form class="flex flex-wrap items-end gap-3 rounded-md border border-border p-3" [formGroup]="form">
       @if (context().language) {
         <div class="flex flex-col gap-1.5 text-sm">
-          <span class="text-muted-foreground">Language</span>
+          <span class="text-muted-foreground">{{ 'preferredLanguage' | t }}</span>
           <span class="font-medium">{{ context().language }}</span>
         </div>
       }
       <label class="flex min-w-44 flex-col gap-1.5 text-sm">
-        <span>Role <span class="text-destructive">*</span></span>
-        <z-select formControlName="roleID" zPlaceholder="Select role" (zValueChange)="onRoleChange($event)">
+        <span>{{ 'role' | t }} <span class="text-destructive">*</span></span>
+        <z-select formControlName="roleID" [zPlaceholder]="'selectRole' | t" (zValueChange)="onRoleChange($event)">
           @for (r of roles(); track r.roleID) {
             <z-select-item [zValue]="r.roleID + ''">{{ r.roleName }}</z-select-item>
           }
@@ -98,21 +106,21 @@ interface AgentRow {
       </label>
       <label class="flex min-w-52 flex-col gap-1.5 text-sm">
         <span>Agents <span class="text-destructive">*</span></span>
-        <z-select formControlName="agents" [zMultiple]="true" zPlaceholder="Select agents" [zDisabled]="agents().length === 0" (zValueChange)="onAgentsChange($event)">
+        <z-select formControlName="agents" [zMultiple]="true" [zPlaceholder]="'allocateTo' | t" [zDisabled]="agents().length === 0" (zValueChange)="onAgentsChange($event)">
           @for (a of agents(); track a.userID) {
             <z-select-item [zValue]="a.userID + ''">{{ a.firstName }} {{ a.lastName }}</z-select-item>
           }
         </z-select>
       </label>
       <label class="flex w-36 flex-col gap-1.5 text-sm">
-        <span>No. to allocate <span class="text-destructive">*</span></span>
+        <span>{{ 'allocateNoOfRecords' | t }} <span class="text-destructive">*</span></span>
         <input z-input formControlName="allocateNo" type="number" (change)="clampAllocateNo()" />
       </label>
       <button z-button type="button" [zDisabled]="form.invalid || agentsSelected().length === 0" [zLoading]="saving()" (click)="allocate()">
-        Allocate
+        {{ 'allocate' | t }}
       </button>
       @if (noAgents()) {
-        <p class="w-full text-sm text-destructive">No agents available for this language.</p>
+        <p class="w-full text-sm text-destructive">{{ 'noAgentsAvailableForThisLanguage' | t }}</p>
       }
     </form>
   `,
@@ -122,6 +130,7 @@ export class AllocateRecordsComponent implements OnInit {
   private readonly api = inject(AllocationApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
+  private readonly lang = inject(LanguageStore);
 
   readonly flavor = input.required<AllocationFlavor>();
   readonly context = input.required<AllocationContext>();
@@ -356,7 +365,7 @@ export class AllocateRecordsComponent implements OnInit {
     request$.subscribe({
       next: () => {
         this.saving.set(false);
-        this.notify.alert('Call allocated successfully', 'success');
+        this.notify.alert(this.lang.t('callAllocatedSuccessfully'), 'success');
         this.form.reset({ agents: [] });
         this.allocated.emit();
       },

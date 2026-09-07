@@ -42,10 +42,12 @@ import {
   saveBlob,
 } from './reports-api.service';
 import { dayBoundary, localDate } from '../allocation/allocation-api.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { BeneficiaryApiService } from '@/app-modules/core/services/beneficiary-api.service';
 import { LocationApiService } from '@/app-modules/core/services/location-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { CallType, CallTypeGroup, DistrictRow, RegistrationData } from '@/app-modules/core/models';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /**
@@ -55,18 +57,24 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
  */
 @Component({
   selector: 'app-call-type-report',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, ...ZardSelectImports],
+  imports: [
+    ReactiveFormsModule,
+    ZardButtonComponent,
+    ZardInputDirective,
+    TranslatePipe,
+    ...ZardSelectImports,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-4">
-      <h2 class="text-base font-semibold">Call Type Report</h2>
+      <h2 class="text-base font-semibold">{{ 'callTypeReport' | t }}</h2>
       <form class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" [formGroup]="form">
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Start Date <span class="text-destructive">*</span></span>
+          <span>{{ 'startDate' | t }} <span class="text-destructive">*</span></span>
           <input z-input formControlName="startDate" type="date" [max]="maxDay" (change)="onStartDateChange()" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>End Date <span class="text-destructive">*</span></span>
+          <span>{{ 'endDate' | t }} <span class="text-destructive">*</span></span>
           <input
             z-input
             formControlName="endDate"
@@ -76,56 +84,56 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
           />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Call Type</span>
-          <z-select formControlName="callType" zPlaceholder="Select call type" (zValueChange)="onCallTypeChange($event)">
+          <span>{{ 'callType' | t }}</span>
+          <z-select formControlName="callType" [zPlaceholder]="'calltype' | t" (zValueChange)="onCallTypeChange($event)">
             @for (g of callGroups(); track g) {
               <z-select-item [zValue]="g">{{ g }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Call Sub-Type</span>
-          <z-select formControlName="callSubType" zPlaceholder="Select sub-type">
+          <span>{{ 'callSub-type' | t }}</span>
+          <z-select formControlName="callSubType" [zPlaceholder]="'callsubtype' | t">
             @for (st of subTypes(); track st.callTypeID) {
               <z-select-item [zValue]="st.callType + ''">{{ st.callType }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>State</span>
-          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange($event)">
+          <span>{{ 'state' | t }}</span>
+          <z-select formControlName="state" [zPlaceholder]="'selectState' | t" (zValueChange)="onStateChange($event)">
             @for (s of states(); track s.stateID) {
               <z-select-item [zValue]="s.stateName + ''">{{ s.stateName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>District</span>
-          <z-select formControlName="district" zPlaceholder="Select district">
+          <span>{{ 'district' | t }}</span>
+          <z-select formControlName="district" [zPlaceholder]="'selectDistrict' | t">
             @for (d of districts(); track d.districtID) {
               <z-select-item [zValue]="d.districtName + ''">{{ d.districtName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Gender</span>
-          <z-select formControlName="gender" zPlaceholder="Select gender">
+          <span>{{ 'gender' | t }}</span>
+          <z-select formControlName="gender" [zPlaceholder]="'selectGender' | t">
             @for (g of genders(); track g.genderID) {
               <z-select-item [zValue]="g.genderName + ''">{{ g.genderName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Language</span>
-          <z-select formControlName="language" zPlaceholder="Select language">
+          <span>{{ 'language' | t }}</span>
+          <z-select formControlName="language" [zPlaceholder]="'selectLanguage' | t">
             @for (l of languages(); track l.languageID) {
               <z-select-item [zValue]="l.languageName + ''">{{ l.languageName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Sexual Orientation</span>
-          <z-select formControlName="sexuality" zPlaceholder="Select">
+          <span>{{ 'sexualOrientation' | t }}</span>
+          <z-select formControlName="sexuality" [zPlaceholder]="'sexuality' | t">
             @for (s of orientations(); track s.sexualOrientationId) {
               <z-select-item [zValue]="s.sexualOrientation + ''">{{ s.sexualOrientation }}</z-select-item>
             }
@@ -133,7 +141,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
         </label>
         <div class="flex items-end">
           <button z-button type="button" [zDisabled]="form.invalid" [zLoading]="downloading()" (click)="download()">
-            Download Report
+            {{ 'downloadReport' | t }}
           </button>
         </div>
       </form>
@@ -147,6 +155,7 @@ export class CallTypeReportComponent implements OnInit {
   private readonly locationApi = inject(LocationApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
+  private readonly lang = inject(LanguageStore);
 
   private readonly callTypeGroups = signal<CallTypeGroup[]>([]);
   protected readonly callGroups = computed(() =>
@@ -262,17 +271,17 @@ export class CallTypeReportComponent implements OnInit {
         this.downloading.set(false);
         if (blob) {
           saveBlob(blob, 'Call_Type_Report.xlsx');
-          this.notify.alert('Call type report downloaded', 'success');
+          this.notify.alert(this.lang.t('callTypeReportDownloaded'), 'success');
         } else {
-          this.notify.alert('No data found', 'info');
+          this.notify.alert(this.lang.t('noDataFound'), 'info');
         }
       },
       error: (err: { status?: number }) => {
         this.downloading.set(false);
         if (err?.status === 500) {
-          this.notify.alert('No data found', 'info');
+          this.notify.alert(this.lang.t('noDataFound'), 'info');
         } else {
-          this.notify.alert('Error while fetching report', 'error');
+          this.notify.alert(this.lang.t('errorWhileFetchingReport'), 'error');
         }
       },
     });

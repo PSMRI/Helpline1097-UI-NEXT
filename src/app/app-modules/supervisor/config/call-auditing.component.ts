@@ -32,7 +32,9 @@ import { ConfigApiService, tzShift } from './config-api.service';
 import { localDate } from '../allocation/allocation-api.service';
 import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
 import { MOBILE_NUMBER_BLOCK } from '@/app-modules/core/directives/input-patterns';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 interface ServiceLine {
@@ -134,7 +136,15 @@ const DAY_MS = 86400000;
  */
 @Component({
   selector: 'app-call-auditing',
-  imports: [ReactiveFormsModule, DatePipe, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
+  imports: [
+    ReactiveFormsModule,
+    DatePipe,
+    TranslatePipe,
+    ZardButtonComponent,
+    ZardInputDirective,
+    RestrictInputDirective,
+    ...ZardSelectImports,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './call-auditing.component.html',
 })
@@ -142,6 +152,7 @@ export class CallAuditingComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ConfigApiService);
   private readonly notify = inject(NotificationService);
+  private readonly lang = inject(LanguageStore);
   private readonly sessionStore = inject(SessionStore);
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
@@ -466,7 +477,7 @@ export class CallAuditingComponent implements OnInit {
         this.audioUrl.set(url);
         this.audioRowIndex.set(index);
       },
-      error: () => this.notify.alert('Failed to get the voice file path', 'error'),
+      error: () => this.notify.alert(this.lang.t('failedToGetTheVoiceFilePath'), 'error'),
     });
   }
 

@@ -25,6 +25,8 @@ import { DatePipe } from '@angular/common';
 
 import { Z_MODAL_DATA } from '@common-ui/ui/dialog';
 
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
+
 interface ConsolidatedRequest {
   feedbackRequestID?: number | string;
   feedbackSupSummary?: string;
@@ -53,24 +55,24 @@ interface FeedbackStatusData {
  */
 @Component({
   selector: 'app-feedback-status-dialog',
-  imports: [DatePipe],
+  imports: [DatePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b text-left text-xs uppercase text-muted-foreground">
-            <th class="px-2 py-1.5 font-medium">Feedback Request ID</th>
-            <th class="px-2 py-1.5 font-medium">Feedback Description</th>
-            <th class="px-2 py-1.5 font-medium">Supervisor Comments</th>
-            <th class="px-2 py-1.5 font-medium">Response Received</th>
-            <th class="px-2 py-1.5 font-medium">Response Attachment</th>
-            <th class="px-2 py-1.5 font-medium">Last Feedback Status</th>
-            <th class="px-2 py-1.5 font-medium">Email Status</th>
-            <th class="px-2 py-1.5 font-medium">Forwarded By</th>
-            <th class="px-2 py-1.5 font-medium">Forwarded Date</th>
-            <th class="px-2 py-1.5 font-medium">Updated By</th>
-            <th class="px-2 py-1.5 font-medium">Updated Date</th>
+            <th class="px-2 py-1.5 font-medium">{{ 'feedbackRequestId' | t }}</th>
+            <th class="px-2 py-1.5 font-medium">{{ 'feedbackDescription' | t }}</th>
+            <th class="px-2 py-1.5 font-medium">{{ 'supervisorComments' | t }}</th>
+            <th class="px-2 py-1.5 font-medium">{{ 'responseReceived' | t }}</th>
+            <th class="px-2 py-1.5 font-medium">{{ 'responseAttachment' | t }}</th>
+            <th class="px-2 py-1.5 font-medium">{{ 'lastFeedbackStatus' | t }}</th>
+            <th class="px-2 py-1.5 font-medium">{{ 'emailStatus' | t }}</th>
+            <th class="px-2 py-1.5 font-medium">{{ 'forwardedBy' | t }}</th>
+            <th class="px-2 py-1.5 font-medium">{{ 'forwardedDate' | t }}</th>
+            <th class="px-2 py-1.5 font-medium">{{ 'updatedBy' | t }}</th>
+            <th class="px-2 py-1.5 font-medium">{{ 'updatedDate' | t }}</th>
           </tr>
         </thead>
         <tbody>
@@ -101,7 +103,7 @@ interface FeedbackStatusData {
             </tr>
           } @empty {
             <tr>
-              <td colspan="11" class="px-2 py-6 text-center text-muted-foreground">No records found.</td>
+              <td colspan="11" class="px-2 py-6 text-center text-muted-foreground">{{ 'noRecordsFound' | t }}</td>
             </tr>
           }
         </tbody>

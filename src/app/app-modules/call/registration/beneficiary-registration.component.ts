@@ -46,6 +46,8 @@ import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { LocationApiService } from '@/app-modules/core/services/location-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { SmsApiService } from '@/app-modules/core/services/sms-api.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import {
   BeneficiaryRecord,
   BenPhoneMap,
@@ -83,6 +85,7 @@ import {
     ZardInputDirective,
     RestrictInputDirective,
     NgIcon,
+    TranslatePipe,
     ...ZardSelectImports,
     ...cardImports,
   ],
@@ -103,6 +106,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
   private readonly dialogService = inject(ZardDialogService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
+  private readonly lang = inject(LanguageStore);
 
   /** Emitted once a beneficiary is selected/registered — the wizard advances (old `benService`). */
   readonly beneficiarySelected = output<void>();
@@ -857,7 +861,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       next: (res) => {
         this.submitting.set(false);
         if (res?.statusCode === 200) {
-          this.notify.alert('Beneficiary updated', 'success');
+          this.notify.alert(this.lang.t('beneficiaryUpdatedSuccessfully'), 'success');
           this.editingRecord.set(null);
           this.linkBeneficiaryToCall(res.data ?? payload);
         } else {
@@ -911,7 +915,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
                 },
               ])
               .subscribe({
-                next: () => this.notify.alert('Registration SMS sent', 'success'),
+                next: () => this.notify.alert(this.lang.t('smsSent'), 'success'),
                 error: () => this.notify.alert('Registration SMS could not be sent', 'error'),
               });
           },

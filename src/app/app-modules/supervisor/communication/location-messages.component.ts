@@ -32,7 +32,9 @@ import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-i
 import { TEXTAREA_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { localDate } from '../allocation/allocation-api.service';
 import { CommunicationApiService, OfficeRow, tzShift } from './communication-api.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /** A location-message row (getSupervisorNotification). */
@@ -91,6 +93,7 @@ function asArray(value: string | string[]): string[] {
     ZardInputDirective,
     RestrictInputDirective,
     ...ZardSelectImports,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './location-messages.component.html',
@@ -102,6 +105,7 @@ export class LocationMessagesComponent implements OnInit {
   private readonly api = inject(CommunicationApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
+  private readonly lang = inject(LanguageStore);
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
   private notificationTypeID: number | null = null;
@@ -291,12 +295,12 @@ export class LocationMessagesComponent implements OnInit {
     this.api.createNotification(requestArray).subscribe({
       next: () => {
         this.saving.set(false);
-        this.notify.alert('Location message created successfully', 'success');
+        this.notify.alert(this.lang.t('locationMessageCreatedSuccessfully'), 'success');
         this.mode.set('list');
       },
       error: (err: { errorMessage?: string }) => {
         this.saving.set(false);
-        this.notify.alert(err?.errorMessage ?? 'Failed to create', 'error');
+        this.notify.alert(err?.errorMessage ?? this.lang.t('failedToCreate'), 'error');
       },
     });
   }
@@ -310,7 +314,7 @@ export class LocationMessagesComponent implements OnInit {
     const start = boundary(v.startDate, 'start');
     const end = boundary(v.endDate, 'end');
     if (end <= start) {
-      this.notify.alert('End date must be after start date', 'info');
+      this.notify.alert(this.lang.t('validTillShouldBeAFutureDateThanValidFrom'), 'info');
       return;
     }
     this.saving.set(true);
@@ -330,13 +334,13 @@ export class LocationMessagesComponent implements OnInit {
       .subscribe({
         next: () => {
           this.saving.set(false);
-          this.notify.alert('Updated successfully', 'success');
+          this.notify.alert(this.lang.t('editedSuccessfully'), 'success');
           this.mode.set('list');
           this.search();
         },
         error: (err: { errorMessage?: string }) => {
           this.saving.set(false);
-          this.notify.alert(err?.errorMessage ?? 'Failed to update', 'error');
+          this.notify.alert(err?.errorMessage ?? this.lang.t('failedToUpdate'), 'error');
         },
       });
   }

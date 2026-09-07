@@ -29,6 +29,8 @@ import { ZardInputDirective } from '@common-ui/ui/input';
 
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { ForceLogoutService } from '@/app-modules/core/services/force-logout.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /**
@@ -39,23 +41,23 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
  */
 @Component({
   selector: 'app-force-logout-dialog',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective],
+  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form [formGroup]="form" (ngSubmit)="kickout()" autocomplete="off" class="flex flex-col gap-4">
       <div class="flex flex-col gap-1.5">
         <label for="fl-user" class="text-sm font-medium">
-          User Name <span class="text-destructive">*</span>
+          {{ 'userName' | t }} <span class="text-destructive">*</span>
         </label>
         <input z-input id="fl-user" formControlName="userName" type="text" autocomplete="off" />
       </div>
       <div class="flex flex-col gap-1.5">
         <label for="fl-pass" class="text-sm font-medium">
-          Password <span class="text-destructive">*</span>
+          {{ 'password' | t }} <span class="text-destructive">*</span>
         </label>
         <input z-input id="fl-pass" formControlName="password" type="password" autocomplete="off" />
       </div>
-      <button z-button type="submit" zFull [zDisabled]="form.invalid || submitting()">Kickout</button>
+      <button z-button type="submit" zFull [zDisabled]="form.invalid || submitting()">{{ 'kickout' | t }}</button>
     </form>
   `,
 })
@@ -64,6 +66,7 @@ export class ForceLogoutDialogComponent {
   private readonly forceLogout = inject(ForceLogoutService);
   private readonly sessionStore = inject(SessionStore);
   private readonly notify = inject(NotificationService);
+  private readonly lang = inject(LanguageStore);
   private readonly dialogRef = inject(ZardDialogRef);
 
   protected readonly submitting = signal(false);
@@ -83,7 +86,7 @@ export class ForceLogoutDialogComponent {
       .agentForceLogout(userName, password, this.sessionStore.currentServiceId())
       .subscribe({
         next: () => {
-          this.notify.alert('User logged out successfully', 'success');
+          this.notify.alert(this.lang.t('userLoggedOutSuccessfully'), 'success');
           this.dialogRef.close();
         },
         error: (err: { errorMessage?: string }) => {

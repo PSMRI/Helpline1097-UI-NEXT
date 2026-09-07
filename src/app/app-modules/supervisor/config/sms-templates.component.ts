@@ -32,6 +32,8 @@ import { INPUT_FIELD_BLOCK, SMS_TEMPLATE_PASTE_BLOCK } from '@/app-modules/core/
 import { ConfigApiService } from './config-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 
 interface SmsType {
   smsTypeID: number;
@@ -83,7 +85,7 @@ const ROWS_PER_PAGE = 5;
  */
 @Component({
   selector: 'app-sms-templates',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, TranslatePipe, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sms-templates.component.html',
 })
@@ -95,6 +97,7 @@ export class SmsTemplatesComponent implements OnInit {
   private readonly api = inject(ConfigApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
+  private readonly lang = inject(LanguageStore);
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
 
@@ -208,7 +211,7 @@ export class SmsTemplatesComponent implements OnInit {
         this.smsTypes.set(available);
         if (available.length === 0) {
           this.notify.alert(
-            'All SMS types have been used and those templates are active',
+            this.lang.t('allSmsTypesHaveBeenUsedAndAreThoseTemplatesAreActive'),
             'info',
           );
         }
@@ -262,7 +265,7 @@ export class SmsTemplatesComponent implements OnInit {
   protected addMapping(): void {
     const m = this.mapForm.getRawValue();
     if (!m.parameter || !m.valueType || !m.value) {
-      this.notify.alert('Parameter, value type and value should be selected', 'info');
+      this.notify.alert(this.lang.t('parameterValueTypeAndValueShouldBeSelected'), 'info');
       return;
     }
     const value = this.valueOptions().find((p) => String(p.smsParameterID) === m.value);
@@ -316,7 +319,7 @@ export class SmsTemplatesComponent implements OnInit {
       .subscribe({
         next: () => {
           this.saving.set(false);
-          this.notify.alert('Template saved successfully', 'success');
+          this.notify.alert(this.lang.t('templateSavedSuccessfully'), 'success');
           this.showTable();
         },
         error: (err: { errorMessage?: string }) => {
@@ -366,7 +369,7 @@ export class SmsTemplatesComponent implements OnInit {
     this.api.updateSMSTemplate({ ...row, deleted: deactivate, modifiedBy: userName }).subscribe({
       next: () => {
         this.notify.alert(
-          deactivate ? 'Deactivated successfully' : 'Activated successfully',
+          deactivate ? this.lang.t('deactivatedSuccessfully') : this.lang.t('activatedSuccessfully'),
           'success',
         );
         this.loadTemplates();

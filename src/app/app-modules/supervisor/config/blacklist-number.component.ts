@@ -30,7 +30,9 @@ import { ZardInputDirective } from '@common-ui/ui/input';
 import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
 import { MOBILE_NUMBER_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { ConfigApiService } from './config-api.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /** A blacklist row from call/getBlacklistNumbers. */
@@ -73,7 +75,7 @@ const ROWS_PER_PAGE = 5;
  */
 @Component({
   selector: 'app-blacklist-number',
-  imports: [ReactiveFormsModule, DatePipe, ZardButtonComponent, ZardInputDirective, RestrictInputDirective],
+  imports: [ReactiveFormsModule, DatePipe, TranslatePipe, ZardButtonComponent, ZardInputDirective, RestrictInputDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './blacklist-number.component.html',
 })
@@ -83,6 +85,7 @@ export class BlacklistNumberComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ConfigApiService);
   private readonly notify = inject(NotificationService);
+  private readonly lang = inject(LanguageStore);
   private readonly sessionStore = inject(SessionStore);
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
@@ -164,7 +167,7 @@ export class BlacklistNumberComponent implements OnInit {
   protected block(row: BlacklistRow): void {
     this.api.blockPhoneNumber(row.phoneBlockID).subscribe({
       next: () => {
-        this.notify.alert('Number blocked successfully', 'success');
+        this.notify.alert(this.lang.t('successfullyBlocked'), 'success');
         this.afterToggle();
       },
       error: (err: { errorMessage?: string }) =>
@@ -175,7 +178,7 @@ export class BlacklistNumberComponent implements OnInit {
   protected unblock(row: BlacklistRow): void {
     this.api.unblockPhoneNumber(row.phoneBlockID).subscribe({
       next: () => {
-        this.notify.alert('Number unblocked successfully', 'success');
+        this.notify.alert(this.lang.t('successfullyUnblocked'), 'success');
         this.afterToggle();
       },
       error: (err: { errorMessage?: string }) =>
@@ -231,7 +234,7 @@ export class BlacklistNumberComponent implements OnInit {
         this.audioUrl.set(url);
         this.audioRowIndex.set(index);
       },
-      error: () => this.notify.alert('Failed to get the voice file path', 'error'),
+      error: () => this.notify.alert(this.lang.t('failedToGetTheVoiceFilePath'), 'error'),
     });
   }
 }

@@ -44,6 +44,8 @@ import { MOBILE_NUMBER_BLOCK, SEARCH_ID_BLOCK, TEXTAREA_BLOCK } from '@/app-modu
 import { CoServicesApiService } from '@/app-modules/core/services/co-services-api.service';
 import { LocationApiService } from '@/app-modules/core/services/location-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { DistrictRow, RegistrationData, SubServiceType, TalukRow } from '@/app-modules/core/models';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
@@ -81,6 +83,7 @@ type SearchType = 'FeedbackID' | 'MobileNumber';
     ZardButtonComponent,
     ZardInputDirective,
     RestrictInputDirective,
+    TranslatePipe,
     ...ZardSelectImports,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -100,7 +103,7 @@ type SearchType = 'FeedbackID' | 'MobileNumber';
                   [checked]="searchType() === 'FeedbackID'"
                   (change)="onSearchTypeChange('FeedbackID')"
                 />
-                <span>Feedback ID</span>
+                <span>{{ 'feedbackId' | t }}</span>
               </label>
               <label class="flex items-center gap-1.5">
                 <input
@@ -110,7 +113,7 @@ type SearchType = 'FeedbackID' | 'MobileNumber';
                   [checked]="searchType() === 'MobileNumber'"
                   (change)="onSearchTypeChange('MobileNumber')"
                 />
-                <span>Mobile Number</span>
+                <span>{{ 'mobileNumber' | t }}</span>
               </label>
             </div>
           </div>
@@ -119,32 +122,32 @@ type SearchType = 'FeedbackID' | 'MobileNumber';
               z-input
               [formControl]="searchTerm"
               [maxlength]="searchType() === 'MobileNumber' ? 10 : 30"
-              [placeholder]="searchType() === 'MobileNumber' ? 'Mobile number' : 'Feedback ID'"
+              [placeholder]="(searchType() === 'MobileNumber' ? 'mobileNumber' : 'feedbackId') | t"
               class="w-56"
               [appRestrictInput]="searchType() === 'MobileNumber' ? mobileNumberBlock : searchIdBlock"
             />
           </div>
           <button z-button type="button" [zDisabled]="!searchValid() || loadingHistory()" (click)="runSearch()">
-            Search
+            {{ 'search' | t }}
           </button>
           <button z-button zType="outline" type="button" [zDisabled]="!searchTerm.value" (click)="clearSearch()">
-            Clear
+            {{ 'clear' | t }}
           </button>
-          <button z-button type="button" class="ml-auto" (click)="showForm()">Create Feedback</button>
+          <button z-button type="button" class="ml-auto" (click)="showForm()">{{ 'createFeedback' | t }}</button>
         </div>
 
         <div class="overflow-x-auto rounded-md border border-border">
           <table class="w-full text-sm">
             <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                <th class="px-3 py-2">S.No</th>
-                <th class="px-3 py-2">Feedback ID</th>
-                <th class="px-3 py-2">Description</th>
-                <th class="px-3 py-2">Severity</th>
-                <th class="px-3 py-2">Feedback Type</th>
-                <th class="px-3 py-2">Agent</th>
-                <th class="px-3 py-2">Status</th>
-                <th class="px-3 py-2">Created Date</th>
+                <th class="px-3 py-2">{{ 'sno' | t }}</th>
+                <th class="px-3 py-2">{{ 'feedbackId' | t }}</th>
+                <th class="px-3 py-2">{{ 'description' | t }}</th>
+                <th class="px-3 py-2">{{ 'severity' | t }}</th>
+                <th class="px-3 py-2">{{ 'feedbackType' | t }}</th>
+                <th class="px-3 py-2">{{ 'agent' | t }}</th>
+                <th class="px-3 py-2">{{ 'status' | t }}</th>
+                <th class="px-3 py-2">{{ 'createdDate' | t }}</th>
               </tr>
             </thead>
             <tbody>
@@ -165,7 +168,7 @@ type SearchType = 'FeedbackID' | 'MobileNumber';
                     @if (loadingHistory()) {
                       Loading…
                     } @else {
-                      No feedback records found.
+                      {{ 'noRecordsFound' | t }}
                     }
                   </td>
                 </tr>
@@ -180,7 +183,7 @@ type SearchType = 'FeedbackID' | 'MobileNumber';
               Page {{ pageIndex() + 1 }} of {{ pageCount() }} ({{ filtered().length }} records)
             </span>
             <button z-button zType="outline" zSize="sm" type="button" [zDisabled]="pageIndex() === 0" (click)="prevPage()">
-              Previous
+              {{ 'previous' | t }}
             </button>
             <button
               z-button
@@ -190,7 +193,7 @@ type SearchType = 'FeedbackID' | 'MobileNumber';
               [zDisabled]="pageIndex() >= pageCount() - 1"
               (click)="nextPage()"
             >
-              Next
+              {{ 'next' | t }}
             </button>
           </div>
         }
@@ -199,67 +202,67 @@ type SearchType = 'FeedbackID' | 'MobileNumber';
       <!-- Create-feedback form -->
       <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>State <span class="text-destructive">*</span></span>
-          <z-select formControlName="state" zPlaceholder="Select state" (zValueChange)="onStateChange($event)">
+          <span>{{ 'state' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="state" [zPlaceholder]="'state' | t" (zValueChange)="onStateChange($event)">
             @for (s of states(); track s.stateID) {
               <z-select-item [zValue]="s.stateID + ''">{{ s.stateName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>District <span class="text-destructive">*</span></span>
-          <z-select formControlName="district" zPlaceholder="Select district" (zValueChange)="onDistrictChange($event)">
+          <span>{{ 'district' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="district" [zPlaceholder]="'district' | t" (zValueChange)="onDistrictChange($event)">
             @for (d of districts(); track d.districtID) {
               <z-select-item [zValue]="d.districtID + ''">{{ d.districtName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Taluk</span>
-          <z-select formControlName="taluk" zPlaceholder="Select taluk">
+          <span>{{ 'taluk' | t }}</span>
+          <z-select formControlName="taluk" [zPlaceholder]="'subDistrictTalukBlock' | t">
             @for (t of taluks(); track t.blockID) {
               <z-select-item [zValue]="t.blockID + ''">{{ t.blockName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Institution Name</span>
-          <z-select formControlName="institution" zPlaceholder="Select institution" (zValueChange)="onInstitutionChange($event)">
+          <span>{{ 'institutionName' | t }}</span>
+          <z-select formControlName="institution" [zPlaceholder]="'institutionName' | t" (zValueChange)="onInstitutionChange($event)">
             @for (i of institutes(); track i.institutionTypeID) {
               <z-select-item [zValue]="i.institutionTypeID + ''">{{ i.institutionType }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Designation <span class="text-destructive">*</span></span>
-          <z-select formControlName="designation" zPlaceholder="Select designation">
+          <span>{{ 'designation' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="designation" [zPlaceholder]="'designation' | t">
             @for (d of designations(); track d.designationID) {
               <z-select-item [zValue]="d.designationID + ''">{{ d.designationName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Feedback Type <span class="text-destructive">*</span></span>
-          <z-select formControlName="feedbackType" zPlaceholder="Select type">
+          <span>{{ 'feedbackType' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="feedbackType" [zPlaceholder]="'feedbackType' | t">
             @for (t of feedbackTypes(); track t.feedbackTypeID) {
               <z-select-item [zValue]="t.feedbackTypeID + ''">{{ t.feedbackTypeName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Severity <span class="text-destructive">*</span></span>
-          <z-select formControlName="severity" zPlaceholder="Select severity">
+          <span>{{ 'severity' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="severity" [zPlaceholder]="'severity' | t">
             @for (s of severities(); track s.severityID) {
               <z-select-item [zValue]="s.severityID + ''">{{ s.severityTypeName }}</z-select-item>
             }
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Date of Incident</span>
+          <span>{{ 'incidentDate' | t }}</span>
           <input z-input formControlName="serviceAvailDate" type="date" class="w-full cursor-pointer" [min]="minDate" [max]="today()" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm sm:col-span-2 lg:col-span-3">
-          <span>Description <span class="text-destructive">*</span></span>
+          <span>{{ 'feedbackDescription' | t }} <span class="text-destructive">*</span></span>
           <textarea
             z-input
             formControlName="feedback"
@@ -271,12 +274,12 @@ type SearchType = 'FeedbackID' | 'MobileNumber';
         </label>
         <label class="flex items-center gap-2 text-sm">
           <input type="checkbox" formControlName="beneficiaryConsent" />
-          <span>Beneficiary consent</span>
+          <span>{{ 'consentCaptured' | t }}</span>
         </label>
         <div class="flex items-end justify-end gap-3 sm:col-span-2 lg:col-span-3">
-          <button z-button zType="outline" type="button" (click)="showTable()">Back</button>
+          <button z-button zType="outline" type="button" (click)="showTable()">{{ 'back' | t }}</button>
           <button z-button type="submit" [zDisabled]="form.invalid" [zLoading]="saving()">
-            Submit Feedback
+            {{ 'register' | t }}
           </button>
         </div>
       </form>
@@ -295,6 +298,7 @@ export class CoFeedbackComponent implements OnInit {
   private readonly dialog = inject(ZardDialogService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
+  private readonly lang = inject(LanguageStore);
 
   /** Shared masters fetched ONCE by the co-services host. */
   readonly serviceTypes = input<SubServiceType[]>([]);
@@ -565,8 +569,9 @@ export class CoFeedbackComponent implements OnInit {
         next: (res) => {
           this.saving.set(false);
           const requestID = (res?.data as { requestID?: string } | null)?.requestID;
+          // Old app: `feedbackCreatedSuccessfullyAndFeedbackIDIs + ' ' + requestID`.
           this.notify.alert(
-            `Feedback submitted${requestID ? ` (ID ${requestID})` : ''}`,
+            `${this.lang.t('feedbackCreatedSuccessfullyAndFeedbackIDIs')} ${requestID ?? ''}`,
             'success',
           );
           this.form.reset({ beneficiaryConsent: false });

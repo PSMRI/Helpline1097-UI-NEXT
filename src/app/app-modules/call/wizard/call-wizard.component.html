@@ -23,7 +23,7 @@
 <div class="flex flex-1 flex-col gap-4 p-4 md:p-6">
   <!-- Step header (old bs-wizard) -->
   <ol class="flex items-center gap-2" aria-label="Call steps">
-    @for (label of steps(); track label; let i = $index) {
+    @for (label of steps(); track $index; let i = $index) {
       <li class="flex flex-1 flex-col items-center gap-1">
         <span
           class="flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors"
@@ -81,7 +81,7 @@
       <!-- Old app only rendered Previous in the standard (4-step) flow -->
       @if (isPrevious() && variant() === 'standard') {
         <button z-button zType="outline" type="button" [zDisabled]="disableBack()" (click)="previous()">
-          Previous
+          {{ 'previous' | t }}
         </button>
       }
     </div>
@@ -95,7 +95,7 @@
         [zDisabled]="variant() !== 'standard' && isCancelDisable()"
         (click)="cancel()"
       >
-        Cancel
+        {{ 'cancel' | t }}
       </button>
       <button
         z-button
@@ -104,10 +104,10 @@
         [zDisabled]="closureDisabled()"
         (click)="closure()"
       >
-        Closure
+        {{ 'closure' | t }}
       </button>
       @if (isNext()) {
-        <button z-button type="button" (click)="next()">Next</button>
+        <button z-button type="button" (click)="next()">{{ 'next' | t }}</button>
       }
     </div>
   </div>

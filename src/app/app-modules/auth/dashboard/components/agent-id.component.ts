@@ -40,6 +40,7 @@ import {
   ENCRYPTED_KEYS,
   SessionStorageService,
 } from '@/app-modules/core/services/session-storage.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { CALL_SCREEN_ROUTE, CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
@@ -53,13 +54,13 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
  */
 @Component({
   selector: 'app-agent-id',
-  imports: [NgIcon],
+  imports: [NgIcon, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucideHeadset })],
   template: `
     <div class="flex items-center gap-2 text-sm">
       <ng-icon name="lucideHeadset" class="text-lg text-primary" />
-      <span class="font-medium">My ID:</span>
+      <span class="font-medium">{{ 'myIdAgent' | t }}</span>
       <span>{{ agentId() ?? '—' }}</span>
       @if (status()) {
         <span class="text-muted-foreground">{{ status() }}</span>

@@ -22,11 +22,11 @@
 
 <div class="flex flex-col gap-4">
   <div class="flex items-center justify-between gap-3">
-    <h2 class="text-base font-semibold">SMS Templates</h2>
+    <h2 class="text-base font-semibold">{{ 'smsTemplates' | t }}</h2>
     @if (mode() === 'list') {
-      <button z-button type="button" (click)="startCreate()">Create New SMS Template</button>
+      <button z-button type="button" (click)="startCreate()">{{ 'createNewSmsTemplate' | t }}</button>
     } @else {
-      <button z-button zType="outline" type="button" (click)="showTable()">Back to List</button>
+      <button z-button zType="outline" type="button" (click)="showTable()">{{ 'back' | t }}</button>
     }
   </div>
 
@@ -35,12 +35,12 @@
       <table class="w-full text-sm">
         <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
           <tr>
-            <th class="px-3 py-2">S.No</th>
-            <th class="px-3 py-2">Template Name</th>
-            <th class="px-3 py-2">Template Type</th>
-            <th class="px-3 py-2">Template</th>
-            <th class="px-3 py-2">View</th>
-            <th class="px-3 py-2">Status</th>
+            <th class="px-3 py-2">{{ 'sno' | t }}</th>
+            <th class="px-3 py-2">{{ 'templateName' | t }}</th>
+            <th class="px-3 py-2">{{ 'templateType' | t }}</th>
+            <th class="px-3 py-2">{{ 'template' | t }}</th>
+            <th class="px-3 py-2">{{ 'view' | t }}</th>
+            <th class="px-3 py-2">{{ 'status' | t }}</th>
           </tr>
         </thead>
         <tbody>
@@ -51,23 +51,23 @@
               <td class="px-3 py-2">{{ row.smsType?.smsType }}</td>
               <td class="px-3 py-2">{{ row.smsTemplate }}</td>
               <td class="px-3 py-2">
-                <button class="text-primary underline" type="button" (click)="view(row)">View</button>
+                <button class="text-primary underline" type="button" (click)="view(row)">{{ 'view' | t }}</button>
               </td>
               <td class="px-3 py-2">
                 @if (!row.deleted) {
                   <button z-button zSize="sm" zType="outline" type="button" (click)="activateDeactivate(row, true)">
-                    Deactivate
+                    {{ 'deactivate' | t }}
                   </button>
                 } @else {
                   <button z-button zSize="sm" type="button" (click)="activateDeactivate(row, false)">
-                    Activate
+                    {{ 'activate' | t }}
                   </button>
                 }
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="px-3 py-6 text-center text-muted-foreground">No Record Found</td>
+              <td colspan="6" class="px-3 py-6 text-center text-muted-foreground">{{ 'noRecordFound' | t }}</td>
             </tr>
           }
         </tbody>
@@ -88,26 +88,26 @@
           [zDisabled]="pageIndex() >= pageCount() - 1"
           (click)="nextPage()"
         >
-          Next
+          {{ 'next' | t }}
         </button>
       </div>
     }
   } @else if (mode() === 'create') {
     <form class="grid gap-3 sm:grid-cols-2" [formGroup]="form">
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Template Name <span class="text-destructive">*</span></span>
+        <span>{{ 'templateName' | t }} <span class="text-destructive">*</span></span>
         <input z-input formControlName="templateName" maxlength="40" [appRestrictInput]="inputFieldBlock" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Template Type <span class="text-destructive">*</span></span>
-        <z-select formControlName="smsType" zPlaceholder="Select type" [zDisabled]="form.controls.smsType.disabled">
+        <span>{{ 'templateType' | t }} <span class="text-destructive">*</span></span>
+        <z-select formControlName="smsType" [zPlaceholder]="'smsType' | t" [zDisabled]="form.controls.smsType.disabled">
           @for (t of smsTypes(); track t.smsTypeID) {
             <z-select-item [zValue]="t.smsTypeID + ''">{{ t.smsType }}</z-select-item>
           }
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
-        <span>Template <span class="text-destructive">*</span></span>
+        <span>{{ 'template' | t }} <span class="text-destructive">*</span></span>
         <textarea z-input formControlName="smsTemplate" rows="3" maxlength="160" placeholder="Use $$TOKEN$$ placeholders (20-160 chars)" [appRestrictInput]="smsTemplatePasteBlock" [allowScannedPaste]="true"></textarea>
         <span class="text-xs text-muted-foreground">{{ form.controls.smsTemplate.value.length }}/160</span>
       </label>
@@ -115,9 +115,9 @@
       @if (!showParameters()) {
         <div class="sm:col-span-2">
           <button z-button type="button" [zDisabled]="form.invalid" (click)="continueToParameters()">
-            Continue
+            {{ 'continue' | t }}
           </button>
-          <button z-button zType="outline" type="button" class="ml-2" (click)="cancelCreate()">Cancel</button>
+          <button z-button zType="outline" type="button" class="ml-2" (click)="cancelCreate()">{{ 'cancel' | t }}</button>
         </div>
       }
     </form>
@@ -130,31 +130,31 @@
         </p>
         <form class="grid gap-3 sm:grid-cols-4" [formGroup]="mapForm">
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>Parameter</span>
-            <z-select formControlName="parameter" zPlaceholder="Select parameter">
+            <span>{{ 'parameter' | t }}</span>
+            <z-select formControlName="parameter" [zPlaceholder]="'selectParameter' | t">
               @for (p of pendingParameters(); track p) {
                 <z-select-item [zValue]="p">{{ p }}</z-select-item>
               }
             </z-select>
           </label>
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>Value Type</span>
-            <z-select formControlName="valueType" zPlaceholder="Select value type" (zValueChange)="onValueTypeChange()">
+            <span>{{ 'valueType' | t }}</span>
+            <z-select formControlName="valueType" [zPlaceholder]="'selectValueType' | t" (zValueChange)="onValueTypeChange()">
               @for (vt of valueTypes(); track vt) {
                 <z-select-item [zValue]="vt">{{ vt }}</z-select-item>
               }
             </z-select>
           </label>
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>Value</span>
-            <z-select formControlName="value" zPlaceholder="Select value">
+            <span>{{ 'value' | t }}</span>
+            <z-select formControlName="value" [zPlaceholder]="'selectValue' | t">
               @for (val of valueOptions(); track val.smsParameterID) {
                 <z-select-item [zValue]="val.smsParameterID + ''">{{ val.smsParameterName }}</z-select-item>
               }
             </z-select>
           </label>
           <div class="flex items-end">
-            <button z-button zType="outline" type="button" (click)="addMapping()">Add</button>
+            <button z-button zType="outline" type="button" (click)="addMapping()">{{ 'add' | t }}</button>
           </div>
         </form>
 
@@ -162,10 +162,10 @@
           <table class="w-full text-sm">
             <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                <th class="px-3 py-2">S.No</th>
-                <th class="px-3 py-2">Parameter</th>
-                <th class="px-3 py-2">Value Type</th>
-                <th class="px-3 py-2">Value</th>
+                <th class="px-3 py-2">{{ 'sno' | t }}</th>
+                <th class="px-3 py-2">{{ 'parameter' | t }}</th>
+                <th class="px-3 py-2">{{ 'valueType' | t }}</th>
+                <th class="px-3 py-2">{{ 'value' | t }}</th>
                 <th class="px-3 py-2"></th>
               </tr>
             </thead>
@@ -178,7 +178,7 @@
                   <td class="px-3 py-2">{{ m.smsParameterValue }}</td>
                   <td class="px-3 py-2 text-right">
                     <button z-button zSize="sm" zType="destructive" type="button" (click)="removeMapping($index)">
-                      Remove
+                      {{ 'remove' | t }}
                     </button>
                   </td>
                 </tr>
@@ -194,23 +194,23 @@
         </div>
 
         <div class="flex items-center gap-3">
-          <button z-button type="button" [zDisabled]="!canSubmit() || saving()" (click)="submit()">Save</button>
-          <button z-button zType="outline" type="button" (click)="cancelCreate()">Cancel</button>
+          <button z-button type="button" [zDisabled]="!canSubmit() || saving()" (click)="submit()">{{ 'submit' | t }}</button>
+          <button z-button zType="outline" type="button" (click)="cancelCreate()">{{ 'cancel' | t }}</button>
         </div>
       </div>
     }
   } @else {
     <form class="grid gap-3 sm:grid-cols-2" [formGroup]="viewForm">
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Template Name</span>
+        <span>{{ 'templateName' | t }}</span>
         <input z-input formControlName="templateName" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
-        <span>Template Type</span>
+        <span>{{ 'templateType' | t }}</span>
         <input z-input formControlName="smsType" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
-        <span>Template</span>
+        <span>{{ 'template' | t }}</span>
         <textarea z-input formControlName="smsTemplate" rows="3"></textarea>
       </label>
     </form>
@@ -219,10 +219,10 @@
       <table class="w-full text-sm">
         <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
           <tr>
-            <th class="px-3 py-2">S.No</th>
-            <th class="px-3 py-2">Parameter</th>
-            <th class="px-3 py-2">Value Type</th>
-            <th class="px-3 py-2">Value</th>
+            <th class="px-3 py-2">{{ 'sno' | t }}</th>
+            <th class="px-3 py-2">{{ 'parameter' | t }}</th>
+            <th class="px-3 py-2">{{ 'valueType' | t }}</th>
+            <th class="px-3 py-2">{{ 'value' | t }}</th>
           </tr>
         </thead>
         <tbody>

@@ -29,6 +29,8 @@ import { ZardSelectImports } from '@common-ui/ui/select';
 import { ConfigApiService } from './config-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 
 interface SubService {
   subServiceID: number;
@@ -60,7 +62,7 @@ const ALLOWED_EXT = ['msg', 'pdf', 'png', 'jpeg', 'jpg', 'doc', 'docx', 'xlsx', 
  */
 @Component({
   selector: 'app-knowledge-management',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, TranslatePipe, ZardButtonComponent, ...ZardSelectImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './knowledge-management.component.html',
 })
@@ -69,6 +71,7 @@ export class KnowledgeManagementComponent implements OnInit {
   private readonly api = inject(ConfigApiService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
+  private readonly lang = inject(LanguageStore);
 
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
 
@@ -206,7 +209,7 @@ export class KnowledgeManagementComponent implements OnInit {
     this.api.addFile([entry]).subscribe({
       next: () => {
         this.saving.set(false);
-        this.notify.alert('File uploaded successfully', 'success');
+        this.notify.alert(this.lang.t('fileUploadedSuccessfully'), 'success');
         this.pendingFile.set(null);
         this.fileError.set(null);
         this.selectedSubcategory.set(null);
@@ -216,7 +219,7 @@ export class KnowledgeManagementComponent implements OnInit {
       },
       error: () => {
         this.saving.set(false);
-        this.notify.alert('Failed to upload file', 'error');
+        this.notify.alert(this.lang.t('failedToUploadFile'), 'error');
       },
     });
   }
