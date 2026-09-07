@@ -70,7 +70,7 @@ interface OutboundRow {
         <table class="w-full text-sm">
           <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
-              <th class="px-3 py-2">S.No</th>
+              <!-- Old generic tab had NO S.No column (unlike its Everwell/Grievance siblings). -->
               <th class="cursor-pointer px-3 py-2" (click)="table.toggleSort('id')">
                 Beneficiary ID {{ table.sortIndicator('id') }}
               </th>
@@ -92,7 +92,6 @@ interface OutboundRow {
           <tbody>
             @for (row of table.paged(); track $index) {
               <tr class="border-t border-border">
-                <td class="px-3 py-2">{{ table.serial($index) }}</td>
                 <td class="px-3 py-2">{{ row.beneficiary?.beneficiaryID }}</td>
                 <td class="px-3 py-2">
                   {{ row.beneficiary?.firstName }} {{ row.beneficiary?.lastName }}
@@ -114,7 +113,7 @@ interface OutboundRow {
               </tr>
             } @empty {
               <tr>
-                <td colspan="7" class="px-3 py-6 text-center text-muted-foreground">
+                <td colspan="6" class="px-3 py-6 text-center text-muted-foreground">
                   No Records Found
                 </td>
               </tr>

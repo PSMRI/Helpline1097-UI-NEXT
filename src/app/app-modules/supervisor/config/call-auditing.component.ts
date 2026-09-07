@@ -231,6 +231,19 @@ export class CallAuditingComponent implements OnInit {
     this.initLookups(serviceId);
   }
 
+  /** Old `reset()`: clear the form, restore today's window, reload the default list. */
+  protected reset(): void {
+    const serviceId = this.serviceId();
+    this.form.reset();
+    const today = new Date();
+    this.form.patchValue({ startDate: inputDay(today), endDate: inputDay(today) });
+    this.agents.set(this.allAgents);
+    this.searchDefault(1);
+    if (serviceId != null) {
+      this.initLookups(serviceId);
+    }
+  }
+
   /** Sequential lookup chain (each depends on the previous), old app faithful ordering. */
   private initLookups(serviceId: number): void {
     this.api.getServiceProviderID(serviceId).subscribe({

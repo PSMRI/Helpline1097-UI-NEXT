@@ -24,6 +24,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   inject,
   OnInit,
   signal,
@@ -73,6 +74,7 @@ export class CampaignToggleComponent implements OnInit {
   private readonly storage = inject(SessionStorageService);
   private readonly notify = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   protected readonly showInbound = signal(false);
   protected readonly showOutbound = signal(false);
@@ -181,5 +183,13 @@ export class CampaignToggleComponent implements OnInit {
 
   private revert(): void {
     this.control.setValue(this.applied(), { emitEvent: false });
+    // The clicked radio unchecked its sibling NATIVELY, but z-radio's [checked] binding
+    // memoizes (the bound value never changed) and skips the DOM write — re-assert the
+    // group's native state so the reverted selection shows.
+    for (const input of this.host.nativeElement.querySelectorAll<HTMLInputElement>(
+      'input[type=radio]',
+    )) {
+      input.checked = input.value === this.applied();
+    }
   }
 }

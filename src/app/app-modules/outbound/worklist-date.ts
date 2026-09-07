@@ -36,6 +36,22 @@ export function formatWorklistDate(value: number | string): string {
   return `${dd}/${mm}/${d.getUTCFullYear()}`;
 }
 
+/** Old `millisToUTCDate(...) | date:'dd/MM/yyyy hh:mm a'` — the UTC parts, rendered as-is. */
+export function formatUtcDateTime(value: number | string): string {
+  const d = toDate(value);
+  if (isNaN(d.getTime())) {
+    return '';
+  }
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  let hours = d.getUTCHours();
+  const suffix = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  const hh = String(hours).padStart(2, '0');
+  const min = String(d.getUTCMinutes()).padStart(2, '0');
+  return `${dd}/${mm}/${d.getUTCFullYear()} ${hh}:${min} ${suffix}`;
+}
+
 /** Old `lastCall | date:'dd/MM/yyyy hh:mm a'` — local-time render like the old pipe. */
 export function formatWorklistDateTime(value: number | string): string {
   const d = toDate(value);

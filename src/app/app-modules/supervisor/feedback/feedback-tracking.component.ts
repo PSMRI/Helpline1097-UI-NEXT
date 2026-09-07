@@ -70,6 +70,12 @@ interface FeedbackRow {
   institutionName?: string;
   designationName?: string;
   severityTypeName?: string;
+  // The populated detail fields are NESTED; the flat siblings above arrive empty.
+  instituteType?: { institutionType?: string };
+  designation?: { designationName?: string };
+  severity?: { severityTypeName?: string };
+  muser?: { firstName?: string; lastName?: string };
+  feedback?: string;
   feedbackSupSummary?: string;
   feedbackRequests?: { feedbackRequestID?: number; feedbackSupSummary?: string }[];
   consolidatedRequests?: HistoryRow[];
@@ -89,6 +95,28 @@ const ROWS_PER_PAGE = 5;
 
 function beneficiaryName(row: FeedbackRow): string {
   return `${row.beneficiary?.firstName ?? ''} ${row.beneficiary?.lastName ?? ''}`.trim();
+}
+
+/** Detail-view field sources, per the old `requestFeedback(feedback)` form patch. */
+function detailBeneficiaryName(row: FeedbackRow): string {
+  return `${row.muser?.firstName ?? ''} ${row.muser?.lastName ?? ''}`.trim();
+}
+function detailInstitution(row: FeedbackRow): string {
+  return row.instituteType?.institutionType ?? '';
+}
+function detailDesignation(row: FeedbackRow): string {
+  return row.designation?.designationName ?? '';
+}
+function detailSeverity(row: FeedbackRow): string {
+  return row.severity?.severityTypeName ?? '';
+}
+/** Last request's summary, else the beneficiary's original feedback text. */
+function detailSummary(row: FeedbackRow): string {
+  const reqs = row.feedbackRequests ?? [];
+  return reqs[reqs.length - 1]?.feedbackSupSummary || row.feedback || '';
+}
+function detailDate(row: FeedbackRow): string {
+  return new Date(row.createdDate as string).toLocaleDateString('en-in');
 }
 
 /**
@@ -259,6 +287,17 @@ export class FeedbackTrackingComponent implements OnInit {
     return beneficiaryName(row);
   }
 
+  /** Detail-view display helpers (old form patched these from the NESTED response fields). */
+  protected detBenName = detailBeneficiaryName;
+  protected detInstitution = detailInstitution;
+  protected detDesignation = detailDesignation;
+  protected detSeverity = detailSeverity;
+  protected detSummary = detailSummary;
+  protected detDate = detailDate;
+  protected detModifiedBy(): string {
+    return this.sessionStore.user()?.userName ?? '';
+  }
+
   // ---- edit / update -------------------------------------------------------
   protected startEdit(row: FeedbackRow): void {
     this.selected.set(row);
@@ -292,22 +331,28 @@ export class FeedbackTrackingComponent implements OnInit {
     this.search();
   }
 
-  private commonDetailFields(row: FeedbackRow): Record<string, unknown> {
+  /** Old requestFeedback vs updateResponse patched a few fields DIFFERENTLY:
+   * edit = muser name + LAST request's summary; update = beneficiary name + FIRST. */
+  private commonDetailFields(row: FeedbackRow, mode: 'edit' | 'update'): Record<string, unknown> {
     const v = this.detailForm.getRawValue();
     return {
-      feedbackSupSummary: row.feedbackSupSummary,
-      beneficiaryName: beneficiaryName(row),
+      feedbackSupSummary:
+        mode === 'edit'
+          ? detailSummary(row)
+          : row.feedbackRequests?.[0]?.feedbackSupSummary || row.feedback || '',
+      beneficiaryName: mode === 'edit' ? detailBeneficiaryName(row) : beneficiaryName(row),
       comments: v.comments.trim(),
       createdBy: row.createdBy,
       // Old prefill: the ROW's original createdDate, not today (an absent createdDate posts
       // "Invalid Date" — the old app did the same, unguarded).
-      feedbackDate: new Date(row.createdDate as string).toLocaleDateString('en-in'),
+      feedbackDate: detailDate(row),
       feedbackTypeName: row.feedbackType?.feedbackTypeName,
       feedbackStatus: undefined,
       emailStatus: undefined,
-      institutionName: row.institutionName,
-      designationName: row.designationName,
-      severityTypeName: row.severityTypeName,
+      // Old only set this control when instituteType existed — otherwise it stayed null.
+      institutionName: row.instituteType ? detailInstitution(row) : null,
+      designationName: detailDesignation(row),
+      severityTypeName: detailSeverity(row),
       modifiedBy: this.sessionStore.user()?.userName,
       emailStatusID: row.emailStatusID,
       feedbackStatusID: v.feedbackStatusID ? Number(v.feedbackStatusID) : row.feedbackStatusID,
@@ -322,7 +367,7 @@ export class FeedbackTrackingComponent implements OnInit {
       return;
     }
     const body: Record<string, unknown> = {
-      ...this.commonDetailFields(row),
+      ...this.commonDetailFields(row, 'edit'),
       feedbackID: row.feedbackID,
       createdDate: null,
       supUserID: null,
@@ -351,10 +396,14 @@ export class FeedbackTrackingComponent implements OnInit {
       return;
     }
     const body: Record<string, unknown> = {
-      ...this.commonDetailFields(row),
+      ...this.commonDetailFields(row, 'update'),
       feedbackID: row.feedbackID,
       feedbackRequestID: row.feedbackRequests?.[0]?.feedbackRequestID,
       feedbackResponseID: undefined,
+      // Old posted the reset form verbatim — these rode along as null on every update.
+      createdDate: null,
+      supUserID: null,
+      updateResponse: null,
     };
     const file = this.pendingFile();
     if (file) {

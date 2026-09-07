@@ -137,6 +137,9 @@ function asArray(value: string | string[] | null): string[] {
       <label class="flex flex-col gap-1.5 text-sm sm:col-span-2 lg:col-span-3">
         <span>Remarks</span>
         <textarea z-input formControlName="remarks" maxlength="300" rows="2" placeholder="Remarks" [appRestrictInput]="textAreaBlock"></textarea>
+        <span class="self-end text-xs text-muted-foreground">
+          {{ form.controls.remarks.value?.length ?? 0 }}/300
+        </span>
       </label>
       <div class="flex items-end justify-end sm:col-span-2 lg:col-span-3">
         <button z-button type="submit" [zDisabled]="form.pristine" [zLoading]="saving()">
@@ -275,7 +278,9 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
       occupationID: numOrNull(v.occupationID),
       educationID: numOrNull(v.educationID),
     };
-    ben.sexualOrientationID = numOrNull(v.sexualOrientationID);
+    // Old sent the raw form value — an unset orientation was `undefined` (key omitted
+    // from the JSON), never null.
+    ben.sexualOrientationID = v.sexualOrientationID != null ? Number(v.sexualOrientationID) : undefined;
     ben.placeOfWork = v.placeOfWork?.trim() || null;
     // "Not disclosed" (and an untouched control) post "" — the old app's default value.
     ben.isHIVPos = v.isHIVPos == null || v.isHIVPos === HIV_NOT_DISCLOSED ? '' : v.isHIVPos;
@@ -303,7 +308,7 @@ export class UpdatesFromBeneficiaryComponent implements OnInit {
         if (res?.statusCode === 200) {
           this.callStore.beneficiary.set(ben as Record<string, unknown>);
           this.form.markAsPristine();
-          this.notify.alert('Other details saved', 'success');
+          this.notify.alert('Details updated successfully', 'success');
         } else {
           this.notify.alert(res?.errorMessage ?? 'Failed to save details', 'error');
         }

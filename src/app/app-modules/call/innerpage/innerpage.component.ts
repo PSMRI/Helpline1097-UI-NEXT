@@ -476,7 +476,7 @@ export class InnerpageComponent implements OnInit {
       remarks: remarks != null ? remarks.trim() : null,
       providerServiceMapID: this.sessionStore.currentServiceId() ?? undefined,
       createdBy: this.sessionStore.user()?.userName,
-      agentID: this.sessionStore.agentId(),
+      agentID: this.sessionStore.agentId() != null ? String(this.sessionStore.agentId()) : null,
       agentIPAddress: this.ipAddress(),
     };
     if (this.callStore.currentCampaign() === 'OUTBOUND') {

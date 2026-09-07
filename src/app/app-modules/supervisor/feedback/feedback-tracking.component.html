@@ -164,11 +164,17 @@
     @if (selected(); as row) {
       <div class="grid gap-2 rounded-md border border-border p-3 text-sm sm:grid-cols-3">
         <div><span class="text-muted-foreground">Feedback Id:</span> {{ row.requestID }}</div>
-        <div><span class="text-muted-foreground">Beneficiary:</span> {{ benName(row) }}</div>
+        <div><span class="text-muted-foreground">Feedback Date:</span> {{ detDate(row) }}</div>
+        <div><span class="text-muted-foreground">Beneficiary:</span> {{ detBenName(row) }}</div>
         <div><span class="text-muted-foreground">Type:</span> {{ row.feedbackType?.feedbackTypeName }}</div>
-        <div><span class="text-muted-foreground">Institution:</span> {{ row.institutionName }}</div>
-        <div><span class="text-muted-foreground">Designation:</span> {{ row.designationName }}</div>
-        <div><span class="text-muted-foreground">Severity:</span> {{ row.severityTypeName }}</div>
+        <div><span class="text-muted-foreground">Institution:</span> {{ detInstitution(row) }}</div>
+        <div><span class="text-muted-foreground">Designation:</span> {{ detDesignation(row) }}</div>
+        <div><span class="text-muted-foreground">Severity:</span> {{ detSeverity(row) }}</div>
+        <div><span class="text-muted-foreground">Created By:</span> {{ row.createdBy }}</div>
+        <div><span class="text-muted-foreground">Modified By:</span> {{ detModifiedBy() }}</div>
+        <div class="sm:col-span-3">
+          <span class="text-muted-foreground">Feedback:</span> {{ detSummary(row) }}
+        </div>
       </div>
     }
 

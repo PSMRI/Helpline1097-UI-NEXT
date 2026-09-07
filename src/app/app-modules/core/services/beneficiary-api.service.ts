@@ -78,7 +78,7 @@ export class BeneficiaryApiService {
   /** POST beneficiary/searchBeneficiary — the advanced-search form. */
   advancedSearch(criteria: {
     firstName?: string;
-    lastName?: string;
+    lastName?: string | null;
     fatherName?: string;
     genderID?: number | string | null;
     beneficiaryID?: string | number | null;

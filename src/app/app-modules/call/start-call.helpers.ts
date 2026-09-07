@@ -35,8 +35,9 @@ export function buildStartCallRequest(
     callID: callStore.sessionId(),
     createdBy: sessionStore.user()?.userName,
     calledServiceID: sessionStore.currentServiceId() ?? undefined,
-    agentID: sessionStore.agentId(),
-    callReceivedUserID: sessionStore.userId(),
+    // Old JSON types: agentID was a STRING, callReceivedUserID a NUMBER.
+    agentID: sessionStore.agentId() != null ? String(sessionStore.agentId()) : undefined,
+    callReceivedUserID: sessionStore.userId() != null ? Number(sessionStore.userId()) : undefined,
     receivedRoleName: sessionStore.currentRole() ?? undefined,
     isOutbound: callStore.isOutbound(),
     ...overrides,
