@@ -69,7 +69,10 @@
               ]
             },
             "ci": {
-              "baseHref": "/1097/",
+              "index": {
+                "input": "src/index.ci.html",
+                "output": "index.html"
+              },
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
