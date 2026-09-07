@@ -30,6 +30,8 @@ import { ZardSelectImports } from '@common-ui/ui/select';
 
 import { ConfigApiService, tzShift } from './config-api.service';
 import { localDate } from '../allocation/allocation-api.service';
+import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
+import { MOBILE_NUMBER_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
@@ -73,6 +75,51 @@ interface CaseSheet {
   [key: string]: unknown;
 }
 
+/** Case-sheet item shapes (old quality-audit template bindings, backend casing verbatim). */
+interface CategoryItem {
+  categoryDetails?: { categoryName?: string };
+  subCategoryName?: string;
+}
+interface FeedbackItem {
+  states?: { stateName?: string };
+  district?: { districtName?: string };
+  districtBlock?: { blockName?: string };
+  designation?: { designationName?: string };
+  FeedbackTypeID?: { feedbackTypeName?: string };
+  serviceAvailDate?: string;
+  severity?: { severityTypeName?: string };
+  feedback?: string;
+  feedbackID?: number | string;
+}
+interface ReferralItem {
+  institutionDetails?: {
+    states?: { stateName?: string };
+    m_district?: { districtName?: string };
+    block?: { blockName?: string };
+    institutionName?: string;
+    address?: string;
+  };
+  directory?: { instituteDirectoryName?: string };
+  subDirectory?: { instituteSubDirectoryName?: string };
+}
+
+/** Nested demographics on the worklist row's `beneficiaryModel` (old benData reads). */
+interface CaseSheetBenModel {
+  firstName?: string;
+  lastName?: string;
+  actualAge?: number | string;
+  ageUnits?: string;
+  m_gender?: { genderName?: string };
+  beneficiaryID?: number | string;
+  i_bendemographics?: {
+    districtBranchName?: string;
+    blockName?: string;
+    districtName?: string;
+    stateName?: string;
+    pinCode?: string;
+  };
+}
+
 function inputDay(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
@@ -87,7 +134,7 @@ const DAY_MS = 86400000;
  */
 @Component({
   selector: 'app-call-auditing',
-  imports: [ReactiveFormsModule, DatePipe, ZardButtonComponent, ZardInputDirective, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, DatePipe, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './call-auditing.component.html',
 })
@@ -118,8 +165,43 @@ export class CallAuditingComponent implements OnInit {
   protected readonly audioUrl = signal<string | null>(null);
 
   // Case sheet
+  protected readonly mobileNumberBlock = MOBILE_NUMBER_BLOCK;
   protected readonly caseSheet = signal<CaseSheet | null>(null);
   protected readonly caseSheetBen = signal<CallRecord | null>(null);
+
+  // Typed views for the case-sheet template (old benData?.beneficiaryModel + service arrays).
+  protected readonly benModel = computed(
+    () => (this.caseSheetBen()?.beneficiaryModel ?? {}) as CaseSheetBenModel,
+  );
+  protected readonly infoItems = computed(
+    () => (this.caseSheet()?.informations ?? []) as CategoryItem[],
+  );
+  protected readonly counsellingItems = computed(
+    () => (this.caseSheet()?.counsellings ?? []) as CategoryItem[],
+  );
+  protected readonly feedbackItems = computed(
+    () => (this.caseSheet()?.feedbacks ?? []) as FeedbackItem[],
+  );
+  protected readonly referralItems = computed(
+    () => (this.caseSheet()?.referrals ?? []) as ReferralItem[],
+  );
+
+  /** Old gate: the Service Requested block (heading included) renders only with data. */
+  protected readonly hasServiceItems = computed(
+    () =>
+      this.infoItems().length > 0 ||
+      this.counsellingItems().length > 0 ||
+      this.feedbackItems().length > 0 ||
+      this.referralItems().length > 0,
+  );
+
+  /** Old `current_date` — stamped on the printed sheet (LOCAL time, deliberately). */
+  protected readonly caseSheetDate = new Date();
+
+  /** Old address-part ternaries: every missing fragment prints "-". */
+  protected dash(value: unknown): string {
+    return value ? String(value) : '-';
+  }
 
   protected readonly maxDay = inputDay(new Date());
 
@@ -386,7 +468,9 @@ export class CallAuditingComponent implements OnInit {
         const arr = res?.data as CaseSheet[] | undefined;
         this.caseSheet.set(Array.isArray(arr) && arr.length > 0 ? arr[0] : {});
       },
-      error: () => {},
+      // Old set showCaseSheet BEFORE the request, so a failed fetch still showed the
+      // beneficiary panel — an empty sheet reproduces that.
+      error: () => this.caseSheet.set({}),
     });
   }
 

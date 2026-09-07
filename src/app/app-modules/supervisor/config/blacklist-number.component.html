@@ -32,7 +32,7 @@
       <form class="flex items-end gap-3" [formGroup]="searchForm">
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Phone Number</span>
-          <input z-input formControlName="phoneNumber" inputmode="numeric" maxlength="10" />
+          <input z-input formControlName="phoneNumber" inputmode="numeric" maxlength="10" [appRestrictInput]="mobileNumberBlock" />
         </label>
         <button z-button type="button" [zDisabled]="searchForm.invalid || loading()" (click)="search()">
           Search

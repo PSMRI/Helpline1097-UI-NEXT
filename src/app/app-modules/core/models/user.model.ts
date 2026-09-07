@@ -49,6 +49,9 @@ export interface RolePrivilege {
 /** A service the user is privileged for (filtered by `serviceName === '1097'`). */
 export interface Privilege {
   serviceID?: number;
+  /** Distinct from serviceID in the privilege object (equal on UAT, 1722, but modeled
+   * separately throughout the old app). */
+  providerServiceMapID?: number;
   serviceName?: string;
   roleID?: number;
   roleName?: string;

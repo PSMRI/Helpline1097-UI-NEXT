@@ -39,6 +39,8 @@ import { ZardDialogService } from '@common-ui/ui/dialog';
 import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
+import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
+import { MOBILE_NUMBER_BLOCK, SEARCH_ID_BLOCK, TEXTAREA_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { CoServicesApiService } from '@/app-modules/core/services/co-services-api.service';
 import { LocationApiService } from '@/app-modules/core/services/location-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
@@ -78,6 +80,7 @@ type SearchType = 'FeedbackID' | 'MobileNumber';
     DatePipe,
     ZardButtonComponent,
     ZardInputDirective,
+    RestrictInputDirective,
     ...ZardSelectImports,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -118,6 +121,7 @@ type SearchType = 'FeedbackID' | 'MobileNumber';
               [maxlength]="searchType() === 'MobileNumber' ? 10 : 30"
               [placeholder]="searchType() === 'MobileNumber' ? 'Mobile number' : 'Feedback ID'"
               class="w-56"
+              [appRestrictInput]="searchType() === 'MobileNumber' ? mobileNumberBlock : searchIdBlock"
             />
           </div>
           <button z-button type="button" [zDisabled]="!searchValid() || loadingHistory()" (click)="runSearch()">
@@ -262,6 +266,7 @@ type SearchType = 'FeedbackID' | 'MobileNumber';
             maxlength="5000"
             rows="3"
             placeholder="Describe the feedback / complaint"
+            [appRestrictInput]="textAreaBlock"
           ></textarea>
         </label>
         <label class="flex items-center gap-2 text-sm">
@@ -279,6 +284,10 @@ type SearchType = 'FeedbackID' | 'MobileNumber';
   `,
 })
 export class CoFeedbackComponent implements OnInit {
+  protected readonly mobileNumberBlock = MOBILE_NUMBER_BLOCK;
+  protected readonly searchIdBlock = SEARCH_ID_BLOCK;
+  protected readonly textAreaBlock = TEXTAREA_BLOCK;
+
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(CoServicesApiService);
   private readonly locationApi = inject(LocationApiService);

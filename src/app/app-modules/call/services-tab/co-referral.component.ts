@@ -468,7 +468,8 @@ export class CoReferralComponent implements OnInit {
 
   private loadHistory(): void {
     const regId = this.callStore.beneficiaryRegId();
-    const serviceId = this.serviceId();
+    // Old posted current_service.providerServiceMapID here (not .serviceID) — equal on UAT.
+    const serviceId = this.sessionStore.currentProviderServiceMapId();
     if (regId == null || serviceId == null) {
       return;
     }

@@ -71,6 +71,8 @@ export interface BeneficiaryRecord {
   maritalStatusID?: number | string | null;
   govtIdentityNo?: string | null;
   govtIdentityTypeID?: number | string | null;
+  /** Old update quirk: a duplicate lowercase copy of dOB is posted alongside it. */
+  dob?: string | null;
   sexualOrientationID?: number | string | null;
   placeOfWork?: string | null;
   remarks?: string | null;

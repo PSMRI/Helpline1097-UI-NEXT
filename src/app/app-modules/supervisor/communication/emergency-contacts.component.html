@@ -83,7 +83,7 @@
     <form class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" [formGroup]="createForm">
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Name <span class="text-destructive">*</span></span>
-        <input z-input formControlName="name" maxlength="50" />
+        <input z-input formControlName="name" maxlength="50" [appRestrictInput]="nameWithSpaceBlock" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Designation <span class="text-destructive">*</span></span>
@@ -95,11 +95,11 @@
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Location <span class="text-destructive">*</span></span>
-        <input z-input formControlName="location" maxlength="90" />
+        <input z-input formControlName="location" [appRestrictInput]="textAreaBlock" maxlength="90" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Contact Number <span class="text-destructive">*</span></span>
-        <input z-input formControlName="contactNumber" maxlength="10" inputmode="numeric" />
+        <input z-input formControlName="contactNumber" maxlength="10" inputmode="numeric" [appRestrictInput]="mobileNumberBlock" />
       </label>
       <div class="flex items-end sm:col-span-2 lg:col-span-4">
         <button z-button zType="outline" type="button" [zDisabled]="createForm.invalid" (click)="addToBuffer()">
@@ -153,7 +153,7 @@
     <form class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" [formGroup]="editForm">
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Name <span class="text-destructive">*</span></span>
-        <input z-input formControlName="name" maxlength="50" />
+        <input z-input formControlName="name" maxlength="50" [appRestrictInput]="nameWithSpaceBlock" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Designation <span class="text-destructive">*</span></span>
@@ -165,11 +165,11 @@
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Location <span class="text-destructive">*</span></span>
-        <input z-input formControlName="location" maxlength="90" />
+        <input z-input formControlName="location" [appRestrictInput]="textAreaBlock" maxlength="90" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Contact Number <span class="text-destructive">*</span></span>
-        <input z-input formControlName="contactNumber" maxlength="10" inputmode="numeric" />
+        <input z-input formControlName="contactNumber" maxlength="10" inputmode="numeric" [appRestrictInput]="mobileNumberBlock" />
       </label>
       <div class="flex items-center gap-3 sm:col-span-2 lg:col-span-4">
         <button z-button type="button" [zDisabled]="editForm.invalid || saving()" (click)="update()">

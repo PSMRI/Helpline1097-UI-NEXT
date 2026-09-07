@@ -34,6 +34,8 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
+import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
+import { TEXTAREA_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { BeneficiaryApiService } from '@/app-modules/core/services/beneficiary-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { BeneficiaryRecord, RegistrationData } from '@/app-modules/core/models';
@@ -79,7 +81,7 @@ function asArray(value: string | string[] | null): string[] {
  */
 @Component({
   selector: 'app-updates-from-beneficiary',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -109,7 +111,7 @@ function asArray(value: string | string[] | null): string[] {
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>Place of Work</span>
-        <input z-input formControlName="placeOfWork" type="text" maxlength="25" placeholder="Place of work" />
+        <input z-input formControlName="placeOfWork" type="text" maxlength="25" placeholder="Place of work" [appRestrictInput]="textAreaBlock" />
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>HIV Status</span>
@@ -134,7 +136,7 @@ function asArray(value: string | string[] | null): string[] {
       </label>
       <label class="flex flex-col gap-1.5 text-sm sm:col-span-2 lg:col-span-3">
         <span>Remarks</span>
-        <textarea z-input formControlName="remarks" maxlength="300" rows="2" placeholder="Remarks"></textarea>
+        <textarea z-input formControlName="remarks" maxlength="300" rows="2" placeholder="Remarks" [appRestrictInput]="textAreaBlock"></textarea>
       </label>
       <div class="flex items-end justify-end sm:col-span-2 lg:col-span-3">
         <button z-button type="submit" [zDisabled]="form.pristine" [zLoading]="saving()">
@@ -145,6 +147,8 @@ function asArray(value: string | string[] | null): string[] {
   `,
 })
 export class UpdatesFromBeneficiaryComponent implements OnInit {
+  protected readonly textAreaBlock = TEXTAREA_BLOCK;
+
   private readonly fb = inject(FormBuilder);
   private readonly beneficiaryApi = inject(BeneficiaryApiService);
   private readonly notify = inject(NotificationService);

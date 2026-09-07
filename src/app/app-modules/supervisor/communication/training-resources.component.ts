@@ -27,6 +27,8 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
+import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
+import { TEXTAREA_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { CommunicationApiService, ProviderRole } from './communication-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
@@ -87,11 +89,13 @@ function endOfDayPlusYears(years: number): Date {
  */
 @Component({
   selector: 'app-training-resources',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './training-resources.component.html',
 })
 export class TrainingResourcesComponent implements OnInit {
+  protected readonly textAreaBlock = TEXTAREA_BLOCK;
+
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(CommunicationApiService);
   private readonly notify = inject(NotificationService);

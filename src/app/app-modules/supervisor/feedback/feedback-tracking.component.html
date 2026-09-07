@@ -196,7 +196,7 @@
 
       <label class="flex flex-col gap-1.5 text-sm sm:col-span-2">
         <span>{{ mode() === 'update' ? 'Response Received' : 'Comments' }} <span class="text-destructive">*</span></span>
-        <textarea z-input formControlName="comments" rows="3" maxlength="500" placeholder="Up to 500 chars"></textarea>
+        <textarea z-input formControlName="comments" rows="3" maxlength="500" placeholder="Up to 500 chars" [appRestrictInput]="textAreaBlock"></textarea>
       </label>
 
       @if (mode() === 'update') {

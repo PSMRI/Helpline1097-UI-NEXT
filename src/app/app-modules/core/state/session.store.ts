@@ -39,6 +39,9 @@ export class SessionStore {
   readonly currentRole = signal<Role | null>(null);
   readonly currentRoleId = signal<number | null>(null);
   readonly currentServiceId = signal<number | null>(null);
+  /** Old current_service.providerServiceMapID — the CO history fetches post THIS field
+   * (equal to serviceID on UAT, kept separate for field-source fidelity). */
+  readonly currentProviderServiceMapId = signal<number | null>(null);
   readonly currentServiceName = signal<string | null>(null);
   readonly agentId = signal<number | null>(null);
   readonly loginIp = signal<string | null>(null);
@@ -72,6 +75,7 @@ export class SessionStore {
     this.currentRole.set(null);
     this.currentRoleId.set(null);
     this.currentServiceId.set(null);
+    this.currentProviderServiceMapId.set(null);
     this.currentServiceName.set(null);
     this.agentId.set(null);
     this.loginIp.set(null);

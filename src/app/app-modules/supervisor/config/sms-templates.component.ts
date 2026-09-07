@@ -27,6 +27,8 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
+import { RestrictInputDirective } from '@/app-modules/core/directives/restrict-input.directive';
+import { INPUT_FIELD_BLOCK, SMS_TEMPLATE_PASTE_BLOCK } from '@/app-modules/core/directives/input-patterns';
 import { ConfigApiService } from './config-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
@@ -81,11 +83,14 @@ const ROWS_PER_PAGE = 5;
  */
 @Component({
   selector: 'app-sms-templates',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, RestrictInputDirective, ...ZardSelectImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sms-templates.component.html',
 })
 export class SmsTemplatesComponent implements OnInit {
+  protected readonly inputFieldBlock = INPUT_FIELD_BLOCK;
+  protected readonly smsTemplatePasteBlock = SMS_TEMPLATE_PASTE_BLOCK;
+
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ConfigApiService);
   private readonly notify = inject(NotificationService);
