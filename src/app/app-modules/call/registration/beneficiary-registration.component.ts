@@ -786,8 +786,14 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     if (serviceId == null || beneficiaryRegID == null) {
       return;
     }
+    // Old `getSMStypes(current_serviceID)` — the SERVICE MASTER id, not the
+    // providerServiceMapID (which returns an empty list, so no type would ever match).
+    const smsTypeServiceId = this.sessionStore.serviceMasterId();
+    if (smsTypeServiceId == null) {
+      return;
+    }
     const userName = this.sessionStore.user()?.userName;
-    this.smsApi.getSmsTypes(serviceId).subscribe({
+    this.smsApi.getSmsTypes(smsTypeServiceId).subscribe({
       next: (res) => {
         const smsTypeID = (res?.data ?? []).find(
           (t) => t.smsType?.toLowerCase() === 'registration sms',
