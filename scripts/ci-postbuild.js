@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /*
  * AMRIT – Accessible Medical Records via Integrated Technologies
  * Integrated EHR (Electronic Health Records) Solution
@@ -20,27 +22,18 @@
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
 
-// Rendered by scripts/ci-prebuild.js into environment.ci.ts (git-ignored). No secrets here.
-const sessionStorageEncKey = '<%= SESSION_STORAGE_ENC_KEY %>';
-const commonAPI = '<%= COMMON_API_BASE %>';
-const adminAPI = '<%= ADMIN_API_BASE %>';
-const API1097 = '<%= API_1097_BASE %>';
-const telephoneServer = '<%= TELEPHONE_SERVER %>';
-const siteKey = '<%= SITE_KEY %>';
-const captchaChallengeURL = '<%= CAPTCHA_CHALLENGE_URL %>';
-const enableCaptcha = <%= ENABLE_CAPTCHA %>;
+// Copies WEB-INF (jboss-web.xml, context-root /1097) into dist — the old
+// build-ci's `cp -R WEB-INF/* dist/WEB-INF/` step the JBoss deployment needs.
 
-export const environment = {
-  production: true,
-  invalidCallType: 'Invalid',
-  encKey: sessionStorageEncKey,
-  commonAPI,
-  ip1097: API1097,
-  adminAPI,
-  telephoneServer,
-  siteKey,
-  captchaChallengeURL,
-  enableCaptcha,
-  useApimanKey: true,
-  sessionTimeoutMinutes: 27,
-};
+const fs = require('fs');
+const path = require('path');
+
+const source = path.join(__dirname, '../WEB-INF');
+const target = path.join(__dirname, '../dist/helpline1097-ui-next/WEB-INF');
+
+fs.mkdirSync(target, { recursive: true });
+for (const entry of fs.readdirSync(source)) {
+  fs.copyFileSync(path.join(source, entry), path.join(target, entry));
+}
+
+process.exit(0);
