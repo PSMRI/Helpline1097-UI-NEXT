@@ -117,8 +117,9 @@
     </div>
   </header>
 
-  <!-- Content -->
-  <main class="flex-1">
+  <!-- Content: right gutter while the CZentrix bar is expanded so it never covers
+       page actions (e.g. the call wizard's Next button). -->
+  <main class="flex-1" [style.paddingRight]="showCtiBar() && !barMinimized() ? '240px' : ''">
     <router-outlet />
   </main>
 

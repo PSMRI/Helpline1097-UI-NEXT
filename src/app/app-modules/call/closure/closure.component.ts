@@ -529,13 +529,15 @@ export class ClosureComponent implements OnInit {
       benCallID: this.callStore.benCallID() ?? undefined,
       providerServiceMapID: this.serviceId() ?? undefined,
       createdBy: this.sessionStore.user()?.userName,
-      agentID: this.sessionStore.agentId(),
+      // Old sent cZentrixAgentID (a STRING) or null.
+      agentID: this.sessionStore.agentId() != null ? String(this.sessionStore.agentId()) : null,
       beneficiaryRegID: this.callStore.beneficiaryRegId(),
       callType: v.callType,
       callTypeID: csv[0] || null,
       // Old interpolation sent '' (never the word "undefined") when fitToBlock was absent.
       fitToBlock: csv[1] ?? '',
-      remarks: v.remarks != null ? v.remarks.trim() : null,
+      // Old ngModel started undefined → the key was OMITTED until the field was touched.
+      remarks: v.remarks == null ? undefined : v.remarks.trim(),
       // Old `values.isFeedback = this.isFeedbackRequiredFlag` — sent on EVERY close.
       isFeedback: v.isFeedback ?? false,
       isFollowupRequired: v.isFollowupRequired ?? false,

@@ -30,21 +30,27 @@
       Activities
     </button>
     <z-menu #activitiesMenuRef>
-      <ng-container *ngTemplateOutlet="menuEntries; context: { entries: activitiesMenu }" />
+      <ng-container
+        *ngTemplateOutlet="menuEntries; context: { entries: activitiesMenu, menu: activitiesMenuRef }"
+      />
     </z-menu>
 
     <button z-button zType="ghost" type="button" [zMenuTriggerFor]="reportsMenuRef">
       Reports
     </button>
     <z-menu #reportsMenuRef>
-      <ng-container *ngTemplateOutlet="menuEntries; context: { entries: reportsMenu }" />
+      <ng-container
+        *ngTemplateOutlet="menuEntries; context: { entries: reportsMenu, menu: reportsMenuRef }"
+      />
     </z-menu>
 
     <button z-button zType="ghost" type="button" [zMenuTriggerFor]="configMenuRef">
       Configurations
     </button>
     <z-menu #configMenuRef>
-      <ng-container *ngTemplateOutlet="menuEntries; context: { entries: configurationsMenu }" />
+      <ng-container
+        *ngTemplateOutlet="menuEntries; context: { entries: configurationsMenu, menu: configMenuRef }"
+      />
     </z-menu>
 
     <a z-button zType="outline" class="ml-auto" routerLink="/MultiRoleScreenComponent/dashboard">
@@ -53,11 +59,14 @@
   </nav>
 
   <!-- Dropdown contents driven by the PAGES map (single source for labels) -->
-  <ng-template #menuEntries let-entries="entries">
+  <ng-template #menuEntries let-entries="entries" let-menu="menu">
     @for (entry of entries; track $index) {
       @switch (entry.kind) {
         @case ('item') {
-          <button z-menu-item (click)="show(entry.page!)">{{ pages[entry.page!].label }}</button>
+          <!-- requestClose: old md-menu auto-closed on item pick; z-menu needs it explicit. -->
+          <button z-menu-item (click)="show(entry.page!); menu.requestClose()">
+            {{ pages[entry.page!].label }}
+          </button>
         }
         @case ('group') {
           <div class="px-3 pb-0.5 pt-2 text-xs font-semibold uppercase text-muted-foreground">

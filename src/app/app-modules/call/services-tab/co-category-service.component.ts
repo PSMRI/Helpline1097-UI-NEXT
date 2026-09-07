@@ -38,6 +38,7 @@ import { lucideDownload } from '@ng-icons/lucide';
 import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
+import { formatUtcDateTime } from '@/app-modules/outbound/worklist-date';
 import { CoServicesApiService } from '@/app-modules/core/services/co-services-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { CoCategory, CoSubCategory, SubServiceType } from '@/app-modules/core/models';
@@ -132,7 +133,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
                 <td class="px-3 py-2">{{ h.categoryDetails?.categoryName }}</td>
                 <td class="px-3 py-2">{{ h.subCategoryDetails?.subCategoryName }}</td>
                 <td class="px-3 py-2">{{ h.createdBy }}</td>
-                <td class="px-3 py-2">{{ h.createdDate }}</td>
+                <td class="px-3 py-2">{{ historyDate(h.createdDate) }}</td>
               </tr>
             } @empty {
               <tr>
@@ -148,6 +149,11 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
   `,
 })
 export class CoCategoryServiceComponent implements OnInit {
+  /** Old `millisToUTCDate(createdDate) | date:'dd/MM/yyyy hh:mm a'`. */
+  protected historyDate(value?: string): string {
+    return value ? formatUtcDateTime(value) : '';
+  }
+
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(CoServicesApiService);
   private readonly notify = inject(NotificationService);
@@ -215,7 +221,8 @@ export class CoCategoryServiceComponent implements OnInit {
     if (!categoryId) {
       return;
     }
-    this.api.getSubCategories(categoryId).subscribe({
+    // Old sent the numeric id (`{categoryID: 53}`), not the select's string value.
+    this.api.getSubCategories(Number(categoryId)).subscribe({
       next: (res) => this.subCategories.set(res?.data ?? []),
       error: () => this.subCategories.set([]),
     });

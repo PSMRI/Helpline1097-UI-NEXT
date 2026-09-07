@@ -71,10 +71,6 @@
           <input z-input formControlName="lastName" type="text" maxlength="25" placeholder="Last name" [appRestrictInput]="nameBlock" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>Father / Husband Name</span>
-          <input z-input formControlName="fatherName" type="text" maxlength="25" placeholder="Father / husband name" />
-        </label>
-        <label class="flex flex-col gap-1.5 text-sm">
           <span>Gender <span class="text-destructive">*</span></span>
           <z-select formControlName="genderID" zPlaceholder="Select gender">
             @for (g of genders(); track g.genderID) {
@@ -232,7 +228,15 @@
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
           <span>Date of Birth</span>
-          <input z-input formControlName="dOB" type="date" class="w-full cursor-pointer" (change)="onDobChange()" />
+          <input
+            z-input
+            formControlName="dOB"
+            type="text"
+            placeholder="DD/MM/YYYY"
+            maxlength="10"
+            class="w-full"
+            (change)="onDobChange()"
+          />
         </label>
         <div class="flex gap-2">
           <label class="flex flex-1 flex-col gap-1.5 text-sm">

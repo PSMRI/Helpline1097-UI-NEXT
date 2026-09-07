@@ -175,7 +175,6 @@ export class BeneficiaryRegistrationComponent implements OnInit {
   protected readonly advForm = this.fb.group({
     firstName: this.fb.control('', Validators.required),
     lastName: this.fb.control(''),
-    fatherName: this.fb.control(''),
     genderID: this.fb.control<string | null>(null, Validators.required),
     state: this.fb.control<string | null>(null, Validators.required),
     district: this.fb.control<string | null>(null, Validators.required),
@@ -189,7 +188,8 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     firstName: this.fb.control('', { nonNullable: true }),
     lastName: this.fb.control('', { nonNullable: true }),
     genderID: this.fb.control<string | null>(null, Validators.required),
-    dOB: this.fb.control<string | null>(null),
+    // dd/MM/yyyy display format (old md2 datepicker); converted to ISO at the payload edge.
+    dOB: this.fb.control<string | null>(null, Validators.pattern(/^\d{2}\/\d{2}\/\d{4}$/)),
     age: this.fb.control<string | null>(null),
     ageUnit: this.fb.control('Years', { nonNullable: true }),
     maritalStatusID: this.fb.control<string | null>(null),
@@ -414,14 +414,15 @@ export class BeneficiaryRegistrationComponent implements OnInit {
   protected runAdvancedSearch(): void {
     const v = this.advForm.getRawValue();
     this.runSearch(
+      // Old body shape: lastName rode along as null when empty; unset optional keys
+      // (fatherName, beneficiaryID, blockID) were `undefined` and dropped from the JSON.
       this.beneficiaryApi.advancedSearch({
         firstName: v.firstName || undefined,
-        lastName: v.lastName || undefined,
-        fatherName: v.fatherName || undefined,
-        genderID: numOrNull(v.genderID),
-        stateID: numOrNull(v.state),
-        districtID: numOrNull(v.district),
-        blockID: numOrNull(v.taluk),
+        lastName: v.lastName || null,
+        genderID: numOrNull(v.genderID) ?? undefined,
+        stateID: numOrNull(v.state) ?? undefined,
+        districtID: numOrNull(v.district) ?? undefined,
+        blockID: numOrNull(v.taluk) ?? undefined,
       }),
     );
   }
@@ -470,14 +471,13 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       firstName: beneficiary.firstName ?? '',
       lastName: beneficiary.lastName ?? '',
       genderID: beneficiary.genderID != null ? String(beneficiary.genderID) : null,
-      dOB: beneficiary.dOB ? beneficiary.dOB.slice(0, 10) : null,
+      dOB: beneficiary.dOB
+        ? beneficiary.dOB.slice(0, 10).split('-').reverse().join('/')
+        : null,
       age: beneficiary.actualAge != null ? String(beneficiary.actualAge) : null,
       maritalStatusID: beneficiary.maritalStatusID != null ? String(beneficiary.maritalStatusID) : null,
       community: demo.communityID != null ? String(demo.communityID) : null,
       state: demo.stateID != null ? String(demo.stateID) : null,
-      district: demo.districtID != null ? String(demo.districtID) : null,
-      taluk: demo.blockID != null ? String(demo.blockID) : null,
-      village: demo.districtBranchID != null ? String(demo.districtBranchID) : null,
       pincode: demo.pinCode ?? '',
       preferredLanguage: demo.preferredLangID != null ? String(demo.preferredLangID) : null,
       alternateNumber1: alts[0] ?? '',
@@ -486,22 +486,42 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       alternateNumber4: alts[3] ?? '',
       alternateNumber5: alts[4] ?? '',
     });
-    // Load the dependent dropdowns so the pre-filled state/district/taluk resolve to labels.
+    // Load the dependent dropdowns, then patch each control AFTER its options exist —
+    // z-select resolves its trigger label only when the written value matches a rendered
+    // item, so patching before the list arrives leaves the placeholder (and blocks save).
     if (demo.stateID != null) {
       this.locationApi.getDistricts(demo.stateID).subscribe({
-        next: (res) => this.districts.set(res?.data ?? []),
+        next: (res) => {
+          this.districts.set(res?.data ?? []);
+          if (demo.districtID != null) {
+            this.form.patchValue({ district: String(demo.districtID) }, { emitEvent: false });
+          }
+        },
         error: () => this.districts.set([]),
       });
     }
     if (demo.districtID != null) {
       this.locationApi.getTaluks(demo.districtID).subscribe({
-        next: (res) => this.taluks.set(res?.data ?? []),
+        next: (res) => {
+          this.taluks.set(res?.data ?? []);
+          if (demo.blockID != null) {
+            this.form.patchValue({ taluk: String(demo.blockID) }, { emitEvent: false });
+          }
+        },
         error: () => this.taluks.set([]),
       });
     }
     if (demo.blockID != null) {
       this.locationApi.getVillages(demo.blockID).subscribe({
-        next: (res) => this.villages.set(res?.data ?? []),
+        next: (res) => {
+          this.villages.set(res?.data ?? []);
+          if (demo.districtBranchID != null) {
+            this.form.patchValue(
+              { village: String(demo.districtBranchID) },
+              { emitEvent: false },
+            );
+          }
+        },
         error: () => this.villages.set([]),
       });
     }
@@ -643,7 +663,11 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       this.form.patchValue({ age: null }, { emitEvent: false });
       return;
     }
-    const dob = new Date(dobStr);
+    const dob = this.parseDob(dobStr);
+    if (!dob) {
+      this.form.patchValue({ age: null }, { emitEvent: false });
+      return;
+    }
     const today = new Date();
     let years = today.getFullYear() - dob.getFullYear();
     const monthDelta = today.getMonth() - dob.getMonth();
@@ -666,8 +690,30 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     this.form.patchValue({ age: String(days), ageUnit: 'Days' }, { emitEvent: false });
   }
 
+  /** Formats a Date as the dd/MM/yyyy display string. */
   private toDateInput(d: Date): string {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  }
+
+  /** Strict dd/MM/yyyy → Date (null on malformed or impossible dates like 31/02). */
+  private parseDob(s: string): Date | null {
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);
+    if (!m) {
+      return null;
+    }
+    const [, dd, mm, yyyy] = m;
+    const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+    return d.getFullYear() === Number(yyyy) &&
+      d.getMonth() === Number(mm) - 1 &&
+      d.getDate() === Number(dd)
+      ? d
+      : null;
+  }
+
+  /** dd/MM/yyyy → `yyyy-MM-ddT00:00:00.000Z` (the shape the backend deserializes). */
+  private dobToIso(s: string): string | undefined {
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);
+    return m ? `${m[3]}-${m[2]}-${m[1]}T00:00:00.000Z` : undefined;
   }
 
   /** Old `registerBeneficiary`: build the create payload, persist, then link to the call. */
@@ -719,8 +765,8 @@ export class BeneficiaryRegistrationComponent implements OnInit {
       lastName: v.lastName,
       genderID: numOrNull(v.genderID),
       // Backend deserializes dOB to a timestamp and 500s on a bare date; old app sent
-      // `<yyyy-MM-dd>T00:00:00.000Z` (the date input's value is already local yyyy-MM-dd).
-      dOB: v.dOB ? `${v.dOB}T00:00:00.000Z` : undefined,
+      // `<yyyy-MM-dd>T00:00:00.000Z`.
+      dOB: v.dOB ? this.dobToIso(v.dOB) : undefined,
       maritalStatusID: numOrNull(v.maritalStatusID),
       benPhoneMaps: phoneMaps,
       // Old app hardcoded govtIdentityTypeID = 1 on CREATE only; on UPDATE it re-sent the
