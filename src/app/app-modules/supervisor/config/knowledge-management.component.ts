@@ -150,6 +150,8 @@ export class KnowledgeManagementComponent implements OnInit {
   protected kmFileUrl(fileUID?: string): string {
     return `${this.config.openKmBaseUrl}${fileUID ?? ''}`;
   }
+  /** Unconfigured base would make hrefs relative SPA links — render plain text instead. */
+  protected readonly kmConfigured = !!this.config.openKmBaseUrl;
 
   /** release-3.6.3: refresh the sub-category list (and re-select) after an upload so the
    * "previous uploaded file" versions reflect the new state. */
@@ -159,7 +161,7 @@ export class KnowledgeManagementComponent implements OnInit {
         const rows = Array.isArray(res?.data) ? (res.data as Subcategory[]) : [];
         this.subcategories.set(rows);
         this.selectedSubcategory.set(
-          rows.find((s) => s.subCategoryID === subCategoryId) ?? null,
+          rows.find((s) => String(s.subCategoryID) === String(subCategoryId)) ?? null,
         );
       },
       error: () => {

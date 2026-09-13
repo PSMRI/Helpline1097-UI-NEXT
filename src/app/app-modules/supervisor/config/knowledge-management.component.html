@@ -65,15 +65,19 @@
     <div class="flex flex-col gap-1.5 text-sm">
       <span>{{ 'previousUploadedFile' | t }}</span>
       @if (selectedSubcategory()?.fileManger?.length) {
-        @for (f of selectedSubcategory()?.fileManger; track f.fileUID) {
-          <a
-            class="text-primary underline"
-            [href]="kmFileUrl(f.fileUID)"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {{ f.fileName }}{{ f.fileExtension }} ({{ f.versionNo }})
-          </a>
+        @for (f of selectedSubcategory()?.fileManger; track $index) {
+          @if (kmConfigured) {
+            <a
+              class="text-primary underline"
+              [href]="kmFileUrl(f.fileUID)"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ f.fileName }}{{ f.fileExtension }} ({{ f.versionNo }})
+            </a>
+          } @else {
+            <span class="text-muted-foreground">{{ f.fileName }}{{ f.fileExtension }} ({{ f.versionNo }})</span>
+          }
         }
       } @else {
         <span class="text-muted-foreground">—</span>

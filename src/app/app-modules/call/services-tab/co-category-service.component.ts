@@ -100,17 +100,21 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
           </p>
           @if (sub.fileManger?.length) {
             <ul class="flex flex-col gap-1">
-              @for (f of sub.fileManger; track f.fileUID) {
+              @for (f of sub.fileManger; track $index) {
                 <li>
-                  <a
-                    [href]="kmFileUrl(f.fileUID)"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1.5 text-primary hover:underline"
-                  >
-                    <ng-icon name="lucideDownload" class="text-base" />
-                    <span>{{ f.fileName }}{{ f.fileExtension }} ({{ f.versionNo }})</span>
-                  </a>
+                  @if (kmConfigured) {
+                    <a
+                      [href]="kmFileUrl(f.fileUID)"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="inline-flex items-center gap-1.5 text-primary hover:underline"
+                    >
+                      <ng-icon name="lucideDownload" class="text-base" />
+                      <span>{{ f.fileName }}{{ f.fileExtension }} ({{ f.versionNo }})</span>
+                    </a>
+                  } @else {
+                    <span class="text-muted-foreground">{{ f.fileName }}{{ f.fileExtension }} ({{ f.versionNo }})</span>
+                  }
                 </li>
               }
             </ul>
@@ -194,6 +198,8 @@ export class CoCategoryServiceComponent implements OnInit {
   protected kmFileUrl(fileUID?: string): string {
     return `${this.config.openKmBaseUrl}${fileUID ?? ''}`;
   }
+  /** Unconfigured base would make hrefs relative SPA links — render plain text instead. */
+  protected readonly kmConfigured = !!this.config.openKmBaseUrl;
   protected readonly history = signal<
     { categoryDetails?: CoCategory; subCategoryDetails?: CoSubCategory; createdBy?: string; createdDate?: string }[]
   >([]);
@@ -231,6 +237,7 @@ export class CoCategoryServiceComponent implements OnInit {
   // control, so reading the control here would see the previous selection.
   protected onCategoryChange(value: string | string[]): void {
     this.subCategories.set([]);
+    this.savedSubcategory.set(null);
     this.form.patchValue({ subCategoryId: null });
     const categoryId = value as string;
     if (!categoryId) {
@@ -255,6 +262,11 @@ export class CoCategoryServiceComponent implements OnInit {
     const createdBy = this.sessionStore.user()?.userName;
     const subServiceID = this.subServiceId();
 
+    // release-3.6.3: the file panel comes from the MASTER subcategory list (set on click,
+    // independent of the save — the save response carries no fileManger).
+    this.savedSubcategory.set(
+      this.subCategories().find((s) => String(s.subCategoryID) === subCategoryId) ?? null,
+    );
     this.saving.set(true);
     const request$ =
       this.serviceType() === 'information'
@@ -276,13 +288,8 @@ export class CoCategoryServiceComponent implements OnInit {
           });
 
     request$.subscribe({
-      next: (res) => {
+      next: () => {
         this.saving.set(false);
-        // release-3.6.3: show the SELECTED sub-category's row (with its fileManger list).
-        const rows: CoSubCategory[] = res?.data ?? [];
-        this.savedSubcategory.set(
-          rows.find((r) => String(r.subCategoryID) === subCategoryId) ?? rows[0] ?? null,
-        );
         this.notify.alert('Service recorded', 'success');
         this.serviceProvided.emit();
         this.loadHistory();
