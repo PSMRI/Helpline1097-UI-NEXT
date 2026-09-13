@@ -161,6 +161,11 @@ export class AgentIdComponent implements OnInit {
     if (state === 'INCALL' || state === 'CLOSURE') {
       const knownSessionId = this.callStore.sessionId();
       const serverSessionId = res?.data?.session_id;
+      // A just-closed call can linger INCALL/CLOSURE on CZentrix for a few beats —
+      // never recover INTO it.
+      if (serverSessionId && serverSessionId === this.callStore.lastClosedSessionId()) {
+        return;
+      }
       if (
         !knownSessionId ||
         knownSessionId !== serverSessionId ||
@@ -177,7 +182,7 @@ export class AgentIdComponent implements OnInit {
   /** Old `routeToInnerPage`: persist the live call's flags and open the call screen. */
   private routeToInnerPage(data?: AgentStateData): void {
     const sessionId = data?.session_id;
-    if (!sessionId) {
+    if (!sessionId || sessionId === 'undefined') {
       return;
     }
     // No callCategory here — the old recovery path didn't set it either.

@@ -171,6 +171,8 @@ export class InnerpageComponent implements OnInit {
   protected readonly custDisconnectCallID = signal<string | null>(null);
   /** release-3.6.3 `disconnectHandled` — push event and fallback poll race; first wins. */
   private disconnectHandled = false;
+  /** release `componentDestroyed` — late poll/wrap-up callbacks must not act after destroy. */
+  private destroyed = false;
   private disconnectPollSubscription?: Subscription;
   /** Old `transferInProgress` — set by the closure flow's transfer path (Phase 6). */
   protected readonly transferInProgress = signal(false);
@@ -199,6 +201,7 @@ export class InnerpageComponent implements OnInit {
       );
     }, 1000);
     this.destroyRef.onDestroy(() => {
+      this.destroyed = true;
       clearInterval(durationInterval);
       this.unsubscribeWrapupTime();
       this.disconnectPollSubscription?.unsubscribe();
@@ -212,7 +215,11 @@ export class InnerpageComponent implements OnInit {
     // leak into this one.
     this.disconnectHandled = false;
     this.transferInProgress.set(false);
-    this.startDisconnectFallbackPoll();
+    // The innerpage also hosts the supervisor activity area — the disconnect poll is
+    // CO-call machinery only.
+    if (this.isCO()) {
+      this.startDisconnectFallbackPoll();
+    }
     // Faithful init order (old innerpage ngOnInit): call types → zone → agent state → totals.
     this.getCallTypes();
     this.getIvrsPathDetails();
@@ -310,7 +317,9 @@ export class InnerpageComponent implements OnInit {
     });
   }
 
-  /** Wall-clock epoch seeding (release `getAgentStatus`/`startCallTimer`), once per call. */
+  /** Wall-clock epoch seeding (release `getAgentStatus`/`startCallTimer`). Deviation:
+   * seeded ONCE per call (release re-seeded on every poll, letting later polls yank the
+   * timer around); release's persisted-callStartTime branch is dead code — not ported. */
   private seedCallTimer(czDurationSeconds: number): void {
     if (this.callStartEpoch !== 0) {
       return;
@@ -366,7 +375,7 @@ export class InnerpageComponent implements OnInit {
 
   /** Shared by the CTI push event and the polling fallback — first one wins. */
   private handleCustomerDisconnect(): void {
-    if (this.disconnectHandled) {
+    if (this.disconnectHandled || this.destroyed) {
       return;
     }
     this.disconnectHandled = true;
@@ -389,7 +398,9 @@ export class InnerpageComponent implements OnInit {
    */
   private startDisconnectFallbackPoll(): void {
     this.disconnectPollSubscription = timer(4000, 4000).subscribe(() => {
-      if (this.disconnectHandled) {
+      // transferInProgress guard is a deliberate deviation from release (which would
+      // auto-close a call mid-warm-transfer when CZentrix reports 'closure').
+      if (this.disconnectHandled || this.destroyed || this.transferInProgress()) {
         return;
       }
       this.cti.getAgentStatus().subscribe({
@@ -420,6 +431,9 @@ export class InnerpageComponent implements OnInit {
     }
     this.callApi.getRoleBasedWrapupTime(roleId).subscribe({
       next: (res) => {
+        if (this.destroyed) {
+          return;
+        }
         const data = res?.data;
         if (data?.isWrapUpTime && data.WrapUpTime != null) {
           this.runWrapupCountdown(data.WrapUpTime);
@@ -427,7 +441,11 @@ export class InnerpageComponent implements OnInit {
           this.runWrapupCountdown(DEFAULT_WRAPUP_SECONDS);
         }
       },
-      error: () => this.runWrapupCountdown(DEFAULT_WRAPUP_SECONDS),
+      error: () => {
+        if (!this.destroyed) {
+          this.runWrapupCountdown(DEFAULT_WRAPUP_SECONDS);
+        }
+      },
     });
   }
 
@@ -571,7 +589,9 @@ export class InnerpageComponent implements OnInit {
         this.storage.removeItem(ENCRYPTED_KEYS.isEverwellCall);
         this.storage.removeItem(ENCRYPTED_KEYS.isGrievanceCall);
         // release-3.6.3: clear the call session so a re-transferred call with the same
-        // number is recognised as new.
+        // number is recognised as new; remember it so the dashboard recovery poll
+        // doesn't bounce back in while CZentrix still reports the closed call.
+        this.callStore.lastClosedSessionId.set(this.callStore.sessionId());
         this.storage.removeItem(ENCRYPTED_KEYS.sessionId);
         this.storage.removeItem(ENCRYPTED_KEYS.cli);
         this.callStore.sessionId.set(null);

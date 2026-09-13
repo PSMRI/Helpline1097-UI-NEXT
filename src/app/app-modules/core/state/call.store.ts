@@ -92,6 +92,10 @@ export class CallStore {
    * to 0 on init (old `enablePreviousOnCustDisconnect(null)`).
    */
   readonly custDisconnected = signal<number>(0);
+  /** Session id of the last successfully closed call — the dashboard recovery poll must
+   * not bounce the agent back into it while CZentrix still reports it INCALL/CLOSURE.
+   * Deliberately NOT cleared by reset(). */
+  readonly lastClosedSessionId = signal<string | null>(null);
 
   // Campaign flags for the only-outbound auto-switch flow (memory-only, like the old
   // dataService/callservice fields they replace).

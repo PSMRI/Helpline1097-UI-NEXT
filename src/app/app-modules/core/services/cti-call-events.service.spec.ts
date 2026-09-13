@@ -80,7 +80,7 @@ describe('CtiCallEventsService (release-3.6.3 Accept semantics)', () => {
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
-  it('does NOT suppress during wrap-up (call screen but isOnCall cleared)', () => {
+  it('does NOT suppress on the call screen once the session is closed (isOnCall false)', () => {
     (Object.getOwnPropertyDescriptor(router, 'url')?.get as jasmine.Spy)?.and?.returnValue(
       `/MultiRoleScreenComponent/${'RedirectToInnerpageComponent'}`,
     );
