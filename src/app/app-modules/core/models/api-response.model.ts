@@ -35,7 +35,7 @@ export interface ApiResponse<T = unknown> {
 export const ApiStatus = {
   /** Success. */
   OK: 200,
-  /** Session conflict / auth issue (e.g. "already logged in", "Invalid username or password"). */
+  /** Session conflict / auth issue (e.g. "already logged in", bad credentials, locked account). */
   SESSION_CONFLICT: 5002,
   /** Domain error the backend wants surfaced to the caller. */
   DOMAIN_ERROR: 5006,

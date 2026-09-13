@@ -45,8 +45,10 @@ function isEnvelope(body: unknown): body is ApiResponse {
 /**
  * Ports the session/error logic from the old InterceptedHttp.onSuccess/onError:
  *  - statusCode 200 → pass through
- *  - 5002 → two paths: "already logged in" / "invalid credentials" → confirm dialog →
- *    logout-from-other-device; otherwise redirect + "session expired" + clear token
+ *  - 5002 → "already logged in" → confirm dialog → logout-from-other-device; the exact
+ *    legacy "Invalid username or password" is swallowed; any other message (locked /
+ *    deactivated / "...Remaining attempts: N") is alerted verbatim + redirect + clear
+ *    (release-3.6.3 semantics)
  *  - 5006 → surface the envelope as an error to the caller
  *  - 401/403 → session expired + clear + redirect to login
  * Non-envelope bodies (e.g. blob downloads) pass through untouched.
@@ -126,7 +128,8 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
       // release-3.6.3 (`handleError` normalisation across ~30 services, centralized):
       // transport / non-JSON (HTML) errors reach components with `errorMessage` always
       // populated, so dialogs show real text instead of `undefined` or crashing.
-      if (error instanceof HttpErrorResponse) {
+      // Platform-feedback keeps the RAW HttpErrorResponse (its dialog reads e.error.error).
+      if (error instanceof HttpErrorResponse && !req.url.includes('platform-feedback')) {
         const body = error.error as { errorMessage?: string; message?: string } | null;
         const errorMessage =
           (typeof body === 'object' && (body?.errorMessage || body?.message)) ||
