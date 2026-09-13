@@ -22,9 +22,10 @@
 
 import {
   ChangeDetectionStrategy,
+  effect,
+  untracked,
   Component,
   computed,
-  effect,
   inject,
   input,
   OnInit,
@@ -206,11 +207,15 @@ export class CoCategoryServiceComponent implements OnInit {
         this.loadCategories(subServiceID);
       }
     });
+    // release-3.6.3: history re-loads whenever the beneficiary is (re)selected, not only
+    // at mount — the tab can exist before the registration slide links a beneficiary.
+    effect(() => {
+      this.callStore.beneficiaryRegId();
+      untracked(() => this.loadHistory());
+    });
   }
 
-  ngOnInit(): void {
-    this.loadHistory();
-  }
+  ngOnInit(): void {}
 
   private loadCategories(subServiceID: number): void {
     this.api.getCategories(subServiceID).subscribe({

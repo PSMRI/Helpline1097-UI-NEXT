@@ -22,6 +22,8 @@
 
 import {
   ChangeDetectionStrategy,
+  effect,
+  untracked,
   Component,
   computed,
   inject,
@@ -369,12 +371,19 @@ export class CoFeedbackComponent implements OnInit {
     beneficiaryConsent: this.fb.control(false, { nonNullable: true }),
   });
 
+  constructor() {
+    // release-3.6.3: history re-loads whenever the beneficiary is (re)selected.
+    effect(() => {
+      this.callStore.beneficiaryRegId();
+      untracked(() => this.loadHistory());
+    });
+  }
+
   ngOnInit(): void {
     const serviceId = this.serviceId();
     if (serviceId == null) {
       return;
     }
-    this.loadHistory();
     // states + sub-service id come from the host's shared fetch (inputs above).
     this.api.getDesignations().subscribe({
       next: (res) => this.designations.set(Array.isArray(res?.data) ? res.data : []),
@@ -403,7 +412,9 @@ export class CoFeedbackComponent implements OnInit {
       return;
     }
     this.loadingHistory.set(true);
-    this.api.getFeedbacksList({ beneficiaryRegID, serviceID: serviceId }).subscribe({
+    // release-3.6.3: the flag scopes history to 1097 rows (without it the backend
+    // returns cross-service/empty results).
+    this.api.getFeedbacksList({ beneficiaryRegID, serviceID: serviceId, is1097: true }).subscribe({
       next: (res) => {
         const rows = Array.isArray(res?.data) ? (res.data as FeedbackRow[]) : [];
         this.history.set(rows);
