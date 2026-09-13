@@ -41,11 +41,17 @@ export const ApiStatus = {
   DOMAIN_ERROR: 5006,
 } as const;
 
-/** Messages that trigger the "logout from other device" confirmation on a 5002. */
+/** The one 5002 message that triggers the "logout from other device" confirmation.
+ * release-3.6.3 removed 'Invalid username or password' from this list — a bad password
+ * must never offer to log the user out of their other device. */
 export const SESSION_CONFLICT_CONFIRM_MESSAGES = [
   'You are already logged in,please confirm to logout from other device and login again',
-  'Invalid username or password',
 ];
+
+/** release-3.6.3: this exact legacy message is swallowed on 5002 (the login page shows
+ * its own text); the live backend's variant with "Remaining attempts: N" falls through
+ * to the alert path and surfaces verbatim. */
+export const INVALID_CREDENTIALS_MESSAGE = 'Invalid username or password';
 
 /**
  * A 5002 carrying this message is a captcha failure, not a session conflict. The old app

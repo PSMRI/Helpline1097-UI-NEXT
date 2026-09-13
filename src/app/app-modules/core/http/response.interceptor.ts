@@ -29,6 +29,7 @@ import {
   ApiResponse,
   ApiStatus,
   CAPTCHA_FAILED_MESSAGE,
+  INVALID_CREDENTIALS_MESSAGE,
   SESSION_CONFLICT_CONFIRM_MESSAGES,
 } from '../models';
 import { AuthService } from '../auth/auth.service';
@@ -82,7 +83,7 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
                     authEvents.requestLogoutFromOtherDevice();
                   }
                 });
-            } else {
+            } else if (message !== INVALID_CREDENTIALS_MESSAGE) {
               const data = body.data as { response?: string } | undefined;
               if (data && data.response === 'User successfully logged out') {
                 // Logout success rides a 5002 envelope. The old interceptor still emitted to
@@ -92,7 +93,9 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
                 return of(event);
               }
               router.navigate(['']);
-              notify.alert('Session expired, please login again', 'error');
+              // release-3.6.3: surface the REAL reason (wrong password + remaining
+              // attempts, locked or deactivated account) instead of a generic message.
+              notify.alert(message || 'Session expired, please login again', 'error');
               auth.removeToken();
             }
             return EMPTY;
@@ -119,6 +122,18 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
         auth.removeToken();
         sessionStorage.clear();
         router.navigate(['']);
+      }
+      // release-3.6.3 (`handleError` normalisation across ~30 services, centralized):
+      // transport / non-JSON (HTML) errors reach components with `errorMessage` always
+      // populated, so dialogs show real text instead of `undefined` or crashing.
+      if (error instanceof HttpErrorResponse) {
+        const body = error.error as { errorMessage?: string; message?: string } | null;
+        const errorMessage =
+          (typeof body === 'object' && (body?.errorMessage || body?.message)) ||
+          error.message ||
+          error.statusText ||
+          'Request failed';
+        return throwError(() => ({ ...(typeof body === 'object' ? body : {}), status: error.status, errorMessage }));
       }
       return throwError(() => error);
     }),
