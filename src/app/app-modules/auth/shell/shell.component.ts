@@ -97,6 +97,17 @@ export class ShellComponent {
     const blockBack = () => window.history.forward();
     window.addEventListener('popstate', blockBack);
     this.shellDestroyRef.onDestroy(() => window.removeEventListener('popstate', blockBack));
+
+    // release-3.6.3: refresh an expanded CZentrix bar when the tab regains focus.
+    const onVisibility = () => {
+      if (!document.hidden && !this.barMinimized()) {
+        this.barReloadNonce.set(Date.now());
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    this.shellDestroyRef.onDestroy(() =>
+      document.removeEventListener('visibilitychange', onVisibility),
+    );
   }
   private readonly cti = inject(CtiService);
   private readonly config = inject(ConfigService);
@@ -169,13 +180,21 @@ export class ShellComponent {
   );
   /** Old `barMinimized` — the bar starts minimized; the footer button toggles it. */
   protected readonly barMinimized = signal(true);
+  /** release-3.6.3: bumped on expand / tab-refocus to cache-bust a stale CZentrix bar. */
+  private readonly barReloadNonce = signal(0);
   /** `{telephonyServerURL}bar/cti_handler.php?e={agentID}` (iframe logs into CZentrix itself). */
-  protected readonly ctiHandlerUrl = computed(() =>
-    this.config.trustedTelephonyUrl(`bar/cti_handler.php?e=${this.sessionStore.agentId()}`),
-  );
+  protected readonly ctiHandlerUrl = computed(() => {
+    const nonce = this.barReloadNonce();
+    return this.config.trustedTelephonyUrl(
+      `bar/cti_handler.php?e=${this.sessionStore.agentId()}${nonce ? `&_t=${nonce}` : ''}`,
+    );
+  });
 
   protected toggleBar(): void {
     this.barMinimized.set(!this.barMinimized());
+    if (!this.barMinimized()) {
+      this.barReloadNonce.set(Date.now());
+    }
   }
 
   /** Old selector `(change)="changeLanguage(app_language)"` — loads + persists + broadcasts. */

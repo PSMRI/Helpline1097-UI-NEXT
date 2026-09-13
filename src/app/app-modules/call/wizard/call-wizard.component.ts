@@ -121,16 +121,16 @@ export class CallWizardComponent implements OnInit {
   );
 
   constructor() {
-    // Old ngOnInit subscription to `custDisconnectCall$`: lock nav onto the closure step.
-    // The counter re-fires this on every CustDisconnect (old Subject semantics), so a
-    // duplicate event re-locks the wizard even after the agent stepped back.
+    // Old ngOnInit subscription to `custDisconnectCall$`: jump to the closure step.
+    // release-3.6.3: the Closure button STAYS ENABLED after a customer hangup — main's
+    // isClosureDisable=true left the agent unable to open closure at all.
     effect(() => {
       if (this.callStore.custDisconnected() > 0) {
         this.step.set(this.lastStepIndex());
         this.isPrevious.set(true);
         this.disableBack.set(false);
         this.isNext.set(false);
-        this.isClosureDisable.set(true);
+        this.isClosureDisable.set(false);
       }
     });
   }
