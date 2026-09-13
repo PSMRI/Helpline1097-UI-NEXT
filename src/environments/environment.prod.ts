@@ -48,7 +48,10 @@ for (const [key, value] of Object.entries(requiredProdConfig)) {
   }
 }
 
+const openKMBaseURL = ''; // release-3.6.3 KM downloads; CI builds the real credentialed URL
+
 export const environment = {
+  openKMBaseURL,
   production: true,
   invalidCallType: 'Invalid',
   encKey: sessionStorageEncKey,

@@ -38,6 +38,8 @@ export class ConfigService {
   readonly helpline1097BaseURL = environment.ip1097;
   readonly adminBaseURL = environment.adminAPI;
   readonly telephonyServerURL = environment.telephoneServer;
+  /** release-3.6.3: OpenKM download base (`...Download?uuid=`); '' where not configured. */
+  readonly openKmBaseUrl = (environment as { openKMBaseURL?: string }).openKMBaseURL ?? '';
 
   readonly useApimanKey = environment.useApimanKey;
   readonly sessionTimeoutMinutes = environment.sessionTimeoutMinutes;

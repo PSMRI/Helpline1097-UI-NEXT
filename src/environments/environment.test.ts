@@ -32,7 +32,10 @@ const siteKey = '';
 const captchaChallengeURL = '';
 const enableCaptcha = false;
 
+const openKMBaseURL = ''; // release-3.6.3 KM downloads; CI builds the real credentialed URL
+
 export const environment = {
+  openKMBaseURL,
   production: false,
   invalidCallType: 'Invalid',
   encKey: sessionStorageEncKey,

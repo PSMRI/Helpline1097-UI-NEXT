@@ -45,6 +45,16 @@ export interface CoSubCategory {
   subCategoryName?: string;
   subCategoryDesc?: string;
   subCatFilePath?: string;
+  /** release-3.6.3: every KM file version for the sub-category. */
+  fileManger?: KmFileEntry[];
+}
+
+/** One OpenKM file row inside `fileManger[]` (release-3.6.3). */
+export interface KmFileEntry {
+  fileName?: string;
+  fileExtension?: string;
+  versionNo?: string | number;
+  fileUID?: string;
 }
 
 /** Information-tab save (`iEMR/saveBenCalServiceCatSubcatMapping`, sent as a 1-item array). */
