@@ -26,8 +26,9 @@
     class="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 print:hidden"
     aria-label="Supervisor activities"
   >
-    <button z-button zType="ghost" type="button" [zMenuTriggerFor]="activitiesMenuRef">
+    <button z-button zType="ghost" type="button" class="gap-1" [zMenuTriggerFor]="activitiesMenuRef">
       {{ 'activities' | t }}
+      <ng-icon name="lucideChevronDown" class="text-base opacity-70" aria-hidden="true" />
     </button>
     <z-menu #activitiesMenuRef>
       <ng-container
@@ -35,8 +36,9 @@
       />
     </z-menu>
 
-    <button z-button zType="ghost" type="button" [zMenuTriggerFor]="reportsMenuRef">
+    <button z-button zType="ghost" type="button" class="gap-1" [zMenuTriggerFor]="reportsMenuRef">
       {{ 'reports' | t }}
+      <ng-icon name="lucideChevronDown" class="text-base opacity-70" aria-hidden="true" />
     </button>
     <z-menu #reportsMenuRef>
       <ng-container
@@ -44,8 +46,9 @@
       />
     </z-menu>
 
-    <button z-button zType="ghost" type="button" [zMenuTriggerFor]="configMenuRef">
+    <button z-button zType="ghost" type="button" class="gap-1" [zMenuTriggerFor]="configMenuRef">
       {{ 'configurations' | t }}
+      <ng-icon name="lucideChevronDown" class="text-base opacity-70" aria-hidden="true" />
     </button>
     <z-menu #configMenuRef>
       <ng-container

@@ -35,6 +35,16 @@ import { UiStore } from '@/app-modules/core/state/ui.store';
 export class App {
   protected readonly ui = inject(UiStore);
 
+  /** Sonner per-toast classes: rounded card, readable body, brand-consistent close. */
+  protected readonly toastOptions = {
+    classes: {
+      toast: 'rounded-lg border shadow-lg text-sm',
+      title: 'font-medium',
+      description: 'text-muted-foreground',
+      closeButton: 'bg-background text-foreground border-border hover:bg-accent',
+    },
+  };
+
   constructor() {
     // Online/offline → UiStore (replaces the old AppComponent navigator.onLine wiring
     // that fed the HTTP wrappers' onlineFlag).

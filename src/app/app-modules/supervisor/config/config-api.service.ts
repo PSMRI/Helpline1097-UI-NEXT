@@ -24,6 +24,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import { skipLoader } from '@/app-modules/core/http/http-context';
 import { ApiResponse } from '@/app-modules/core/models';
 import { ConfigService } from '@/app-modules/core/services/config.service';
 
@@ -70,12 +71,17 @@ export class ConfigApiService {
   getBlacklistNumbers(
     providerServiceMapID: number,
     phoneNo?: number,
+    options: { silent?: boolean } = {},
   ): Observable<ApiResponse> {
     const body: Record<string, unknown> = { providerServiceMapID, is1097: true };
     if (phoneNo !== undefined) {
       body['phoneNo'] = phoneNo;
     }
-    return this.common('call/getBlacklistNumbers', body);
+    return this.http.post<ApiResponse>(
+      `${this.config.commonBaseURL}call/getBlacklistNumbers`,
+      body,
+      options.silent ? { context: skipLoader() } : {},
+    );
   }
 
   /** POST call/blockPhoneNumber. */

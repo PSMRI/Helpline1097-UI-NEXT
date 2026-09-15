@@ -26,6 +26,14 @@
   </div>
 }
 
-<z-toaster />
+<!-- Offset clears the sticky header so toasts never overlap it. -->
+<z-toaster
+  position="top-right"
+  offset="64px"
+  [richColors]="true"
+  [closeButton]="true"
+  [duration]="4000"
+  [toastOptions]="toastOptions"
+/>
 
 <router-outlet />

@@ -104,8 +104,11 @@ export class EmergencyContactsDialogComponent implements OnInit {
           this.contacts.set(res?.data ?? []);
           this.loading.set(false);
         },
-        error: (err: { message?: string; errorMessage?: string }) => {
-          this.error.set(err?.message ?? err?.errorMessage ?? 'Failed to load emergency contacts.');
+        error: () => {
+          // Old dialog showed its empty state on ANY failure — the UAT backend currently
+          // 5000s this endpoint with a Gson serialization error, which is not the user's
+          // problem to read.
+          this.contacts.set([]);
           this.loading.set(false);
         },
       });
