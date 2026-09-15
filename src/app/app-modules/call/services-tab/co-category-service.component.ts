@@ -274,16 +274,16 @@ export class CoCategoryServiceComponent implements OnInit {
             beneficiaryRegID,
             benCallID,
             subServiceID,
-            categoryID: categoryId,
-            subCategoryID: subCategoryId,
+            categoryID: Number(categoryId),
+            subCategoryID: Number(subCategoryId),
             createdBy,
           })
         : this.api.saveCounsellingMapping({
             beneficiaryRegID,
             benCallID,
             subServiceID,
-            coCategoryID: categoryId,
-            coSubCategoryID: subCategoryId,
+            coCategoryID: Number(categoryId),
+            coSubCategoryID: Number(subCategoryId),
             createdBy,
           });
 
