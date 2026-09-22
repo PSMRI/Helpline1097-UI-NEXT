@@ -92,6 +92,7 @@ export class CallStore {
    * to 0 on init (old `enablePreviousOnCustDisconnect(null)`).
    */
   readonly custDisconnected = signal<number>(0);
+  readonly lastClosedSessionId = signal<string | null>(null);
 
   // Campaign flags for the only-outbound auto-switch flow (memory-only, like the old
   // dataService/callservice fields they replace).

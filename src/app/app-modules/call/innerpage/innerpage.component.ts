@@ -152,8 +152,7 @@ export class InnerpageComponent implements OnInit {
   protected readonly ticks = signal(0);
   protected readonly wrapupTime = signal(false);
 
-  // Call-duration ticker (old built "Xm Ys " from a setInterval; we clear ours on destroy —
-  // the old app leaked the interval, display-only hardening).
+  private callStartEpoch = 0;
   private readonly elapsedSeconds = signal(0);
   protected readonly callDuration = computed(() => {
     const total = this.elapsedSeconds();
@@ -168,6 +167,9 @@ export class InnerpageComponent implements OnInit {
 
   /** Old `custdisconnectCallID` — session id from the CustDisconnect CTI event. */
   protected readonly custDisconnectCallID = signal<string | null>(null);
+  private disconnectHandled = false;
+  private destroyed = false;
+  private disconnectPollSubscription?: Subscription;
   /** Old `transferInProgress` — set by the closure flow's transfer path (Phase 6). */
   protected readonly transferInProgress = signal(false);
 
@@ -188,17 +190,28 @@ export class InnerpageComponent implements OnInit {
     this.destroyRef.onDestroy(() => window.removeEventListener('message', listener, false));
 
     const durationInterval = setInterval(() => {
-      this.elapsedSeconds.set(this.elapsedSeconds() + 1);
+      this.elapsedSeconds.set(
+        this.callStartEpoch > 0
+          ? Math.max(0, Math.floor((Date.now() - this.callStartEpoch) / 1000))
+          : this.elapsedSeconds() + 1,
+      );
     }, 1000);
     this.destroyRef.onDestroy(() => {
+      this.destroyed = true;
       clearInterval(durationInterval);
       this.unsubscribeWrapupTime();
+      this.disconnectPollSubscription?.unsubscribe();
     });
   }
 
   ngOnInit(): void {
     // Old innerpage initialized the outbound flag from the persisted callCategory.
     this.callStore.isOutbound.set(this.callStore.callCategory() === 'OUTBOUND');
+    this.disconnectHandled = false;
+    this.transferInProgress.set(false);
+    if (this.isCO()) {
+      this.startDisconnectFallbackPoll();
+    }
     // Faithful init order (old innerpage ngOnInit): call types → zone → agent state → totals.
     this.getCallTypes();
     this.getIvrsPathDetails();
@@ -273,10 +286,10 @@ export class InnerpageComponent implements OnInit {
     });
   }
 
-  /** Old innerpage `getAgentStatus`: display state; "closure" arms the wrap-up display. */
   private getAgentStatus(): void {
     this.cti.getAgentStatus().subscribe({
       next: (res) => {
+        this.seedCallTimer(Number(res?.data?.call_duration));
         const stateName = res?.data?.stateObj?.stateName;
         if (!stateName) {
           return;
@@ -288,9 +301,17 @@ export class InnerpageComponent implements OnInit {
         }
       },
       error: () => {
-        // Old app only logged this.
+        this.seedCallTimer(NaN);
       },
     });
+  }
+
+  private seedCallTimer(czDurationSeconds: number): void {
+    if (this.callStartEpoch !== 0) {
+      return;
+    }
+    const offset = !isNaN(czDurationSeconds) && czDurationSeconds > 0 ? czDurationSeconds : 0;
+    this.callStartEpoch = Date.now() - offset * 1000;
   }
 
   /** Old `getAgentCallDetails` — the agent's day totals shown in the header strip. */
@@ -309,12 +330,6 @@ export class InnerpageComponent implements OnInit {
     });
   }
 
-  /**
-   * Old innerpage `listener`/`handleEvent`: `Accept` resets the wrap-up countdown;
-   * `CustDisconnect|{sessionId}` records the disconnect and refreshes the agent state
-   * (wrap-up timer + slide-to-closure arrive in slices 5c/5d); a 4th OUTBOUND field flips
-   * the outbound flag.
-   */
   private onCtiMessage(event: Event): void {
     const raw =
       (event as MessageEvent).data ?? (event as CustomEvent<{ data?: unknown }>).detail?.data;
@@ -322,31 +337,50 @@ export class InnerpageComponent implements OnInit {
       return;
     }
     const parts = raw.split('|');
-    const action = parts[0]?.trim().toLowerCase();
-    const sessionVar = /^\d{10}\.\d{10}$/;
+    const sessionVar = /^\d+\.\d+$/;
 
-    if (action === 'accept') {
-      this.ticks.set(0);
-      this.unsubscribeWrapupTime();
-    } else if (
-      parts[0] === 'CustDisconnect' &&
-      !this.transferInProgress() &&
-      (sessionVar.test(parts[1]) || parts[1] === '')
+    if (
+      (parts[0] === 'CustDisconnect' || parts[0] === 'Disconnect') &&
+      !this.transferInProgress()
     ) {
-      this.custDisconnectCallID.set(parts[1]);
+      this.custDisconnectCallID.set(
+        sessionVar.test(parts[2]) ? parts[2] : sessionVar.test(parts[1]) ? parts[1] : '',
+      );
       this.getAgentStatus();
-      // Old `disconnectCall()` UI jump (slide to Closure, lock nav) ran ONLY for standard
-      // calls — everwell/grievance flows stayed on their slides. The wrap-up always starts.
-      if (this.isEverwell() !== 'yes' && this.isGrievance() !== 'yes') {
-        this.callStore.custDisconnected.update((n) => n + 1);
-      }
-      this.startCallWrapup();
-      // Old: an early customer disconnect marks the everwell call as not connected, which
-      // switches the support-action dialog to its not-reachable subcategory list.
-      this.callStore.everwellCallNotConnected.set('yes');
+      this.handleCustomerDisconnect();
     } else if (parts.length > 3 && parts[3] === 'OUTBOUND') {
       this.callStore.isOutbound.set(true);
     }
+  }
+
+  private handleCustomerDisconnect(): void {
+    if (this.disconnectHandled || this.destroyed) {
+      return;
+    }
+    this.disconnectHandled = true;
+    this.disconnectPollSubscription?.unsubscribe();
+    if (this.isEverwell() !== 'yes' && this.isGrievance() !== 'yes') {
+      this.callStore.custDisconnected.update((n) => n + 1);
+    }
+    this.startCallWrapup();
+    this.callStore.everwellCallNotConnected.set('yes');
+  }
+
+  private startDisconnectFallbackPoll(): void {
+    this.disconnectPollSubscription = timer(4000, 4000).subscribe(() => {
+      if (this.disconnectHandled || this.destroyed || this.transferInProgress()) {
+        return;
+      }
+      this.cti.getAgentStatus().subscribe({
+        next: (res) => {
+          const stateName = res?.data?.stateObj?.stateName ?? '';
+          if (stateName.toLowerCase().trim() === 'closure') {
+            this.handleCustomerDisconnect();
+          }
+        },
+        error: () => {},
+      });
+    });
   }
 
   /**
@@ -363,6 +397,9 @@ export class InnerpageComponent implements OnInit {
     }
     this.callApi.getRoleBasedWrapupTime(roleId).subscribe({
       next: (res) => {
+        if (this.destroyed) {
+          return;
+        }
         const data = res?.data;
         if (data?.isWrapUpTime && data.WrapUpTime != null) {
           this.runWrapupCountdown(data.WrapUpTime);
@@ -370,27 +407,31 @@ export class InnerpageComponent implements OnInit {
           this.runWrapupCountdown(DEFAULT_WRAPUP_SECONDS);
         }
       },
-      error: () => this.runWrapupCountdown(DEFAULT_WRAPUP_SECONDS),
+      error: () => {
+        if (!this.destroyed) {
+          this.runWrapupCountdown(DEFAULT_WRAPUP_SECONDS);
+        }
+      },
     });
   }
 
-  /**
-   * Old `roleBasedCallWrapupTime`: `timer(2000, 1000)` countdown into `ticks`; on expiry,
-   * auto-close the call when the agent state is "closure" (the old comparison used the
-   * displayed status string — kept, including that a "(stateType)" suffix defeats it).
-   */
   private runWrapupCountdown(timeRemaining: number): void {
+    const duration = Number(timeRemaining);
+    if (isNaN(duration) || duration <= 0) {
+      return;
+    }
     this.unsubscribeWrapupTime();
     this.wrapupTimerSubscription = timer(2000, 1000).subscribe((t) => {
-      this.ticks.set(timeRemaining - t);
-      if (t === timeRemaining) {
+      this.ticks.set(duration - t);
+      if (t >= duration) {
         this.unsubscribeWrapupTime();
         this.ticks.set(0);
-        if (this.callStatus().toLowerCase().trim() === 'closure') {
+        if (this.wrapupTime()) {
           this.closeCall(
             'Call disconnect from customer.',
             this.lang.t('callClosedSuccessfully'),
             this.wrapupCallID(),
+            true,
           );
         }
       }
@@ -402,16 +443,11 @@ export class InnerpageComponent implements OnInit {
     this.wrapupTimerSubscription = undefined;
   }
 
-  /**
-   * Old innerpage `closeCall(remarks, message?, wrapupCallID?)` — the main `call/closeCall`
-   * path. Field set and semantics are verbatim (incl. the misspelled `prefferedDateTime` and
-   * the `session_id === custdisconnectCallID` guard). The Everwell/grievance outbound
-   * pre-closure completion posts open the method, exactly where the old closeCall had them.
-   */
   protected closeCall(
     remarks: string,
     message?: string,
     wrapupCallId?: number | string | null,
+    skipSessionCheck = false,
   ): void {
     // Old closeCall opened with the everwell/grievance worklist-completion posts —
     // fire-and-forget, BEFORE the session guard, parallel to the closeCall below.
@@ -492,8 +528,9 @@ export class InnerpageComponent implements OnInit {
       request.endCall = true;
     }
 
-    // Old guard: only close the call the CTI actually reported disconnected.
-    if (this.callStore.sessionId() !== this.custDisconnectCallID()) {
+    const storedSessionId = this.callStore.sessionId();
+    const effectiveCallID = this.custDisconnectCallID() || storedSessionId;
+    if (!(skipSessionCheck || !storedSessionId || storedSessionId === effectiveCallID)) {
       return;
     }
     this.callApi.closeCall(request).subscribe({
@@ -502,6 +539,11 @@ export class InnerpageComponent implements OnInit {
         this.storage.removeItem(ENCRYPTED_KEYS.isOnCall);
         this.storage.removeItem(ENCRYPTED_KEYS.isEverwellCall);
         this.storage.removeItem(ENCRYPTED_KEYS.isGrievanceCall);
+        this.callStore.lastClosedSessionId.set(this.callStore.sessionId());
+        this.storage.removeItem(ENCRYPTED_KEYS.sessionId);
+        this.storage.removeItem(ENCRYPTED_KEYS.cli);
+        this.callStore.sessionId.set(null);
+        this.callStore.cli.set(null);
         this.callStore.isOnCall.set(false);
         this.router.navigate(['/MultiRoleScreenComponent/dashboard']);
       },

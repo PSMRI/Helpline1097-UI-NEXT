@@ -121,16 +121,13 @@ export class CallWizardComponent implements OnInit {
   );
 
   constructor() {
-    // Old ngOnInit subscription to `custDisconnectCall$`: lock nav onto the closure step.
-    // The counter re-fires this on every CustDisconnect (old Subject semantics), so a
-    // duplicate event re-locks the wizard even after the agent stepped back.
     effect(() => {
       if (this.callStore.custDisconnected() > 0) {
         this.step.set(this.lastStepIndex());
         this.isPrevious.set(true);
         this.disableBack.set(false);
         this.isNext.set(false);
-        this.isClosureDisable.set(true);
+        this.isClosureDisable.set(false);
       }
     });
   }
@@ -164,14 +161,22 @@ export class CallWizardComponent implements OnInit {
     // no cross-slide refresh is needed here — old `closure.onView()` equivalent.
   }
 
+  private readonly initialSessionId = this.callStore.sessionId();
+
   /**
    * Old `closeCall(compain_type)` — the closure emitted `callClosed`: clear the call flags
    * and return to the dashboard. Faithful to the old app (which also cleared the same keys).
    */
   protected onCallClosed(): void {
+    if (this.callStore.sessionId() !== this.initialSessionId) {
+      return;
+    }
+    this.callStore.lastClosedSessionId.set(this.initialSessionId);
     this.storage.removeItem(ENCRYPTED_KEYS.isOnCall);
     this.storage.removeItem(ENCRYPTED_KEYS.isEverwellCall);
     this.storage.removeItem(ENCRYPTED_KEYS.isGrievanceCall);
+    this.storage.removeItem(ENCRYPTED_KEYS.sessionId);
+    this.storage.removeItem(ENCRYPTED_KEYS.cli);
     this.callStore.reset();
     this.router.navigate(['/MultiRoleScreenComponent/dashboard']);
   }

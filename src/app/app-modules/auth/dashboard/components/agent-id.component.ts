@@ -80,6 +80,7 @@ export class AgentIdComponent implements OnInit {
   protected readonly status = signal('');
 
   private timerSubscription?: Subscription;
+  private recoveryPollSubscription?: Subscription;
 
   constructor() {
     // Old app started the 5s retry poll in ngOnInit when `onlyOutbound && !onceOutbound`;
@@ -96,11 +97,17 @@ export class AgentIdComponent implements OnInit {
 
   ngOnInit(): void {
     this.getAgentStatus();
+    this.recoveryPollSubscription = interval(5 * 1000).subscribe(() => {
+      if (!this.callStore.onlyOutboundAvailable()) {
+        this.getAgentStatus(true);
+      }
+    });
+    this.destroyRef.onDestroy(() => this.recoveryPollSubscription?.unsubscribe());
   }
 
-  private getAgentStatus(): void {
+  private getAgentStatus(pollMode = false): void {
     this.cti.getAgentStatus().subscribe({
-      next: (res) => this.handleAgentState(res),
+      next: (res) => this.handleAgentState(res, pollMode),
       error: () => {
         // Old app: agent not logged into CZentrix — status stays empty.
       },
@@ -108,7 +115,7 @@ export class AgentIdComponent implements OnInit {
   }
 
   /** Faithful port of the old `dashboardUserId.getAgentStatus` response handler. */
-  private handleAgentState(res: ApiResponse<AgentStateData> | null): void {
+  private handleAgentState(res: ApiResponse<AgentStateData> | null, pollMode = false): void {
     const stateName = res?.data?.stateObj?.stateName;
     if (!stateName) {
       return;
@@ -144,14 +151,17 @@ export class AgentIdComponent implements OnInit {
       this.stopTimer();
     }
 
-    // Call recovery — the agent is already on a call the app doesn't know about.
-    // Faithful to the old app: it compared the stored id against the ENVELOPE-level
-    // `res.session_id` (which the backend never sets), so with a stored session id the
-    // comparison always mismatched and recovery ran on every INCALL/CLOSURE state.
     if (state === 'INCALL' || state === 'CLOSURE') {
       const knownSessionId = this.callStore.sessionId();
-      const envelopeSessionId = (res as { session_id?: string } | null)?.session_id;
-      if (!knownSessionId || knownSessionId !== envelopeSessionId) {
+      const serverSessionId = res?.data?.session_id;
+      if (serverSessionId && serverSessionId === this.callStore.lastClosedSessionId()) {
+        return;
+      }
+      if (
+        !knownSessionId ||
+        knownSessionId !== serverSessionId ||
+        (pollMode && state === 'INCALL')
+      ) {
         this.routeToInnerPage(res?.data);
       }
     }
@@ -163,7 +173,7 @@ export class AgentIdComponent implements OnInit {
   /** Old `routeToInnerPage`: persist the live call's flags and open the call screen. */
   private routeToInnerPage(data?: AgentStateData): void {
     const sessionId = data?.session_id;
-    if (!sessionId) {
+    if (!sessionId || sessionId === 'undefined') {
       return;
     }
     // No callCategory here — the old recovery path didn't set it either.

@@ -23,7 +23,6 @@
 import { DestroyRef, inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { NotificationService } from './notification.service';
 import { CALL_SCREEN_ROUTE, CallStore } from '../state/call.store';
 
 /**
@@ -37,7 +36,6 @@ import { CALL_SCREEN_ROUTE, CallStore } from '../state/call.store';
 export class CtiCallEventsService {
   private readonly callStore = inject(CallStore);
   private readonly router = inject(Router);
-  private readonly notify = inject(NotificationService);
 
   /** Attach the window listener for the lifetime of the host component. */
   attach(destroyRef: DestroyRef): void {
@@ -53,33 +51,21 @@ export class CtiCallEventsService {
       return;
     }
     const parts = raw.split('|');
-    const sessionId = parts[2];
-    if (sessionId === undefined || sessionId === 'undefined' || sessionId === null || sessionId === '') {
+    if (parts.length < 3 || parts[0]?.trim().toLowerCase() !== 'accept') {
       return;
     }
-    const known = this.callStore.sessionId();
-    const isNewSession = !known || known !== sessionId;
-    const isAccept = parts[0]?.toLowerCase() === 'accept';
-    if (isNewSession || isAccept) {
-      this.handleCtiEvent(parts);
-    }
-  }
-
-  private handleCtiEvent(parts: string[]): void {
-    if (parts.length <= 2) {
+    const sessionVar = /^\d+(\.\d+)?$/;
+    if (!sessionVar.test(parts[2])) {
       return;
     }
-    const mobileNumber = (parts[1] ?? '').replace(/\D/g, '');
-    const checkNumber = /^\d+$/;
-    const sessionVar = /^\d{10}\.\d{10}$/;
-    // Anchored — the old unanchored pattern accepted "INBOUNDxyz" (declared deviation).
-    const checkCallType = /^(INBOUND|OUTBOUND)$/i;
+    const cli = parts[1] || '';
+    const callCategory = /^(INBOUND|OUTBOUND)$/i.test(parts[3]) ? parts[3] : 'INBOUND';
 
-    if (checkNumber.test(mobileNumber) && sessionVar.test(parts[2]) && checkCallType.test(parts[3])) {
-      this.callStore.startCall(parts[1], parts[2], parts[3]);
-      this.router.navigate([CALL_SCREEN_ROUTE]);
-    } else {
-      this.notify.alert('Invalid call. Please check.', 'error');
+    if (this.router.url.includes(CALL_SCREEN_ROUTE) && this.callStore.isOnCall()) {
+      return;
     }
+
+    this.callStore.startCall(cli, parts[2], callCategory);
+    this.router.navigate([CALL_SCREEN_ROUTE]);
   }
 }

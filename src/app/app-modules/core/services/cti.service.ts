@@ -40,6 +40,7 @@ export interface AgentStateData {
   /** Present when the agent is INCALL/CLOSURE — used by the dashboard's call recovery. */
   cust_ph_no?: string;
   session_id?: string;
+  call_duration?: number | string;
 }
 
 /** IVRS routing info returned by `cti/getIVRSPathDetails` (old innerpage reads `zoneName`). */
