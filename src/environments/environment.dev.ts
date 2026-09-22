@@ -34,7 +34,10 @@ const siteKey = '';
 const captchaChallengeURL = '';
 const enableCaptcha = false;
 
+const openKMBaseURL = '';
+
 export const environment = {
+  openKMBaseURL,
   production: false,
   invalidCallType: 'Invalid',
   encKey: sessionStorageEncKey,

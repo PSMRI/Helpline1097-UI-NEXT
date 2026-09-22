@@ -38,6 +38,7 @@ export class ConfigService {
   readonly helpline1097BaseURL = environment.ip1097;
   readonly adminBaseURL = environment.adminAPI;
   readonly telephonyServerURL = environment.telephoneServer;
+  readonly openKmBaseUrl = (environment as { openKMBaseURL?: string }).openKMBaseURL ?? '';
 
   readonly useApimanKey = environment.useApimanKey;
   readonly sessionTimeoutMinutes = environment.sessionTimeoutMinutes;

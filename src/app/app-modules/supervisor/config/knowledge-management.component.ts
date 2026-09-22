@@ -27,6 +27,8 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
 import { ConfigApiService } from './config-api.service';
+import { ConfigService } from '@/app-modules/core/services/config.service';
+import { KmFileEntry } from '@/app-modules/core/models';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 import { LanguageStore } from '@/app-modules/core/state/language.store';
@@ -46,6 +48,7 @@ interface Subcategory {
   subCatFilePath?: string;
   fileURL?: string;
   fileNameWithExtension?: string;
+  fileManger?: KmFileEntry[];
 }
 interface PendingFile {
   fileName: string;
@@ -69,6 +72,7 @@ const ALLOWED_EXT = ['msg', 'pdf', 'png', 'jpeg', 'jpg', 'doc', 'docx', 'xlsx', 
 export class KnowledgeManagementComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ConfigApiService);
+  private readonly config = inject(ConfigService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
   private readonly lang = inject(LanguageStore);
@@ -139,6 +143,24 @@ export class KnowledgeManagementComponent implements OnInit {
     this.selectedSubcategory.set(
       this.subcategories().find((s) => String(s.subCategoryID) === value) ?? null,
     );
+  }
+
+  protected kmFileUrl(fileUID?: string): string {
+    return `${this.config.openKmBaseUrl}${fileUID ?? ''}`;
+  }
+  protected readonly kmConfigured = !!this.config.openKmBaseUrl;
+
+  private refreshSubcategories(categoryId: number, subCategoryId: number): void {
+    this.api.getSubcategory(categoryId).subscribe({
+      next: (res) => {
+        const rows = Array.isArray(res?.data) ? (res.data as Subcategory[]) : [];
+        this.subcategories.set(rows);
+        this.selectedSubcategory.set(
+          rows.find((s) => String(s.subCategoryID) === String(subCategoryId)) ?? null,
+        );
+      },
+      error: () => {},
+    });
   }
 
   protected onFileSelected(event: Event): void {
@@ -212,10 +234,7 @@ export class KnowledgeManagementComponent implements OnInit {
         this.notify.alert(this.lang.t('fileUploadedSuccessfully'), 'success');
         this.pendingFile.set(null);
         this.fileError.set(null);
-        this.selectedSubcategory.set(null);
-        this.form.reset({ service: '', category: '', subCategory: '' });
-        this.categories.set([]);
-        this.subcategories.set([]);
+        this.refreshSubcategories(Number(v.category), Number(v.subCategory));
       },
       error: () => {
         this.saving.set(false);

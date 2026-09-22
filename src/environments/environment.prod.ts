@@ -48,7 +48,10 @@ for (const [key, value] of Object.entries(requiredProdConfig)) {
   }
 }
 
+const openKMBaseURL = '';
+
 export const environment = {
+  openKMBaseURL,
   production: true,
   invalidCallType: 'Invalid',
   encKey: sessionStorageEncKey,

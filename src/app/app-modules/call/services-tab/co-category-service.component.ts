@@ -39,6 +39,7 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardSelectImports } from '@common-ui/ui/select';
 
 import { formatUtcDateTime } from '@/app-modules/outbound/worklist-date';
+import { ConfigService } from '@/app-modules/core/services/config.service';
 import { CoServicesApiService } from '@/app-modules/core/services/co-services-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
@@ -51,10 +52,10 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
  * `co-counselling-services`, which were near-clones). Parameterized by `serviceType`:
  * both pick their sub-service by name match (INFO / COUN), then Category → Sub-Category →
  * "Get Details", which SAVES the mapping AND returns the guidance documents (old "Get Details"
- * was the save; there is no separate save button). Each returned `subCatFilePath` is shown as a
- * link (bound raw — broken where the backend leaves `${KM_*}` unresolved, e.g. UAT; opens the
- * real document in prod). Counselling's save uses the `coCategoryID`/`coSubCategoryID` keys and
- * a different endpoint — handled by the API service.
+ * was the save; there is no separate save button). release-3.6.3: the selected sub-category's
+ * `fileManger[]` versions are listed, each linking `openKMBaseURL + fileUID`. Counselling's
+ * save uses the `coCategoryID`/`coSubCategoryID` keys and a different endpoint — handled by
+ * the API service.
  */
 @Component({
   selector: 'app-co-category-service',
@@ -91,30 +92,35 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
         </button>
       </form>
 
-      @if (savedFiles().length) {
+      <!-- release-3.6.3: every fileManger[] version listed, linked via openKMBaseURL. -->
+      @if (savedSubcategory(); as sub) {
         <div class="rounded-md border border-border p-3 text-sm">
-          <p class="mb-1 font-medium">Details</p>
-          <ul class="flex flex-col gap-1">
-            @for (f of savedFiles(); track f.subCategoryName) {
-              <li>
-                <!-- Old app: the returned document opens in a new tab; no path → not available.
-                     The KM path is bound raw (broken where KM_* is unresolved, e.g. UAT). -->
-                @if (f.subCatFilePath) {
-                  <a
-                    [href]="f.subCatFilePath"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1.5 text-primary hover:underline"
-                  >
-                    <ng-icon name="lucideDownload" class="text-base" />
-                    <span>{{ f.subCategoryName }}@if (f.subCategoryDesc) {: {{ f.subCategoryDesc }}}</span>
-                  </a>
-                } @else {
-                  <span class="text-muted-foreground">{{ f.subCategoryName }} — {{ 'noDocumentAvailable' | t }}</span>
-                }
-              </li>
-            }
-          </ul>
+          <p class="mb-1 font-medium">
+            {{ sub.subCategoryName }}@if (sub.subCategoryDesc) {<span class="font-normal"> : {{ sub.subCategoryDesc }}</span>}
+          </p>
+          @if (sub.fileManger?.length) {
+            <ul class="flex flex-col gap-1">
+              @for (f of sub.fileManger; track $index) {
+                <li>
+                  @if (kmConfigured) {
+                    <a
+                      [href]="kmFileUrl(f.fileUID)"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="inline-flex items-center gap-1.5 text-primary hover:underline"
+                    >
+                      <ng-icon name="lucideDownload" class="text-base" />
+                      <span>{{ f.fileName }}{{ f.fileExtension }} ({{ f.versionNo }})</span>
+                    </a>
+                  } @else {
+                    <span class="text-muted-foreground">{{ f.fileName }}{{ f.fileExtension }} ({{ f.versionNo }})</span>
+                  }
+                </li>
+              }
+            </ul>
+          } @else {
+            <span class="text-muted-foreground">{{ 'noDocumentAvailable' | t }}</span>
+          }
         </div>
       }
 
@@ -163,6 +169,7 @@ export class CoCategoryServiceComponent implements OnInit {
 
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(CoServicesApiService);
+  private readonly config = inject(ConfigService);
   private readonly notify = inject(NotificationService);
   private readonly sessionStore = inject(SessionStore);
   private readonly callStore = inject(CallStore);
@@ -185,7 +192,12 @@ export class CoCategoryServiceComponent implements OnInit {
 
   protected readonly categories = signal<CoCategory[]>([]);
   protected readonly subCategories = signal<CoSubCategory[]>([]);
-  protected readonly savedFiles = signal<CoSubCategory[]>([]);
+  protected readonly savedSubcategory = signal<CoSubCategory | null>(null);
+
+  protected kmFileUrl(fileUID?: string): string {
+    return `${this.config.openKmBaseUrl}${fileUID ?? ''}`;
+  }
+  protected readonly kmConfigured = !!this.config.openKmBaseUrl;
   protected readonly history = signal<
     { categoryDetails?: CoCategory; subCategoryDetails?: CoSubCategory; createdBy?: string; createdDate?: string }[]
   >([]);
@@ -223,6 +235,7 @@ export class CoCategoryServiceComponent implements OnInit {
   // control, so reading the control here would see the previous selection.
   protected onCategoryChange(value: string | string[]): void {
     this.subCategories.set([]);
+    this.savedSubcategory.set(null);
     this.form.patchValue({ subCategoryId: null });
     const categoryId = value as string;
     if (!categoryId) {
@@ -247,6 +260,9 @@ export class CoCategoryServiceComponent implements OnInit {
     const createdBy = this.sessionStore.user()?.userName;
     const subServiceID = this.subServiceId();
 
+    this.savedSubcategory.set(
+      this.subCategories().find((s) => String(s.subCategoryID) === subCategoryId) ?? null,
+    );
     this.saving.set(true);
     const request$ =
       this.serviceType() === 'information'
@@ -254,23 +270,22 @@ export class CoCategoryServiceComponent implements OnInit {
             beneficiaryRegID,
             benCallID,
             subServiceID,
-            categoryID: categoryId,
-            subCategoryID: subCategoryId,
+            categoryID: Number(categoryId),
+            subCategoryID: Number(subCategoryId),
             createdBy,
           })
         : this.api.saveCounsellingMapping({
             beneficiaryRegID,
             benCallID,
             subServiceID,
-            coCategoryID: categoryId,
-            coSubCategoryID: subCategoryId,
+            coCategoryID: Number(categoryId),
+            coSubCategoryID: Number(subCategoryId),
             createdBy,
           });
 
     request$.subscribe({
-      next: (res) => {
+      next: () => {
         this.saving.set(false);
-        this.savedFiles.set(res?.data ?? []);
         this.notify.alert('Service recorded', 'success');
         this.serviceProvided.emit();
         this.loadHistory();

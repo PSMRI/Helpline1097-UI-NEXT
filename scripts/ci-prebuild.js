@@ -45,6 +45,9 @@ const defaultEnvValues = {
   SITE_KEY: '',
   CAPTCHA_CHALLENGE_URL: '',
   ENABLE_CAPTCHA: false,
+  KM_GUEST_USER: '',
+  KM_GUEST_PASSWORD: '',
+  KM_API_BASE_PATH: '',
 };
 
 const rawEnvValues = Object.assign({}, defaultEnvValues, process.env);

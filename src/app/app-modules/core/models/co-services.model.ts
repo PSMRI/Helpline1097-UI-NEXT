@@ -45,6 +45,14 @@ export interface CoSubCategory {
   subCategoryName?: string;
   subCategoryDesc?: string;
   subCatFilePath?: string;
+  fileManger?: KmFileEntry[];
+}
+
+export interface KmFileEntry {
+  fileName?: string;
+  fileExtension?: string;
+  versionNo?: string | number;
+  fileUID?: string;
 }
 
 /** Information-tab save (`iEMR/saveBenCalServiceCatSubcatMapping`, sent as a 1-item array). */
