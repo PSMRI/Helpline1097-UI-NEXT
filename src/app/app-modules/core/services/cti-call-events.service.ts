@@ -44,14 +44,6 @@ export class CtiCallEventsService {
     destroyRef.onDestroy(() => window.removeEventListener('message', listener, false));
   }
 
-  /**
-   * release-3.6.3 Accept semantics: transfer legs arrive with integer session ids, empty
-   * phone numbers, or no call-type — all accepted (missing type defaults to INBOUND).
-   * An Accept fired while the agent is on the call screen with an active session is the
-   * CTI echo of the agent's own warm-transfer dial, not a new call — ignored. (isOnCall
-   * stays true through wrap-up, so an Accept during wrap-up is also suppressed; the
-   * dashboard's recovery poll picks that call up after the auto-close — release parity.)
-   */
   private onCtiMessage(event: Event): void {
     const raw =
       (event as MessageEvent).data ?? (event as CustomEvent<{ data?: unknown }>).detail?.data;

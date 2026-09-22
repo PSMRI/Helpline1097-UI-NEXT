@@ -97,9 +97,6 @@ export class AgentIdComponent implements OnInit {
 
   ngOnInit(): void {
     this.getAgentStatus();
-    // release-3.6.3: poll while the dashboard is mounted — the reliable fallback for
-    // inbound calls whose Accept the window listener missed (2nd-transfer routing gap).
-    // Outbound-only agents keep their separate retry timer instead.
     this.recoveryPollSubscription = interval(5 * 1000).subscribe(() => {
       if (!this.callStore.onlyOutboundAvailable()) {
         this.getAgentStatus(true);
@@ -154,15 +151,9 @@ export class AgentIdComponent implements OnInit {
       this.stopTimer();
     }
 
-    // release-3.6.3 call recovery — the agent is already on a call the app doesn't know
-    // about (e.g. a transfer Accept fired during a routing gap). Compare against
-    // `data.session_id`; in poll mode a matching session still on the dashboard means a
-    // router conflict swallowed the navigation — force-navigate to recover.
     if (state === 'INCALL' || state === 'CLOSURE') {
       const knownSessionId = this.callStore.sessionId();
       const serverSessionId = res?.data?.session_id;
-      // A just-closed call can linger INCALL/CLOSURE on CZentrix for a few beats —
-      // never recover INTO it.
       if (serverSessionId && serverSessionId === this.callStore.lastClosedSessionId()) {
         return;
       }

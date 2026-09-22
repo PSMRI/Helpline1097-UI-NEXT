@@ -40,7 +40,6 @@ export interface AgentStateData {
   /** Present when the agent is INCALL/CLOSURE — used by the dashboard's call recovery. */
   cust_ph_no?: string;
   session_id?: string;
-  /** Seconds the current call has been running per CZentrix — seeds the call timer. */
   call_duration?: number | string;
 }
 

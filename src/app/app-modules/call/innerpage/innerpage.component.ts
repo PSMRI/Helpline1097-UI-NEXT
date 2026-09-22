@@ -152,8 +152,6 @@ export class InnerpageComponent implements OnInit {
   protected readonly ticks = signal(0);
   protected readonly wrapupTime = signal(false);
 
-  // Call-duration ticker — release-3.6.3 (AMM-2312): recomputed from a wall-clock epoch
-  // seeded from CZentrix's call_duration, so it can't drift from the bar.
   private callStartEpoch = 0;
   private readonly elapsedSeconds = signal(0);
   protected readonly callDuration = computed(() => {
@@ -169,9 +167,7 @@ export class InnerpageComponent implements OnInit {
 
   /** Old `custdisconnectCallID` — session id from the CustDisconnect CTI event. */
   protected readonly custDisconnectCallID = signal<string | null>(null);
-  /** release-3.6.3 `disconnectHandled` — push event and fallback poll race; first wins. */
   private disconnectHandled = false;
-  /** release `componentDestroyed` — late poll/wrap-up callbacks must not act after destroy. */
   private destroyed = false;
   private disconnectPollSubscription?: Subscription;
   /** Old `transferInProgress` — set by the closure flow's transfer path (Phase 6). */
@@ -211,12 +207,8 @@ export class InnerpageComponent implements OnInit {
   ngOnInit(): void {
     // Old innerpage initialized the outbound flag from the persisted callCategory.
     this.callStore.isOutbound.set(this.callStore.callCategory() === 'OUTBOUND');
-    // release-3.6.3: a stale disconnect/transfer state from the previous call must not
-    // leak into this one.
     this.disconnectHandled = false;
     this.transferInProgress.set(false);
-    // The innerpage also hosts the supervisor activity area — the disconnect poll is
-    // CO-call machinery only.
     if (this.isCO()) {
       this.startDisconnectFallbackPoll();
     }
@@ -294,9 +286,6 @@ export class InnerpageComponent implements OnInit {
     });
   }
 
-  /** Old innerpage `getAgentStatus`: display state; "closure" arms the wrap-up display.
-   * release-3.6.3 (AMM-2312) also seeds the call timer from CZentrix's `call_duration`
-   * so the app's timer matches the bar instead of counting from component mount. */
   private getAgentStatus(): void {
     this.cti.getAgentStatus().subscribe({
       next: (res) => {
@@ -317,9 +306,6 @@ export class InnerpageComponent implements OnInit {
     });
   }
 
-  /** Wall-clock epoch seeding (release `getAgentStatus`/`startCallTimer`). Deviation:
-   * seeded ONCE per call (release re-seeded on every poll, letting later polls yank the
-   * timer around); release's persisted-callStartTime branch is dead code — not ported. */
   private seedCallTimer(czDurationSeconds: number): void {
     if (this.callStartEpoch !== 0) {
       return;
@@ -344,12 +330,6 @@ export class InnerpageComponent implements OnInit {
     });
   }
 
-  /**
-   * release-3.6.3 `handleEvent`: `CustDisconnect` OR `Disconnect` (session id at [2],
-   * falling back to [1] for the older CTI layout) → the shared idempotent disconnect
-   * handler; a 4th OUTBOUND field flips the outbound flag. Accept is no longer handled
-   * here — the shell listener owns new-call routing.
-   */
   private onCtiMessage(event: Event): void {
     const raw =
       (event as MessageEvent).data ?? (event as CustomEvent<{ data?: unknown }>).detail?.data;
@@ -373,33 +353,21 @@ export class InnerpageComponent implements OnInit {
     }
   }
 
-  /** Shared by the CTI push event and the polling fallback — first one wins. */
   private handleCustomerDisconnect(): void {
     if (this.disconnectHandled || this.destroyed) {
       return;
     }
     this.disconnectHandled = true;
     this.disconnectPollSubscription?.unsubscribe();
-    // Old `disconnectCall()` UI jump (slide to Closure) ran ONLY for standard calls —
-    // everwell/grievance flows stayed on their slides. The wrap-up always starts.
     if (this.isEverwell() !== 'yes' && this.isGrievance() !== 'yes') {
       this.callStore.custDisconnected.update((n) => n + 1);
     }
     this.startCallWrapup();
-    // An early customer disconnect marks the everwell call as not connected, which
-    // switches the support-action dialog to its not-reachable subcategory list.
     this.callStore.everwellCallNotConnected.set('yes');
   }
 
-  /**
-   * release-3.6.3 fallback: the CTI bar emits no disconnect event for very short calls
-   * (~<10s), leaving the agent stuck in-call forever. Poll the agent's CZentrix state
-   * and treat a transition to "closure" as the customer hanging up.
-   */
   private startDisconnectFallbackPoll(): void {
     this.disconnectPollSubscription = timer(4000, 4000).subscribe(() => {
-      // transferInProgress guard is a deliberate deviation from release (which would
-      // auto-close a call mid-warm-transfer when CZentrix reports 'closure').
       if (this.disconnectHandled || this.destroyed || this.transferInProgress()) {
         return;
       }
@@ -410,9 +378,7 @@ export class InnerpageComponent implements OnInit {
             this.handleCustomerDisconnect();
           }
         },
-        error: () => {
-          /* release logged and kept polling */
-        },
+        error: () => {},
       });
     });
   }
@@ -449,12 +415,6 @@ export class InnerpageComponent implements OnInit {
     });
   }
 
-  /**
-   * release-3.6.3 `roleBasedCallWrapupTime`: guard a non-numeric/zero duration, count
-   * down into `ticks`, and on expiry ALWAYS auto-close (the wrapupTime flag is set at
-   * wrap-up start and never cleared), bypassing the session gate — the old gate on the
-   * displayed "closure" status string could be stale and left calls open forever.
-   */
   private runWrapupCountdown(timeRemaining: number): void {
     const duration = Number(timeRemaining);
     if (isNaN(duration) || duration <= 0) {
@@ -483,12 +443,6 @@ export class InnerpageComponent implements OnInit {
     this.wrapupTimerSubscription = undefined;
   }
 
-  /**
-   * release-3.6.3 `closeCall(remarks, message?, wrapupCallID?, skipSessionCheck?)` — the
-   * main `call/closeCall` path (field set verbatim incl. the misspelled
-   * `prefferedDateTime`). The Everwell/grievance outbound pre-closure completion posts
-   * open the method, exactly where the old closeCall had them.
-   */
   protected closeCall(
     remarks: string,
     message?: string,
@@ -574,9 +528,6 @@ export class InnerpageComponent implements OnInit {
       request.endCall = true;
     }
 
-    // release-3.6.3 gate: close when explicitly skipping, when no session is stored
-    // (outbound / PREVIEW_FAIL), or when no OTHER session's disconnect was recorded —
-    // the old strict equality left calls unclosable on every non-CTI path.
     const storedSessionId = this.callStore.sessionId();
     const effectiveCallID = this.custDisconnectCallID() || storedSessionId;
     if (!(skipSessionCheck || !storedSessionId || storedSessionId === effectiveCallID)) {
@@ -588,9 +539,6 @@ export class InnerpageComponent implements OnInit {
         this.storage.removeItem(ENCRYPTED_KEYS.isOnCall);
         this.storage.removeItem(ENCRYPTED_KEYS.isEverwellCall);
         this.storage.removeItem(ENCRYPTED_KEYS.isGrievanceCall);
-        // release-3.6.3: clear the call session so a re-transferred call with the same
-        // number is recognised as new; remember it so the dashboard recovery poll
-        // doesn't bounce back in while CZentrix still reports the closed call.
         this.callStore.lastClosedSessionId.set(this.callStore.sessionId());
         this.storage.removeItem(ENCRYPTED_KEYS.sessionId);
         this.storage.removeItem(ENCRYPTED_KEYS.cli);

@@ -121,9 +121,6 @@ export class CallWizardComponent implements OnInit {
   );
 
   constructor() {
-    // Old ngOnInit subscription to `custDisconnectCall$`: jump to the closure step.
-    // release-3.6.3: the Closure button STAYS ENABLED after a customer hangup — main's
-    // isClosureDisable=true left the agent unable to open closure at all.
     effect(() => {
       if (this.callStore.custDisconnected() > 0) {
         this.step.set(this.lastStepIndex());
@@ -164,14 +161,11 @@ export class CallWizardComponent implements OnInit {
     // no cross-slide refresh is needed here — old `closure.onView()` equivalent.
   }
 
-  /** Session this wizard instance opened with — a different one at close time means a
-   * NEW call arrived during wrap-up (release-3.6.3 don't-clobber guard). */
   private readonly initialSessionId = this.callStore.sessionId();
 
   /**
    * Old `closeCall(compain_type)` — the closure emitted `callClosed`: clear the call flags
-   * and return to the dashboard. release-3.6.3: skip entirely when a new call already took
-   * over the session (the shell listener set it up — don't undo that work).
+   * and return to the dashboard. Faithful to the old app (which also cleared the same keys).
    */
   protected onCallClosed(): void {
     if (this.callStore.sessionId() !== this.initialSessionId) {
@@ -181,7 +175,6 @@ export class CallWizardComponent implements OnInit {
     this.storage.removeItem(ENCRYPTED_KEYS.isOnCall);
     this.storage.removeItem(ENCRYPTED_KEYS.isEverwellCall);
     this.storage.removeItem(ENCRYPTED_KEYS.isGrievanceCall);
-    // release-3.6.3: also drop the persisted session so a re-transferred call is new.
     this.storage.removeItem(ENCRYPTED_KEYS.sessionId);
     this.storage.removeItem(ENCRYPTED_KEYS.cli);
     this.callStore.reset();
