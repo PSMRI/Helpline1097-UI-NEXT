@@ -212,7 +212,6 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     alternateNumber3: this.fb.control(''),
     alternateNumber4: this.fb.control(''),
     alternateNumber5: this.fb.control(''),
-    // release-3.6.3: preferred language is OPTIONAL (source's `required` blocked registrations).
     preferredLanguage: this.fb.control<string | null>(null),
   });
 

@@ -372,7 +372,6 @@ export class CoFeedbackComponent implements OnInit {
   });
 
   constructor() {
-    // release-3.6.3: history re-loads whenever the beneficiary is (re)selected.
     effect(() => {
       this.callStore.beneficiaryRegId();
       untracked(() => this.loadHistory());
@@ -412,8 +411,6 @@ export class CoFeedbackComponent implements OnInit {
       return;
     }
     this.loadingHistory.set(true);
-    // release-3.6.3: the flag scopes history to 1097 rows (without it the backend
-    // returns cross-service/empty results).
     this.api.getFeedbacksList({ beneficiaryRegID, serviceID: serviceId, is1097: true }).subscribe({
       next: (res) => {
         const rows = Array.isArray(res?.data) ? (res.data as FeedbackRow[]) : [];

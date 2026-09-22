@@ -206,8 +206,6 @@ export class CoCategoryServiceComponent {
         this.loadCategories(subServiceID);
       }
     });
-    // release-3.6.3: history re-loads whenever the beneficiary is (re)selected, not only
-    // at mount — the tab can exist before the registration slide links a beneficiary.
     effect(() => {
       this.callStore.beneficiaryRegId();
       untracked(() => this.loadHistory());

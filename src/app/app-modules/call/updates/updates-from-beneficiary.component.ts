@@ -59,7 +59,6 @@ const SOURCE_OF_INFO = [
   { id: 6, name: 'Others', value: 'Others' },
   { id: 8, name: 'Newspaper', value: 'Newspaper' },
   { id: 7, name: 'Not Disclosed', value: 'Not Disclosed' },
-  // release-3.6.3 addition (id 9), backend-recognised value.
   { id: 9, name: 'Breakfree India', value: 'Breakfree India' },
 ];
 

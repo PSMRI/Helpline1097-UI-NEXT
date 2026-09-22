@@ -251,7 +251,6 @@ export class CoReferralComponent implements OnInit {
   }
 
   constructor() {
-    // release-3.6.3: history re-loads whenever the beneficiary is (re)selected.
     effect(() => {
       this.callStore.beneficiaryRegId();
       untracked(() => this.loadHistory());
