@@ -194,11 +194,9 @@ export class CoCategoryServiceComponent implements OnInit {
   protected readonly subCategories = signal<CoSubCategory[]>([]);
   protected readonly savedSubcategory = signal<CoSubCategory | null>(null);
 
-  /** release `getFileURL` — `openKMBaseURL + fileUID`. */
   protected kmFileUrl(fileUID?: string): string {
     return `${this.config.openKmBaseUrl}${fileUID ?? ''}`;
   }
-  /** Unconfigured base would make hrefs relative SPA links — render plain text instead. */
   protected readonly kmConfigured = !!this.config.openKmBaseUrl;
   protected readonly history = signal<
     { categoryDetails?: CoCategory; subCategoryDetails?: CoSubCategory; createdBy?: string; createdDate?: string }[]
@@ -262,8 +260,6 @@ export class CoCategoryServiceComponent implements OnInit {
     const createdBy = this.sessionStore.user()?.userName;
     const subServiceID = this.subServiceId();
 
-    // release-3.6.3: the file panel comes from the MASTER subcategory list (set on click,
-    // independent of the save — the save response carries no fileManger).
     this.savedSubcategory.set(
       this.subCategories().find((s) => String(s.subCategoryID) === subCategoryId) ?? null,
     );

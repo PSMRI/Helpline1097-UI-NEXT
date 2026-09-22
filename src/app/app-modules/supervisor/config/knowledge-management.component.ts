@@ -48,7 +48,6 @@ interface Subcategory {
   subCatFilePath?: string;
   fileURL?: string;
   fileNameWithExtension?: string;
-  /** release-3.6.3: every previously uploaded version. */
   fileManger?: KmFileEntry[];
 }
 interface PendingFile {
@@ -146,15 +145,11 @@ export class KnowledgeManagementComponent implements OnInit {
     );
   }
 
-  /** release `getFileURL` — `openKMBaseURL + fileUID`. */
   protected kmFileUrl(fileUID?: string): string {
     return `${this.config.openKmBaseUrl}${fileUID ?? ''}`;
   }
-  /** Unconfigured base would make hrefs relative SPA links — render plain text instead. */
   protected readonly kmConfigured = !!this.config.openKmBaseUrl;
 
-  /** release-3.6.3: refresh the sub-category list (and re-select) after an upload so the
-   * "previous uploaded file" versions reflect the new state. */
   private refreshSubcategories(categoryId: number, subCategoryId: number): void {
     this.api.getSubcategory(categoryId).subscribe({
       next: (res) => {
@@ -164,9 +159,7 @@ export class KnowledgeManagementComponent implements OnInit {
           rows.find((s) => String(s.subCategoryID) === String(subCategoryId)) ?? null,
         );
       },
-      error: () => {
-        /* keep the stale list; the next manual change re-fetches */
-      },
+      error: () => {},
     });
   }
 
@@ -241,8 +234,6 @@ export class KnowledgeManagementComponent implements OnInit {
         this.notify.alert(this.lang.t('fileUploadedSuccessfully'), 'success');
         this.pendingFile.set(null);
         this.fileError.set(null);
-        // release-3.6.3: keep the selection and refresh the version list in place
-        // (the old full-reset left "previous uploaded file" showing stale state).
         this.refreshSubcategories(Number(v.category), Number(v.subCategory));
       },
       error: () => {

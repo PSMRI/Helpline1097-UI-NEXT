@@ -48,7 +48,7 @@ for (const [key, value] of Object.entries(requiredProdConfig)) {
   }
 }
 
-const openKMBaseURL = ''; // release-3.6.3 KM downloads; CI builds the real credentialed URL
+const openKMBaseURL = '';
 
 export const environment = {
   openKMBaseURL,
