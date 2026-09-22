@@ -145,7 +145,6 @@ export class BlacklistNumberComponent implements OnInit {
     this.searchByPhone.set(on);
     if (!on) {
       // Old app cleared the phone and reloaded the full list when search is switched off.
-      // Silent: the current rows stay on screen until the refresh lands (no loader flash).
       this.searchForm.reset({ phoneNumber: '' });
       this.loadList(undefined, { silent: true });
     }

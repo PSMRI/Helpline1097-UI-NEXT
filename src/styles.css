@@ -199,9 +199,7 @@
   }
 }
 
-/* ---- App-level UI polish ------------------------------------------------ */
 @layer components {
-  /* Every clickable control reads as clickable. */
   button:not(:disabled),
   [role='button']:not([aria-disabled='true']),
   [role='menuitem'],
@@ -211,8 +209,6 @@
     cursor: pointer;
   }
 
-  /* Header language picker (light-on-blue). The trigger's own borders/ring are
-     replaced so the active state never resizes the header row. */
   .header-select > button {
     @apply h-9 min-h-0 border-white/30 bg-white/10 text-primary-foreground shadow-none hover:bg-white/20;
   }

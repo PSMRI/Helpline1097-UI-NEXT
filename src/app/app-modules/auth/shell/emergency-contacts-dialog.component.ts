@@ -105,9 +105,6 @@ export class EmergencyContactsDialogComponent implements OnInit {
           this.loading.set(false);
         },
         error: () => {
-          // Old dialog showed its empty state on ANY failure — the UAT backend currently
-          // 5000s this endpoint with a Gson serialization error, which is not the user's
-          // problem to read.
           this.contacts.set([]);
           this.loading.set(false);
         },

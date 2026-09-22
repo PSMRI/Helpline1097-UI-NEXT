@@ -79,7 +79,6 @@ export class ForceLogoutComponent {
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
 
   protected readonly form = this.fb.group({
-    // Required only — old had no length rule (a 2-char username like "co" is valid).
     userName: this.fb.control<string>('', {
       nonNullable: true,
       validators: [Validators.required],
@@ -105,9 +104,6 @@ export class ForceLogoutComponent {
           if (response.toLowerCase() === 'success') {
             this.notify.alert(this.lang.t('userLoggedOutSuccessfully'), 'success');
             this.form.reset({ userName: '' });
-            // Kicking out ONESELF invalidates this session's token. The old app only
-            // landed on login by luck (its agent-state poll 401'd seconds later); here
-            // it is explicit — otherwise the next click fails with "session expired".
             const self = this.sessionStore.user()?.userName ?? '';
             if (self && self.toLowerCase() === userName.trim().toLowerCase()) {
               this.auth.removeToken();
