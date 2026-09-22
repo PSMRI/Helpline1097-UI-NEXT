@@ -22,12 +22,12 @@
 
 import {
   ChangeDetectionStrategy,
+  effect,
+  untracked,
   Component,
   computed,
-  effect,
   inject,
   input,
-  OnInit,
   output,
   signal,
 } from '@angular/core';
@@ -161,7 +161,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
     </div>
   `,
 })
-export class CoCategoryServiceComponent implements OnInit {
+export class CoCategoryServiceComponent {
   /** Old `millisToUTCDate(createdDate) | date:'dd/MM/yyyy hh:mm a'`. */
   protected historyDate(value?: string): string {
     return value ? formatUtcDateTime(value) : '';
@@ -218,11 +218,12 @@ export class CoCategoryServiceComponent implements OnInit {
         this.loadCategories(subServiceID);
       }
     });
+    effect(() => {
+      this.callStore.beneficiaryRegId();
+      untracked(() => this.loadHistory());
+    });
   }
 
-  ngOnInit(): void {
-    this.loadHistory();
-  }
 
   private loadCategories(subServiceID: number): void {
     this.api.getCategories(subServiceID).subscribe({

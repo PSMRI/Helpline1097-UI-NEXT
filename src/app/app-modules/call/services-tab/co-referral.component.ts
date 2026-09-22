@@ -22,6 +22,8 @@
 
 import {
   ChangeDetectionStrategy,
+  effect,
+  untracked,
   Component,
   computed,
   inject,
@@ -246,7 +248,13 @@ export class CoReferralComponent implements OnInit {
       next: (res) => this.directories.set(res?.data?.directory ?? []),
       error: () => this.directories.set([]),
     });
-    this.loadHistory();
+  }
+
+  constructor() {
+    effect(() => {
+      this.callStore.beneficiaryRegId();
+      untracked(() => this.loadHistory());
+    });
   }
 
   // Handlers take the emitted value: z-select fires zValueChange BEFORE its CVA writes the

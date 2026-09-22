@@ -343,7 +343,7 @@
             [readonly]="!form.controls.alternateNumber4.value" [appRestrictInput]="mobileNumberBlock" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>{{ 'preferredLanguage' | t }} <span class="text-destructive">*</span></span>
+          <span>{{ 'preferredLanguage' | t }}</span>
           <z-select formControlName="preferredLanguage" [zPlaceholder]="'preferredLanguage' | t">
             @for (l of languages(); track l.languageID) {
               <z-select-item [zValue]="l.languageID + ''">{{ l.languageName }}</z-select-item>

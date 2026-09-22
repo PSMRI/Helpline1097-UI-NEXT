@@ -59,6 +59,7 @@ const SOURCE_OF_INFO = [
   { id: 6, name: 'Others', value: 'Others' },
   { id: 8, name: 'Newspaper', value: 'Newspaper' },
   { id: 7, name: 'Not Disclosed', value: 'Not Disclosed' },
+  { id: 9, name: 'Breakfree India', value: 'Breakfree India' },
 ];
 
 const NOT_DISCLOSED = 'Not Disclosed';

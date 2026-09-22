@@ -212,7 +212,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     alternateNumber3: this.fb.control(''),
     alternateNumber4: this.fb.control(''),
     alternateNumber5: this.fb.control(''),
-    preferredLanguage: this.fb.control<string | null>(null, Validators.required),
+    preferredLanguage: this.fb.control<string | null>(null),
   });
 
   ngOnInit(): void {
