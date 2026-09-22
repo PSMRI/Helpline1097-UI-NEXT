@@ -29,6 +29,7 @@ import {
   ApiResponse,
   ApiStatus,
   CAPTCHA_FAILED_MESSAGE,
+  INVALID_CREDENTIALS_MESSAGE,
   SESSION_CONFLICT_CONFIRM_MESSAGES,
 } from '../models';
 import { AuthService } from '../auth/auth.service';
@@ -44,8 +45,9 @@ function isEnvelope(body: unknown): body is ApiResponse {
 /**
  * Ports the session/error logic from the old InterceptedHttp.onSuccess/onError:
  *  - statusCode 200 → pass through
- *  - 5002 → two paths: "already logged in" / "invalid credentials" → confirm dialog →
- *    logout-from-other-device; otherwise redirect + "session expired" + clear token
+ *  - 5002 → "already logged in" → confirm dialog → logout-from-other-device; the exact
+ *    legacy "Invalid username or password" is swallowed; any other message (locked /
+ *    deactivated / "...Remaining attempts: N") is alerted verbatim + redirect + clear
  *  - 5006 → surface the envelope as an error to the caller
  *  - 401/403 → session expired + clear + redirect to login
  * Non-envelope bodies (e.g. blob downloads) pass through untouched.
@@ -82,7 +84,7 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
                     authEvents.requestLogoutFromOtherDevice();
                   }
                 });
-            } else {
+            } else if (message !== INVALID_CREDENTIALS_MESSAGE) {
               const data = body.data as { response?: string } | undefined;
               if (data && data.response === 'User successfully logged out') {
                 // Logout success rides a 5002 envelope. The old interceptor still emitted to
@@ -92,7 +94,7 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
                 return of(event);
               }
               router.navigate(['']);
-              notify.alert('Session expired, please login again', 'error');
+              notify.alert(message || 'Session expired, please login again', 'error');
               auth.removeToken();
             }
             return EMPTY;
@@ -119,6 +121,15 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
         auth.removeToken();
         sessionStorage.clear();
         router.navigate(['']);
+      }
+      if (error instanceof HttpErrorResponse && !req.url.includes('platform-feedback')) {
+        const body = error.error as { errorMessage?: string; message?: string } | null;
+        const errorMessage =
+          (typeof body === 'object' && (body?.errorMessage || body?.message)) ||
+          error.message ||
+          error.statusText ||
+          'Request failed';
+        return throwError(() => ({ ...(typeof body === 'object' ? body : {}), status: error.status, errorMessage }));
       }
       return throwError(() => error);
     }),

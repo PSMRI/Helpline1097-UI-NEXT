@@ -35,7 +35,7 @@ export interface ApiResponse<T = unknown> {
 export const ApiStatus = {
   /** Success. */
   OK: 200,
-  /** Session conflict / auth issue (e.g. "already logged in", "Invalid username or password"). */
+  /** Session conflict / auth issue (e.g. "already logged in", bad credentials, locked account). */
   SESSION_CONFLICT: 5002,
   /** Domain error the backend wants surfaced to the caller. */
   DOMAIN_ERROR: 5006,
@@ -44,8 +44,9 @@ export const ApiStatus = {
 /** Messages that trigger the "logout from other device" confirmation on a 5002. */
 export const SESSION_CONFLICT_CONFIRM_MESSAGES = [
   'You are already logged in,please confirm to logout from other device and login again',
-  'Invalid username or password',
 ];
+
+export const INVALID_CREDENTIALS_MESSAGE = 'Invalid username or password';
 
 /**
  * A 5002 carrying this message is a captcha failure, not a session conflict. The old app
