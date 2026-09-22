@@ -33,8 +33,6 @@ export const apiKeyInterceptor: HttpInterceptorFn = (req, next) => {
   // Platform-feedback is exempt: the old FeedbackService used the BARE Http client (no
   // wrappers at all), and its categories URL already carries a query string — appending
   // `?apikey=` here would corrupt `serviceLine` for a logged-in visitor.
-  // release-3.6.3: sessionStorage stringification can leave the literal 'undefined',
-  // which would append `?apikey=undefined` and 401 every API.
   if (apiKey && apiKey !== 'undefined' && !req.url.includes('platform-feedback')) {
     req = req.clone({ url: `${req.url}?apikey=${apiKey}` });
   }
