@@ -52,10 +52,8 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
  * `co-counselling-services`, which were near-clones). Parameterized by `serviceType`:
  * both pick their sub-service by name match (INFO / COUN), then Category → Sub-Category →
  * "Get Details", which SAVES the mapping AND returns the guidance documents (old "Get Details"
- * was the save; there is no separate save button). release-3.6.3: the selected sub-category's
- * `fileManger[]` versions are listed, each linking `openKMBaseURL + fileUID`. Counselling's
- * save uses the `coCategoryID`/`coSubCategoryID` keys and a different endpoint — handled by
- * the API service.
+ * was the save; there is no separate save button). Counselling's save uses the
+ * `coCategoryID`/`coSubCategoryID` keys and a different endpoint — handled by the API service.
  */
 @Component({
   selector: 'app-co-category-service',
@@ -92,7 +90,6 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
         </button>
       </form>
 
-      <!-- release-3.6.3: every fileManger[] version listed, linked via openKMBaseURL. -->
       @if (savedSubcategory(); as sub) {
         <div class="rounded-md border border-border p-3 text-sm">
           <p class="mb-1 font-medium">
