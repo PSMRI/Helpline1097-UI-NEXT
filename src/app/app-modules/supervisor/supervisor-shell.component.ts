@@ -24,6 +24,8 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { SafeResourceUrl } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideChevronDown } from '@ng-icons/lucide';
 
 import { ZardButtonComponent } from '@common-ui/ui/button';
 import { menuImports } from '@common-ui/ui/menu';
@@ -182,8 +184,10 @@ const CONFIGURATIONS_MENU: MenuEntry[] = [
     CallTypeReportComponent,
     DistributionReportComponent,
     TranslatePipe,
+    NgIcon,
     ...menuImports,
   ],
+  viewProviders: [provideIcons({ lucideChevronDown })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './supervisor-shell.component.html',
 })

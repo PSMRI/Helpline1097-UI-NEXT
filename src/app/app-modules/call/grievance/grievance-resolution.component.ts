@@ -86,12 +86,12 @@ const RESOLUTION_OPTIONS = ['Resolved', 'Unresolved'];
           <table class="w-full text-sm">
             <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                <th class="px-3 py-2">S.No</th>
+                <th class="px-3 py-2">{{ 'sno' | t }}</th>
                 <th class="px-3 py-2">{{ 'date' | t }}</th>
                 <th class="px-3 py-2">{{ 'comments' | t }}</th>
                 <th class="px-3 py-2">{{ 'status' | t }}</th>
                 <th class="px-3 py-2">{{ 'actionTakenBy' | t }}</th>
-                <th class="px-3 py-2">File</th>
+                <th class="px-3 py-2">{{ 'file' | t }}</th>
               </tr>
             </thead>
             <tbody>
@@ -106,10 +106,10 @@ const RESOLUTION_OPTIONS = ['Resolved', 'Unresolved'];
                     <button
                       type="button"
                       class="text-primary underline hover:text-primary/80"
-                      title="View File"
+                      [title]="'viewFile' | t"
                       (click)="viewTransactionFile(t)"
                     >
-                      View
+                      {{ 'view' | t }}
                     </button>
                   </td>
                 </tr>

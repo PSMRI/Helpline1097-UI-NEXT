@@ -28,6 +28,7 @@ import { ZardInputDirective } from '@common-ui/ui/input';
 
 import { AdminApiService, ServiceProviderRequest, ServiceProviderRow } from './admin-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 
 const ROWS_PER_PAGE = 8;
 
@@ -55,14 +56,14 @@ function isoFromInputDay(day: string): string {
  */
 @Component({
   selector: 'app-admin-service-provider',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective],
+  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-4">
       <div class="flex items-center justify-between gap-3">
-        <h4 class="text-base font-semibold">Provider Details</h4>
+        <h4 class="text-base font-semibold">{{ 'providerDetails' | t }}</h4>
         @if (!showCreate()) {
-          <button z-button type="button" (click)="toggleCreate()">Create</button>
+          <button z-button type="button" (click)="toggleCreate()">{{ 'create' | t }}</button>
         }
       </div>
 
@@ -71,11 +72,11 @@ function isoFromInputDay(day: string): string {
           <table class="w-full text-sm">
             <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                <th class="px-3 py-2">Provider Name</th>
-                <th class="px-3 py-2">Contact Person</th>
-                <th class="px-3 py-2">Contact No</th>
-                <th class="px-3 py-2">Edit</th>
-                <th class="px-3 py-2">Delete</th>
+                <th class="px-3 py-2">{{ 'providerName' | t }}</th>
+                <th class="px-3 py-2">{{ 'contactPerson' | t }}</th>
+                <th class="px-3 py-2">{{ 'contactNo' | t }}</th>
+                <th class="px-3 py-2">{{ 'edit' | t }}</th>
+                <th class="px-3 py-2">{{ 'delete' | t }}</th>
               </tr>
             </thead>
             <tbody>
@@ -89,20 +90,20 @@ function isoFromInputDay(day: string): string {
                     <button
                       type="button"
                       class="text-muted-foreground hover:text-foreground"
-                      title="Edit"
+                      [title]="'edit' | t"
                       (click)="editProvider(row)"
                     >
-                      Edit
+                      {{ 'edit' | t }}
                     </button>
                   </td>
                   <td class="px-3 py-2">
                     <button
                       type="button"
                       class="text-destructive hover:text-destructive/80"
-                      title="Delete"
+                      [title]="'delete' | t"
                       (click)="deleteProvider(row)"
                     >
-                      Delete
+                      {{ 'delete' | t }}
                     </button>
                   </td>
                 </tr>
@@ -114,7 +115,7 @@ function isoFromInputDay(day: string): string {
           <div class="flex items-center justify-end gap-3 text-sm">
             <span class="text-muted-foreground">Page {{ pageIndex() + 1 }} of {{ pageCount() }}</span>
             <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="pageIndex() === 0" (click)="prevPage()">
-              Prev
+              {{ 'previous' | t }}
             </button>
             <button
               z-button
@@ -124,48 +125,48 @@ function isoFromInputDay(day: string): string {
               [zDisabled]="pageIndex() >= pageCount() - 1"
               (click)="nextPage()"
             >
-              Next
+              {{ 'next' | t }}
             </button>
           </div>
         }
       } @else {
         <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>Provider Name <span class="text-destructive">*</span></span>
-            <input z-input formControlName="serviceProviderName" type="text" maxlength="30" placeholder="Enter Provider Name" />
+            <span>{{ 'providerName' | t }} <span class="text-destructive">*</span></span>
+            <input z-input formControlName="serviceProviderName" type="text" maxlength="30" [placeholder]="'enterProviderName' | t" />
             <!-- Old app showed this with no touched/dirty gate — visible on a pristine form. -->
             @if (form.controls.serviceProviderName.errors) {
               <span class="text-destructive">* Service Provider Name is required</span>
             }
           </label>
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>Validity</span>
+            <span>{{ 'validity' | t }}</span>
             <input z-input formControlName="validity" type="date" />
           </label>
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>Contact Person Name</span>
-            <input z-input formControlName="primaryContactName" type="text" maxlength="30" placeholder="Enter Contact Person Name" />
+            <span>{{ 'contactPersonName' | t }}</span>
+            <input z-input formControlName="primaryContactName" type="text" maxlength="30" [placeholder]="'enterContactPersonName' | t" />
           </label>
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>Contact No.</span>
+            <span>{{ 'contactNo_' | t }}</span>
             <input z-input formControlName="primaryContactNo" type="text" maxlength="10" inputmode="numeric" />
           </label>
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>Email Id</span>
-            <input z-input formControlName="emailID" type="text" placeholder="Enter Email Id" />
+            <span>{{ 'emailId' | t }}</span>
+            <input z-input formControlName="emailID" type="text" [placeholder]="'enterEmailId' | t" />
           </label>
           <!-- Address 1 and Address 2 are bound to the SAME control, exactly as the old app. -->
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>Address 1</span>
-            <input z-input formControlName="address" type="text" placeholder="Enter Address" />
+            <span>{{ 'address1' | t }}</span>
+            <input z-input formControlName="address" type="text" [placeholder]="'enterAddress' | t" />
           </label>
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>Address 2</span>
-            <input z-input formControlName="address" type="text" placeholder="Enter Address" />
+            <span>{{ 'address2' | t }}</span>
+            <input z-input formControlName="address" type="text" [placeholder]="'enterAddress' | t" />
           </label>
           <div class="flex items-end justify-end sm:col-span-2 lg:col-span-4">
             <!-- Never disabled on invalid, faithful to the old form. -->
-            <button z-button type="submit">Save</button>
+            <button z-button type="submit">{{ 'save' | t }}</button>
           </div>
         </form>
       }

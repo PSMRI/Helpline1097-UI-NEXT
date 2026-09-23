@@ -30,6 +30,7 @@ import { CoServicesApiService } from '@/app-modules/core/services/co-services-ap
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 
 /** One prior call (services/getBeneficiaryCallsHistory row — backend casing verbatim). */
 interface CallHistoryRow {
@@ -64,7 +65,7 @@ const ROWS_PER_PAGE = 5;
  */
 @Component({
   selector: 'app-beneficiary-history-dialog',
-  imports: [DatePipe, ZardButtonComponent],
+  imports: [DatePipe, ZardButtonComponent, TranslatePipe],
   providers: [DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -73,15 +74,15 @@ const ROWS_PER_PAGE = 5;
         <table class="w-full text-sm">
           <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
-              <th class="px-3 py-2">Beneficiary Call Id</th>
-              <th class="px-3 py-2">Call Time</th>
-              <th class="px-3 py-2">Information</th>
-              <th class="px-3 py-2">Counselling</th>
-              <th class="px-3 py-2">Referral</th>
-              <th class="px-3 py-2">Feedback</th>
-              <th class="px-3 py-2">Call Type</th>
-              <th class="px-3 py-2">Call Subtype</th>
-              <th class="px-3 py-2">Remarks</th>
+              <th class="px-3 py-2">{{ 'beneficiaryCallId' | t }}</th>
+              <th class="px-3 py-2">{{ 'callTime' | t }}</th>
+              <th class="px-3 py-2">{{ 'information' | t }}</th>
+              <th class="px-3 py-2">{{ 'counselling' | t }}</th>
+              <th class="px-3 py-2">{{ 'referral' | t }}</th>
+              <th class="px-3 py-2">{{ 'feedback' | t }}</th>
+              <th class="px-3 py-2">{{ 'callType' | t }}</th>
+              <th class="px-3 py-2">{{ 'callSubType' | t }}</th>
+              <th class="px-3 py-2">{{ 'remarks' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -102,7 +103,7 @@ const ROWS_PER_PAGE = 5;
             } @empty {
               <tr>
                 <td colspan="9" class="px-3 py-6 text-center text-muted-foreground">
-                  No records found
+                  {{ 'noRecordsFound' | t }}
                 </td>
               </tr>
             }
@@ -111,12 +112,12 @@ const ROWS_PER_PAGE = 5;
       </div>
 
       <div class="flex items-center justify-between gap-3">
-        <span class="text-muted-foreground">Total no. of records: {{ rows().length }}</span>
+        <span class="text-muted-foreground">{{ 'totalNoOfRecords' | t }} : {{ rows().length }}</span>
         <div class="flex items-center gap-3">
           @if (rows().length) {
             <span class="text-muted-foreground">Page {{ pageIndex() + 1 }} of {{ pageCount() }}</span>
             <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="pageIndex() === 0" (click)="prevPage()">
-              Prev
+              {{ 'previous' | t }}
             </button>
             <button
               z-button
@@ -126,10 +127,10 @@ const ROWS_PER_PAGE = 5;
               [zDisabled]="pageIndex() >= pageCount() - 1"
               (click)="nextPage()"
             >
-              Next
+              {{ 'next' | t }}
             </button>
           }
-          <button z-button type="button" (click)="close()">OK</button>
+          <button z-button type="button" (click)="close()">{{ 'ok' | t }}</button>
         </div>
       </div>
     </div>

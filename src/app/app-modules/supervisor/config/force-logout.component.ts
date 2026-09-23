@@ -22,11 +22,13 @@
 
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 
 import { ConfigApiService } from './config-api.service';
+import { AuthService } from '@/app-modules/core/auth/auth.service';
 import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { LanguageStore } from '@/app-modules/core/state/language.store';
@@ -70,6 +72,8 @@ export class ForceLogoutComponent {
   private readonly notify = inject(NotificationService);
   private readonly lang = inject(LanguageStore);
   private readonly sessionStore = inject(SessionStore);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   protected readonly busy = signal(false);
   private readonly serviceId = computed(() => this.sessionStore.currentServiceId());
@@ -77,7 +81,7 @@ export class ForceLogoutComponent {
   protected readonly form = this.fb.group({
     userName: this.fb.control<string>('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3)],
+      validators: [Validators.required],
     }),
   });
 
@@ -100,6 +104,12 @@ export class ForceLogoutComponent {
           if (response.toLowerCase() === 'success') {
             this.notify.alert(this.lang.t('userLoggedOutSuccessfully'), 'success');
             this.form.reset({ userName: '' });
+            const self = this.sessionStore.user()?.userName ?? '';
+            if (self && self.toLowerCase() === userName.trim().toLowerCase()) {
+              this.auth.removeToken();
+              sessionStorage.clear();
+              this.router.navigate(['']);
+            }
           }
         },
         error: (err: { errorMessage?: string }) => {

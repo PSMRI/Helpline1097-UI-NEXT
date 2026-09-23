@@ -22,6 +22,8 @@
 
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 
 import { Z_MODAL_DATA, ZardDialogRef } from '@common-ui/ui/dialog';
@@ -55,6 +57,8 @@ describe('Phase 13 contracts', () => {
       TestBed.configureTestingModule({
         providers: [
           provideZonelessChangeDetection(),
+          provideHttpClient(),
+          provideHttpClientTesting(),
           { provide: CoServicesApiService, useValue: api },
           {
             provide: NotificationService,
@@ -84,6 +88,8 @@ describe('Phase 13 contracts', () => {
       TestBed.configureTestingModule({
         providers: [
           provideZonelessChangeDetection(),
+          provideHttpClient(),
+          provideHttpClientTesting(),
           { provide: Z_MODAL_DATA, useValue: { kmdocs: [{ notificationDesc: desc }] } },
         ],
       });

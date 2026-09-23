@@ -26,6 +26,13 @@
   </div>
 }
 
-<z-toaster />
+<z-toaster
+  position="top-right"
+  offset="64px"
+  [richColors]="true"
+  [closeButton]="true"
+  [duration]="2500"
+  [toastOptions]="toastOptions"
+/>
 
 <router-outlet />

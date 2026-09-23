@@ -55,7 +55,7 @@
         <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
           <tr>
             <th class="px-3 py-2">{{ 'office' | t }}</th>
-            <th class="px-3 py-2">Type</th>
+            <th class="px-3 py-2">{{ 'type' | t }}</th>
             <th class="px-3 py-2">{{ 'subject' | t }}</th>
             <th class="px-3 py-2">{{ 'description' | t }}</th>
             <th class="px-3 py-2">{{ 'validFrom' | t }}</th>
@@ -91,7 +91,7 @@
       <div class="flex items-center justify-end gap-3 text-sm">
         <span class="text-muted-foreground">Page {{ pageIndex() + 1 }} of {{ pageCount() }}</span>
         <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="pageIndex() === 0" (click)="prevPage()">
-          Prev
+          {{ 'previous' | t }}
         </button>
         <button
           z-button

@@ -120,13 +120,13 @@ export class BlacklistNumberComponent implements OnInit {
     this.loadList();
   }
 
-  private loadList(phoneNo?: number): void {
+  private loadList(phoneNo?: number, options: { silent?: boolean } = {}): void {
     const serviceId = this.serviceId();
     if (serviceId == null) {
       return;
     }
     this.loading.set(true);
-    this.api.getBlacklistNumbers(serviceId, phoneNo).subscribe({
+    this.api.getBlacklistNumbers(serviceId, phoneNo, options).subscribe({
       next: (res) => {
         this.loading.set(false);
         this.rows.set(Array.isArray(res?.data) ? (res.data as BlacklistRow[]) : []);
@@ -146,7 +146,7 @@ export class BlacklistNumberComponent implements OnInit {
     if (!on) {
       // Old app cleared the phone and reloaded the full list when search is switched off.
       this.searchForm.reset({ phoneNumber: '' });
-      this.loadList();
+      this.loadList(undefined, { silent: true });
     }
   }
 

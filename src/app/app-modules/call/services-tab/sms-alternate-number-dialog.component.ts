@@ -23,6 +23,7 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 
 import { ZardInputDirective } from '@common-ui/ui/input';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 
 /**
  * Alternate-number prompt shown before sending a referral SMS (old `CommonSmsDialogComponent`).
@@ -39,13 +40,13 @@ import { ZardInputDirective } from '@common-ui/ui/input';
  */
 @Component({
   selector: 'app-sms-alternate-number-dialog',
-  imports: [ZardInputDirective],
+  imports: [ZardInputDirective, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-3">
       <label class="flex items-center gap-2 text-sm">
         <input type="checkbox" [checked]="useAlternate()" (change)="toggleAlternate($event)" />
-        <span>Alternate Number</span>
+        <span>{{ 'alternateNumber' | t }}</span>
       </label>
 
       @if (useAlternate()) {
@@ -56,7 +57,7 @@ import { ZardInputDirective } from '@common-ui/ui/input';
             inputmode="numeric"
             maxlength="10"
             autocomplete="off"
-            placeholder="Mobile Number"
+            [placeholder]="'mobileNumber' | t"
             [value]="mobileNumber()"
             (input)="onNumberInput($event)"
             (blur)="touched.set(true)"

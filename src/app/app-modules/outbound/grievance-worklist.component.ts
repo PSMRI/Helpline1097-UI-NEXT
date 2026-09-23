@@ -157,7 +157,7 @@ interface GrievanceRow {
           <div class="flex items-center gap-3">
             <span class="text-muted-foreground">Page {{ table.pageIndex() + 1 }} of {{ table.pageCount() }}</span>
             <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="table.pageIndex() === 0" (click)="table.prev()">
-              Prev
+              {{ 'previous' | t }}
             </button>
             <button
               z-button

@@ -27,6 +27,7 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 
 import { AdminApiService, ServiceMasterRequest, ServiceMasterRow } from './admin-api.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 
 /**
  * Service Master — super-admin tab 3 (old `admin-service-master`). List + create.
@@ -44,7 +45,7 @@ import { AdminApiService, ServiceMasterRequest, ServiceMasterRow } from './admin
  */
 @Component({
   selector: 'app-admin-service-master',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective],
+  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-4">
@@ -52,10 +53,10 @@ import { AdminApiService, ServiceMasterRequest, ServiceMasterRow } from './admin
         <table class="w-full text-sm">
           <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
             <tr>
-              <th class="px-3 py-2">Service Name</th>
-              <th class="px-3 py-2">Service Desc</th>
-              <th class="px-3 py-2">Edit</th>
-              <th class="px-3 py-2">Delete</th>
+              <th class="px-3 py-2">{{ 'serviceName' | t }}</th>
+              <th class="px-3 py-2">{{ 'serviceDesc' | t }}</th>
+              <th class="px-3 py-2">{{ 'edit' | t }}</th>
+              <th class="px-3 py-2">{{ 'delete' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -72,20 +73,20 @@ import { AdminApiService, ServiceMasterRequest, ServiceMasterRow } from './admin
         </table>
       </div>
 
-      <h4 class="text-base font-semibold">ServiceMaster Details</h4>
+      <h4 class="text-base font-semibold">{{ 'servicemasterDetails' | t }}</h4>
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>ServiceName</span>
-          <input z-input formControlName="serviceName" type="text" placeholder="Enter Service Name" />
+          <span>{{ 'servicename' | t }}</span>
+          <input z-input formControlName="serviceName" type="text" [placeholder]="'enterServiceName' | t" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>ServiceDesc</span>
+          <span>{{ 'servicedesc' | t }}</span>
           <!-- The old placeholder key was missing from the language file and rendered empty. -->
           <input z-input formControlName="serviceDesc" type="text" />
         </label>
         <div class="flex items-end justify-end sm:col-span-2 lg:col-span-4">
-          <button z-button type="submit">Save</button>
+          <button z-button type="submit">{{ 'save' | t }}</button>
         </div>
       </form>
     </div>

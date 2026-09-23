@@ -42,6 +42,7 @@ import {
 } from '@/app-modules/core/services/notification-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { SessionStore } from '@/app-modules/core/state/session.store';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 
 export interface AlertsNotificationsDialogData {
   msgType: string;
@@ -59,7 +60,7 @@ const ROWS_PER_PAGE = 3;
  */
 @Component({
   selector: 'app-alerts-notifications-dialog',
-  imports: [NgIcon, ZardButtonComponent],
+  imports: [NgIcon, ZardButtonComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [provideIcons({ lucideCheck, lucideRefreshCw, lucideTrash2 })],
   template: `
@@ -75,7 +76,7 @@ const ROWS_PER_PAGE = 3;
           <button
             type="button"
             class="p-1 text-muted-foreground hover:text-destructive"
-            title="Delete"
+            [title]="'delete' | t"
             (click)="deleteNotification(row.userNotificationMapID!)"
           >
             <ng-icon name="lucideTrash2" class="text-base" />
@@ -84,7 +85,7 @@ const ROWS_PER_PAGE = 3;
             <button
               type="button"
               class="p-1 text-muted-foreground hover:text-primary"
-              title="Read"
+              [title]="'read' | t"
               (click)="setSingle('read', row.userNotificationMapID!)"
             >
               <ng-icon name="lucideCheck" class="text-base" />
@@ -93,7 +94,7 @@ const ROWS_PER_PAGE = 3;
             <button
               type="button"
               class="p-1 text-muted-foreground hover:text-primary"
-              title="Unread"
+              [title]="'unread' | t"
               (click)="setSingle('unread', row.userNotificationMapID!)"
             >
               <ng-icon name="lucideRefreshCw" class="text-base" />
@@ -102,7 +103,7 @@ const ROWS_PER_PAGE = 3;
         </div>
       } @empty {
         <p class="py-6 text-center text-muted-foreground">
-          No {{ heading }} messages found
+          {{ 'no' | t }} {{ heading }} {{ 'messagesFound' | t }}
         </p>
       }
 
@@ -110,7 +111,7 @@ const ROWS_PER_PAGE = 3;
         <div class="flex items-center justify-end gap-2 text-xs">
           <span class="text-muted-foreground">Page {{ pageIndex() + 1 }} of {{ pageCount() }}</span>
           <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="pageIndex() === 0" (click)="prevPage()">
-            Prev
+            {{ 'previous' | t }}
           </button>
           <button
             z-button
@@ -120,15 +121,15 @@ const ROWS_PER_PAGE = 3;
             [zDisabled]="pageIndex() >= pageCount() - 1"
             (click)="nextPage()"
           >
-            Next
+            {{ 'next' | t }}
           </button>
         </div>
       }
 
       <div class="mt-2 flex justify-end gap-2">
-        <button z-button zSize="sm" type="button" (click)="setAll('read')">Read All</button>
-        <button z-button zSize="sm" zType="outline" type="button" (click)="setAll('unread')">Unread All</button>
-        <button z-button zSize="sm" zType="outline" type="button" (click)="dialogRef.close()">Close</button>
+        <button z-button zSize="sm" type="button" (click)="setAll('read')">{{ 'readAll' | t }}</button>
+        <button z-button zSize="sm" zType="outline" type="button" (click)="setAll('unread')">{{ 'unreadAll' | t }}</button>
+        <button z-button zSize="sm" zType="outline" type="button" (click)="dialogRef.close()">{{ 'close' | t }}</button>
       </div>
     </div>
   `,

@@ -104,8 +104,8 @@ export class EmergencyContactsDialogComponent implements OnInit {
           this.contacts.set(res?.data ?? []);
           this.loading.set(false);
         },
-        error: (err: { message?: string; errorMessage?: string }) => {
-          this.error.set(err?.message ?? err?.errorMessage ?? 'Failed to load emergency contacts.');
+        error: () => {
+          this.contacts.set([]);
           this.loading.set(false);
         },
       });

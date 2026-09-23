@@ -154,12 +154,12 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
               <input z-input formControlName="prefferedDateTime" type="date" [min]="minDate" />
             </label>
             <label class="flex flex-col gap-1.5 text-sm">
-              <span>Reason <span class="text-destructive">*</span></span>
+              <span>{{ 'reason' | t }} <span class="text-destructive">*</span></span>
               <input z-input formControlName="requestedFor" type="text" maxlength="200" [placeholder]="'followUpReason' | t" [appRestrictInput]="textAreaBlock" />
             </label>
             <label class="flex flex-col gap-1.5 text-sm">
               <span>{{ 'language' | t }} <span class="text-destructive">*</span></span>
-              <z-select formControlName="preferredLanguageName" zPlaceholder="Select language">
+              <z-select formControlName="preferredLanguageName" [zPlaceholder]="'selectLanguage' | t">
                 @for (l of languages(); track l.languageID) {
                   <z-select-item [zValue]="l.languageName + ''">{{ l.languageName }}</z-select-item>
                 }
@@ -167,7 +167,7 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
             </label>
             <label class="flex flex-col gap-1.5 text-sm">
               <span>{{ 'serviceRequested' | t }} <span class="text-destructive">*</span></span>
-              <z-select formControlName="requestedServiceID" zPlaceholder="Select service">
+              <z-select formControlName="requestedServiceID" [zPlaceholder]="'selectService' | t">
                 @for (s of subServices(); track s.subServiceID) {
                   <z-select-item [zValue]="s.subServiceID + ''">{{ s.subServiceName }}</z-select-item>
                 }

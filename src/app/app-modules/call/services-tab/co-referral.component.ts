@@ -149,7 +149,7 @@ import { numOrNull } from '@/app-modules/core/utils/select-value';
               [zLoading]="sendingSms()"
               (click)="openSmsDialog()"
             >
-              Send SMS
+              {{ 'sendSms' | t }}
             </button>
           </div>
         </div>
