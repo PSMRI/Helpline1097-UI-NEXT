@@ -80,8 +80,8 @@ import { SessionStore } from '@/app-modules/core/state/session.store';
         </label>
         <label class="flex min-w-44 flex-col gap-1.5 text-sm">
           <span>{{ 'language' | t }}</span>
-          <z-select formControlName="language" zPlaceholder="All">
-            <z-select-item zValue="">All</z-select-item>
+          <z-select formControlName="language" [zPlaceholder]="'all' | t">
+            <z-select-item zValue="">{{ 'all' | t }}</z-select-item>
             @for (l of languages(); track l.languageID) {
               <z-select-item [zValue]="l.languageName + ''">{{ l.languageName }}</z-select-item>
             }

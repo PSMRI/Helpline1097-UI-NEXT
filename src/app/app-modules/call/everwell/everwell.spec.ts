@@ -22,6 +22,8 @@
 
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 
 import { ZardDialogRef } from '@common-ui/ui/dialog';
@@ -61,6 +63,8 @@ describe('Everwell in-call contracts', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: EverwellApiService, useValue: api },
         { provide: NotificationService, useValue: notify },
         { provide: ZardDialogRef, useValue: dialogRef },
@@ -160,6 +164,8 @@ describe('Everwell in-call contracts', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: EverwellApiService, useValue: api },
         { provide: NotificationService, useValue: notify },
         { provide: ZardDialogRef, useValue: dialogRef },

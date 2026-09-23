@@ -105,7 +105,7 @@
     <div class="flex items-center justify-end gap-3 text-sm">
       <span class="text-muted-foreground">Page {{ pageIndex() + 1 }} of {{ pageCount() }}</span>
       <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="pageIndex() === 0" (click)="prevPage()">
-        Prev
+        {{ 'previous' | t }}
       </button>
       <button
         z-button

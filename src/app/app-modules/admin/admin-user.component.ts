@@ -27,6 +27,7 @@ import { ZardButtonComponent } from '@common-ui/ui/button';
 import { ZardInputDirective } from '@common-ui/ui/input';
 
 import { AdminApiService, AdminUserRequest, AdminUserRow } from './admin-api.service';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 
 const ROWS_PER_PAGE = 8;
 
@@ -47,14 +48,14 @@ const ROWS_PER_PAGE = 8;
  */
 @Component({
   selector: 'app-admin-user',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective],
+  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-4">
       <div class="flex items-center justify-between gap-3">
-        <h4 class="text-base font-semibold">User Details</h4>
+        <h4 class="text-base font-semibold">{{ 'userDetails' | t }}</h4>
         @if (!showCreate()) {
-          <button z-button type="button" (click)="toggleCreate()">Create</button>
+          <button z-button type="button" (click)="toggleCreate()">{{ 'create' | t }}</button>
         }
       </div>
 
@@ -63,11 +64,11 @@ const ROWS_PER_PAGE = 8;
           <table class="w-full text-sm">
             <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                <th class="px-3 py-2">First Name</th>
-                <th class="px-3 py-2">Last Name</th>
-                <th class="px-3 py-2">User Name</th>
-                <th class="px-3 py-2">Edit</th>
-                <th class="px-3 py-2">Delete</th>
+                <th class="px-3 py-2">{{ 'firstName' | t }}</th>
+                <th class="px-3 py-2">{{ 'lastName' | t }}</th>
+                <th class="px-3 py-2">{{ 'userName' | t }}</th>
+                <th class="px-3 py-2">{{ 'edit' | t }}</th>
+                <th class="px-3 py-2">{{ 'delete' | t }}</th>
               </tr>
             </thead>
             <tbody>
@@ -89,7 +90,7 @@ const ROWS_PER_PAGE = 8;
           <div class="flex items-center justify-end gap-3 text-sm">
             <span class="text-muted-foreground">Page {{ pageIndex() + 1 }} of {{ pageCount() }}</span>
             <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="pageIndex() === 0" (click)="prevPage()">
-              Prev
+              {{ 'previous' | t }}
             </button>
             <button
               z-button
@@ -99,35 +100,35 @@ const ROWS_PER_PAGE = 8;
               [zDisabled]="pageIndex() >= pageCount() - 1"
               (click)="nextPage()"
             >
-              Next
+              {{ 'next' | t }}
             </button>
           </div>
         }
       } @else {
         <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>First Name</span>
-            <input z-input formControlName="firstName" type="text" maxlength="50" placeholder="Enter FirstName Name" />
+            <span>{{ 'firstName' | t }}</span>
+            <input z-input formControlName="firstName" type="text" maxlength="50" [placeholder]="'enterFirstnameName' | t" />
           </label>
           <label class="flex flex-col gap-1.5 text-sm">
             <!-- The old label key was missing from the language file and rendered empty. -->
             <span>Middle Name</span>
-            <input z-input formControlName="middleName" type="text" maxlength="50" placeholder="Enter Middlename" />
+            <input z-input formControlName="middleName" type="text" maxlength="50" [placeholder]="'enterMiddlename' | t" />
           </label>
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>Last Name</span>
-            <input z-input formControlName="lastName" type="text" maxlength="50" placeholder="Enter Lastname" />
+            <span>{{ 'lastName' | t }}</span>
+            <input z-input formControlName="lastName" type="text" maxlength="50" [placeholder]="'enterLastname' | t" />
           </label>
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>User Name</span>
-            <input z-input formControlName="userName" type="text" maxlength="20" placeholder="Enter Username" />
+            <span>{{ 'userName' | t }}</span>
+            <input z-input formControlName="userName" type="text" maxlength="20" [placeholder]="'enterUsername' | t" />
           </label>
           <label class="flex flex-col gap-1.5 text-sm">
-            <span>Password</span>
-            <input z-input formControlName="password" type="password" maxlength="20" placeholder="Enter Password" />
+            <span>{{ 'password' | t }}</span>
+            <input z-input formControlName="password" type="password" maxlength="20" [placeholder]="'enterPassword' | t" />
           </label>
           <div class="flex items-end justify-end sm:col-span-2 lg:col-span-4">
-            <button z-button type="submit">Save</button>
+            <button z-button type="submit">{{ 'save' | t }}</button>
           </div>
         </form>
       }

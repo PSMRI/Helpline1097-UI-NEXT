@@ -33,6 +33,7 @@ import { CallApiService } from '@/app-modules/core/services/call-api.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 import { buildStartCallRequest, captureStartCallResponse } from '../start-call.helpers';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -63,7 +64,7 @@ interface CalendarMonth {
  */
 @Component({
   selector: 'app-everwell-adherence',
-  imports: [ZardButtonComponent],
+  imports: [ZardButtonComponent, TranslatePipe],
   providers: [DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -74,14 +75,14 @@ interface CalendarMonth {
           <table class="w-full text-sm">
             <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                <th class="px-3 py-2">Beneficiary ID</th>
-                <th class="px-3 py-2">Beneficiary Name</th>
-                <th class="px-3 py-2">Gender</th>
-                <th class="px-3 py-2">State</th>
-                <th class="px-3 py-2">Comments</th>
-                <th class="px-3 py-2">Last Call</th>
-                <th class="px-3 py-2">Call Count</th>
-                <th class="px-3 py-2">Relationship</th>
+                <th class="px-3 py-2">{{ 'beneficiaryId' | t }}</th>
+                <th class="px-3 py-2">{{ 'beneficiaryName' | t }}</th>
+                <th class="px-3 py-2">{{ 'gender' | t }}</th>
+                <th class="px-3 py-2">{{ 'state' | t }}</th>
+                <th class="px-3 py-2">{{ 'comments' | t }}</th>
+                <th class="px-3 py-2">{{ 'lastCall' | t }}</th>
+                <th class="px-3 py-2">{{ 'callCount' | t }}</th>
+                <th class="px-3 py-2">{{ 'relationship' | t }}</th>
               </tr>
             </thead>
             <tbody>
@@ -99,7 +100,7 @@ interface CalendarMonth {
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="8" class="px-3 py-6 text-center text-muted-foreground">No records found</td>
+                  <td colspan="8" class="px-3 py-6 text-center text-muted-foreground">{{ 'noRecordsFound' | t }}</td>
                 </tr>
               }
             </tbody>
@@ -109,7 +110,7 @@ interface CalendarMonth {
           <div class="flex items-center justify-end gap-3 text-sm">
             <span class="text-muted-foreground">Page {{ pageIndex() + 1 }} of {{ pageCount() }}</span>
             <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="pageIndex() === 0" (click)="prevPage()">
-              Prev
+              {{ 'previous' | t }}
             </button>
             <button
               z-button
@@ -119,7 +120,7 @@ interface CalendarMonth {
               [zDisabled]="pageIndex() >= pageCount() - 1"
               (click)="nextPage()"
             >
-              Next
+              {{ 'next' | t }}
             </button>
           </div>
         }
@@ -131,7 +132,7 @@ interface CalendarMonth {
             <strong>Everwell missed doses count:</strong>
             {{ selected()?.NoInfoDoseCount ?? 0 }}
           </span>
-          <button z-button zType="outline" type="button" (click)="backToTable()">Back</button>
+          <button z-button zType="outline" type="button" (click)="backToTable()">{{ 'back' | t }}</button>
         </div>
         <div>
           <strong>Everwell missed doses dates:</strong>
@@ -166,19 +167,19 @@ interface CalendarMonth {
         <ul class="flex flex-col gap-1.5">
           <li class="flex items-center gap-2">
             <span class="inline-block h-4 w-4 rounded" style="background-color: #66ff66"></span>
-            Dose taken but not reported by technology
+            {{ 'doseTakenButNotReportedByTechnology' | t }}
           </li>
           <li class="flex items-center gap-2">
             <span class="inline-block h-4 w-4 rounded" style="background-color: red"></span>
-            Dose not taken
+            {{ 'doseNotTaken' | t }}
           </li>
           <li class="flex items-center gap-2">
             <span class="inline-block h-4 w-4 rounded" style="background-color: #ff6600"></span>
-            Other Subcategories
+            {{ 'otherSubcategories' | t }}
           </li>
           <li class="flex items-center gap-2">
             <span class="inline-block h-4 w-4 rounded" style="background-color: #80ccff"></span>
-            No previous feedback
+            {{ 'noPreviousFeedback' | t }}
           </li>
         </ul>
       </div>

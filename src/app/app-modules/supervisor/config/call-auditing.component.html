@@ -101,7 +101,7 @@
         >
           {{ 'search' | t }}
         </button>
-        <button z-button zType="outline" type="button" (click)="reset()">Reset</button>
+        <button z-button zType="outline" type="button" (click)="reset()">{{ 'reset' | t }}</button>
       </div>
     </form>
 
@@ -163,7 +163,7 @@
       <div class="flex items-center justify-end gap-3 text-sm">
         <span class="text-muted-foreground">Page {{ pageNo() }} of {{ pageCount() }}</span>
         <button z-button zSize="sm" zType="outline" type="button" [zDisabled]="pageNo() === 1" (click)="prevPage()">
-          Prev
+          {{ 'previous' | t }}
         </button>
         <button
           z-button
@@ -186,7 +186,7 @@
         <h2 class="text-base font-semibold">{{ 'caseSheet' | t }}</h2>
         <!-- Old "Service Type 1097" sub-heading + the date stamp (deliberately PRINTED,
              LOCAL time — the old li carried no noprint). -->
-        <div class="text-sm font-semibold">Service Type 1097</div>
+        <div class="text-sm font-semibold">{{ 'serviceTypeOneZeroNineSeven' | t }}</div>
         <div class="text-sm">Date : {{ caseSheetDate | date: 'dd/MM/yyyy' }}</div>
       </div>
       <!-- Old noprint chrome — hidden in the printed sheet. -->
@@ -202,11 +202,11 @@
       <div class="rounded-md border border-border p-3 text-sm">
         <h3 class="mb-2 font-semibold">{{ 'beneficiaryDetails' | t }}</h3>
         <div class="grid gap-2 sm:grid-cols-2">
-          <div><strong>Call Id :</strong> {{ ben.benCallID }}</div>
+          <div><strong>{{ 'callId:' | t }}</strong> {{ ben.benCallID }}</div>
           <div><strong>Agent Id :</strong> {{ ben.agentID }}</div>
-          <div><strong>First Name :</strong> {{ benModel().firstName }}</div>
-          <div><strong>Last Name :</strong> {{ benModel().lastName }}</div>
-          <div><strong>Age :</strong> {{ benModel().actualAge }} {{ benModel().ageUnits }}</div>
+          <div><strong>{{ 'firstName:' | t }}</strong> {{ benModel().firstName }}</div>
+          <div><strong>{{ 'lastName:' | t }}</strong> {{ benModel().lastName }}</div>
+          <div><strong>{{ 'age' | t }} :</strong> {{ benModel().actualAge }} {{ benModel().ageUnits }}</div>
           <div><strong>Gender :</strong> {{ benModel().m_gender?.genderName }}</div>
           <div class="sm:col-span-2">
             <strong>Address :</strong>
@@ -216,7 +216,7 @@
             {{ dash(benModel().i_bendemographics?.stateName) }} -
             {{ dash(benModel().i_bendemographics?.pinCode) }} | India
           </div>
-          <div><strong>Beneficiary Id :</strong> {{ benModel().beneficiaryID }}</div>
+          <div><strong>{{ 'beneficiaryId:' | t }}</strong> {{ benModel().beneficiaryID }}</div>
         </div>
       </div>
     }
@@ -226,13 +226,13 @@
     <!-- Old gated the WHOLE block (heading included) on non-empty service details. -->
     @if (hasServiceItems()) {
       <div class="flex flex-col gap-3">
-        <h3 class="font-semibold">Service Requested</h3>
+        <h3 class="font-semibold">{{ 'serviceRequested' | t }}</h3>
         @if (infoItems().length > 0) {
           <div class="rounded-md border border-border p-3 text-sm">
             <h4 class="mb-2 font-semibold">{{ 'informationService' | t }}</h4>
             @for (item of infoItems(); track $index) {
               <div class="grid gap-2 border-t border-border/60 py-2 first:border-t-0 sm:grid-cols-2">
-                <div><strong>Category :</strong> {{ item.categoryDetails?.categoryName }}</div>
+                <div><strong>{{ 'category:' | t }}</strong> {{ item.categoryDetails?.categoryName }}</div>
                 <div><strong>Sub Category :</strong> {{ item.subCategoryName }}</div>
               </div>
             }
@@ -243,7 +243,7 @@
             <h4 class="mb-2 font-semibold">{{ 'counsellingService' | t }}</h4>
             @for (item of counsellingItems(); track $index) {
               <div class="grid gap-2 border-t border-border/60 py-2 first:border-t-0 sm:grid-cols-2">
-                <div><strong>Category :</strong> {{ item.categoryDetails?.categoryName }}</div>
+                <div><strong>{{ 'category:' | t }}</strong> {{ item.categoryDetails?.categoryName }}</div>
                 <div><strong>Sub Category :</strong> {{ item.subCategoryName }}</div>
               </div>
             }
@@ -255,11 +255,11 @@
             @for (item of feedbackItems(); track $index) {
               <div class="grid gap-2 border-t border-border/60 py-2 first:border-t-0 sm:grid-cols-2">
                 <div><strong>State :</strong> {{ item.states?.stateName }}</div>
-                <div><strong>District :</strong> {{ item.district?.districtName }}</div>
+                <div><strong>{{ 'district:' | t }}</strong> {{ item.district?.districtName }}</div>
                 <div><strong>Sub District :</strong> {{ item.districtBlock?.blockName }}</div>
                 <!-- Old template hardcoded "-" for Institute Name. -->
                 <div><strong>Institute Name :</strong> -</div>
-                <div><strong>Designation :</strong> {{ item.designation?.designationName }}</div>
+                <div><strong>{{ 'designation:' | t }}</strong> {{ item.designation?.designationName }}</div>
                 <div><strong>Type of Feedback :</strong> {{ item.FeedbackTypeID?.feedbackTypeName }}</div>
                 <div>
                   <strong>Incident Date :</strong>
@@ -280,14 +280,14 @@
             @for (item of referralItems(); track $index) {
               <div class="grid gap-2 border-t border-border/60 py-2 first:border-t-0 sm:grid-cols-2">
                 <div><strong>State :</strong> {{ item.institutionDetails?.states?.stateName }}</div>
-                <div><strong>District :</strong> {{ item.institutionDetails?.m_district?.districtName }}</div>
+                <div><strong>{{ 'district:' | t }}</strong> {{ item.institutionDetails?.m_district?.districtName }}</div>
                 <div><strong>Sub District :</strong> {{ item.institutionDetails?.block?.blockName }}</div>
                 <div>
                   <strong>Information Required :</strong>
                   {{ item.directory?.instituteDirectoryName }},{{ item.subDirectory?.instituteSubDirectoryName }}
                 </div>
                 <div class="sm:col-span-2">
-                  <strong>Results :</strong>
+                  <strong>{{ 'results' | t }}</strong>
                   {{ item.institutionDetails?.institutionName }},{{ item.institutionDetails?.address }}
                 </div>
               </div>

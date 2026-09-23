@@ -32,6 +32,7 @@ import { ZardSelectImports } from '@common-ui/ui/select';
 import { EverwellApiService, EverwellFamilyRow, EverwellFeedbackRow } from './everwell-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { CallStore } from '@/app-modules/core/state/call.store';
+import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
 
 /** Handed over by the adherence slide (old `MD_DIALOG_DATA` + the dataService reads). */
 export interface SupportActionData {
@@ -77,7 +78,7 @@ const SUBCATEGORIES_NOT_CONNECTED = [
  */
 @Component({
   selector: 'app-support-action-dialog',
-  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, ...ZardSelectImports],
+  imports: [ReactiveFormsModule, ZardButtonComponent, ZardInputDirective, ...ZardSelectImports, TranslatePipe],
   providers: [DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -89,15 +90,15 @@ const SUBCATEGORIES_NOT_CONNECTED = [
         @if (isEdit()) {
           <label class="flex items-center justify-end gap-2 font-semibold text-primary">
             <input type="checkbox" [checked]="!locked()" (change)="toggleLock()" />
-            Edit Feedback
+            {{ 'editFeedback' | t }}
           </label>
         }
       </div>
 
       <form [formGroup]="form" class="grid gap-3 sm:grid-cols-2">
         <label class="flex flex-col gap-1.5">
-          <span>Category <span class="text-destructive">*</span></span>
-          <z-select formControlName="category" zPlaceholder="Category" [zDisabled]="isEdit() && locked()">
+          <span>{{ 'category' | t }} <span class="text-destructive">*</span></span>
+          <z-select formControlName="category" [zPlaceholder]="'category' | t" [zDisabled]="isEdit() && locked()">
             <z-select-item [zValue]="CATEGORY">{{ CATEGORY }}</z-select-item>
           </z-select>
         </label>
@@ -116,23 +117,23 @@ const SUBCATEGORIES_NOT_CONNECTED = [
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5">
-          <span>Date of Action</span>
+          <span>{{ 'dateOfAction' | t }}</span>
           <input z-input formControlName="dob" readonly />
         </label>
         <label class="flex flex-col gap-1.5 sm:col-span-2">
-          <span>Comments <span class="text-destructive">*</span></span>
+          <span>{{ 'comments' | t }} <span class="text-destructive">*</span></span>
           <textarea z-input rows="2" maxlength="500" formControlName="comments"></textarea>
           @if (form.controls.comments.invalid && form.controls.comments.touched) {
-            <span class="text-destructive">Enter minimum 2 characters</span>
+            <span class="text-destructive">{{ 'enterMinimum2Characters' | t }}</span>
           }
         </label>
         <label class="flex items-center gap-2">
           <input type="checkbox" formControlName="addMblNum" (change)="onAddNumberToggle()" />
-          <span>Add Mobile Number</span>
+          <span>{{ 'addMobileNumber' | t }}</span>
         </label>
         @if (form.controls.addMblNum.value) {
           <label class="flex flex-col gap-1.5">
-            <span>Secondary Mobile Number</span>
+            <span>{{ 'secondaryMobileNumber' | t }}</span>
             <input z-input formControlName="mblNum" type="tel" maxlength="10" inputmode="numeric" />
             @if (form.controls.mblNum.invalid && form.controls.mblNum.touched) {
               <span class="text-destructive">Mobile number should be 10 digits</span>
@@ -153,7 +154,7 @@ const SUBCATEGORIES_NOT_CONNECTED = [
       <div class="flex items-center justify-end gap-3">
         @if (!isEdit()) {
           <button z-button type="button" [zDisabled]="form.invalid || busy()" (click)="submit()">
-            Submit
+            {{ 'submit' | t }}
           </button>
         } @else {
           <button
@@ -162,9 +163,9 @@ const SUBCATEGORIES_NOT_CONNECTED = [
             [zDisabled]="form.invalid || form.pristine || busy()"
             (click)="update()"
           >
-            Update
+            {{ 'update' | t }}
           </button>
-          <button z-button zType="outline" type="button" (click)="close()">Ok</button>
+          <button z-button zType="outline" type="button" (click)="close()">{{ 'ok' | t }}</button>
         }
       </div>
     </div>
