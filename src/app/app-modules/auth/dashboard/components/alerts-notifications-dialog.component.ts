@@ -103,7 +103,7 @@ const ROWS_PER_PAGE = 3;
         </div>
       } @empty {
         <p class="py-6 text-center text-muted-foreground">
-          No {{ heading }} messages found
+          {{ 'no' | t }} {{ heading }} {{ 'messagesFound' | t }}
         </p>
       }
 

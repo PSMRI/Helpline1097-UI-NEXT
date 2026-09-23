@@ -38,13 +38,14 @@ import {
 } from '@/app-modules/core/services/notification-api.service';
 import { NotificationService } from '@/app-modules/core/services/notification.service';
 import { TranslatePipe } from '@/app-modules/core/pipes/translate.pipe';
+import { LanguageStore } from '@/app-modules/core/state/language.store';
 import { SessionStore } from '@/app-modules/core/state/session.store';
 
 /** Rows in old panel order; `key` = count/config type, `msgType` = old dialog msg_type. */
 const ROWS = [
-  { key: 'Alert', msgType: 'Alert', label: 'Alerts' },
-  { key: 'Location Message', msgType: 'Office', label: 'Office Bulletin' },
-  { key: 'Notification', msgType: 'Notification', label: 'Notifications' },
+  { key: 'Alert', msgType: 'Alert', label: 'Alerts', labelKey: 'alerts' },
+  { key: 'Location Message', msgType: 'Office', label: 'Office Bulletin', labelKey: 'officeBulletin' },
+  { key: 'Notification', msgType: 'Notification', label: 'Notifications', labelKey: 'notifications' },
 ] as const;
 
 /**
@@ -72,7 +73,7 @@ const ROWS = [
             class="flex cursor-pointer items-center justify-between rounded-md px-2 py-2 hover:bg-accent"
             (click)="openNotificationsDialog(row)"
           >
-            <span class="text-sm">{{ row.label }}</span>
+            <span class="text-sm">{{ row.labelKey | t }}</span>
             <span
               class="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-medium"
               [class.bg-primary]="c > 0"
@@ -93,6 +94,7 @@ export class AlertsPanelComponent implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(ZardDialogService);
   private readonly sessionStore = inject(SessionStore);
+  private readonly lang = inject(LanguageStore);
 
   protected readonly rows = ROWS;
   protected readonly counts = signal<Record<string, number>>({});
@@ -146,11 +148,13 @@ export class AlertsPanelComponent implements OnInit {
         next: (res) => {
           const messages = (res?.data ?? []).filter((m) => m.notificationState !== 'future');
           if (messages.length === 0) {
-            this.notify.alert(`No ${row.msgType.toLowerCase()} messages found`);
+            this.notify.alert(
+              `${this.lang.t('no')} ${row.msgType.toLowerCase()} ${this.lang.t('messagesFound')}`,
+            );
             return;
           }
           this.dialog.create({
-            zTitle: `${row.msgType.toLowerCase()} Messages`,
+            zTitle: `${row.msgType.toLowerCase()} ${this.lang.t('messages')}`,
             zContent: AlertsNotificationsDialogComponent,
             zData: {
               msgType: row.msgType,
