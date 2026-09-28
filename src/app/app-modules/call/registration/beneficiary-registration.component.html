@@ -36,6 +36,8 @@
             placeholder="Search by beneficiary ID"
             class="w-full pr-8"
             [appRestrictInput]="mobileNumberBlock"
+            [allowScannedPaste]="true"
+            (keydown.enter)="search()"
           />
           @if (searchId.value) {
             <button
