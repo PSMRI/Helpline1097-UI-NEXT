@@ -106,6 +106,13 @@ describe('BeneficiaryRegistrationComponent search-by-id', () => {
     expect(results().length).toBe(3);
   });
 
+  it('registration requires a first name', () => {
+    const firstName = fixture.componentInstance['form'].controls.firstName;
+    expect(firstName.hasError('required')).toBeTrue();
+    firstName.setValue('Asha');
+    expect(firstName.valid).toBeTrue();
+  });
+
   it('clearing the id goes back to the calling-number list', () => {
     setSearchId('207853452750');
     fixture.componentInstance['search']();

@@ -191,7 +191,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
   // numbers when the create payload is built.
   protected readonly form = this.fb.group({
     titleId: this.fb.control<string | null>(null),
-    firstName: this.fb.control('', { nonNullable: true }),
+    firstName: this.fb.control('', { nonNullable: true, validators: [Validators.required] }),
     lastName: this.fb.control('', { nonNullable: true }),
     genderID: this.fb.control<string | null>(null, Validators.required),
     // dd/MM/yyyy display format (old md2 datepicker); converted to ISO at the payload edge.
