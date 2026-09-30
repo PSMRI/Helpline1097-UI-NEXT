@@ -77,6 +77,8 @@ import {
  * value re-sent on UPDATE. Row-select shows the call-history dialog before linking (old
  * `BeneficiaryHistoryComponent` flow).
  */
+const BENEFICIARY_ID_LENGTH = 12;
+
 @Component({
   selector: 'app-beneficiary-registration',
   imports: [
@@ -189,7 +191,7 @@ export class BeneficiaryRegistrationComponent implements OnInit {
   // numbers when the create payload is built.
   protected readonly form = this.fb.group({
     titleId: this.fb.control<string | null>(null),
-    firstName: this.fb.control('', { nonNullable: true }),
+    firstName: this.fb.control('', { nonNullable: true, validators: [Validators.required] }),
     lastName: this.fb.control('', { nonNullable: true }),
     genderID: this.fb.control<string | null>(null, Validators.required),
     // dd/MM/yyyy display format (old md2 datepicker); converted to ISO at the payload edge.
@@ -329,12 +331,19 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     }
   }
 
+  // searchUserByID is an exact match on the backend, so a partial id filters the
+  // calling-number list locally instead.
   protected search(): void {
     const id = this.searchId.value.trim();
-    if (id) {
-      this.runSearch(this.beneficiaryApi.searchByBeneficiaryId(id));
-    } else {
+    const cli = this.callStore.cli();
+    if (!id) {
       this.retrieveAll();
+    } else if (id.length < BENEFICIARY_ID_LENGTH && cli) {
+      this.runSearch(this.beneficiaryApi.searchByPhone(cli), (row) =>
+        String(row.beneficiaryID ?? '').includes(id),
+      );
+    } else {
+      this.runSearch(this.beneficiaryApi.searchByBeneficiaryId(id));
     }
   }
 
@@ -346,20 +355,25 @@ export class BeneficiaryRegistrationComponent implements OnInit {
     }
   }
 
-  /** Clear-icon (×) on the beneficiary-id search input. */
+  /** Clear-icon (×) on the beneficiary-id search input — old "Retrieve All". */
   protected clearSearchId(): void {
     this.searchId.setValue('');
+    this.retrieveAll();
   }
 
   private searchByPhone(phone: string): void {
     this.runSearch(this.beneficiaryApi.searchByPhone(phone));
   }
 
-  private runSearch(source: ReturnType<BeneficiaryApiService['searchByPhone']>): void {
+  private runSearch(
+    source: ReturnType<BeneficiaryApiService['searchByPhone']>,
+    keep?: (row: BeneficiaryRecord) => boolean,
+  ): void {
     this.searching.set(true);
     source.subscribe({
       next: (res) => {
-        const rows = Array.isArray(res?.data) ? res.data : [];
+        const all = Array.isArray(res?.data) ? res.data : [];
+        const rows = keep ? all.filter(keep) : all;
         this.results.set(rows);
         this.pageIndex.set(0);
         this.parentBenRegID.set(rows[0]?.benPhoneMaps?.[0]?.parentBenRegID ?? null);

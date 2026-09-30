@@ -36,6 +36,8 @@
             placeholder="Search by beneficiary ID"
             class="w-full pr-8"
             [appRestrictInput]="mobileNumberBlock"
+            [allowScannedPaste]="true"
+            (keydown.enter)="search()"
           />
           @if (searchId.value) {
             <button
@@ -210,7 +212,7 @@
           </z-select>
         </label>
         <label class="flex flex-col gap-1.5 text-sm">
-          <span>{{ 'firstName' | t }}</span>
+          <span>{{ 'firstName' | t }} <span class="text-destructive">*</span></span>
           <input z-input formControlName="firstName" type="text" maxlength="25" [placeholder]="'firstName' | t" [appRestrictInput]="nameBlock" />
         </label>
         <label class="flex flex-col gap-1.5 text-sm">

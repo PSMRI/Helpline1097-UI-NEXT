@@ -111,11 +111,15 @@ export class CzentrixHttpService extends CtiService {
     return this.http.get<ApiResponse>(url, { context: skipAuth(skipLoader()) });
   }
 
+  // Old czentrix.service sent the status/stats/IP/language calls through AuthorizationWrapper
+  // (no spinner); only agentLogout and the manual dial went through InterceptedHttp. The
+  // status call is polled every 4s on the call screen and 5s on the dashboard.
   /** POST cti/getAgentState — live agent state (`data.stateObj.stateName`). */
   getAgentStatus(): Observable<ApiResponse<AgentStateData>> {
     return this.http.post<ApiResponse<AgentStateData>>(
       `${this.config.commonBaseURL}cti/getAgentState`,
       this.agentPayload(),
+      { context: skipLoader() },
     );
   }
 
@@ -124,6 +128,7 @@ export class CzentrixHttpService extends CtiService {
     return this.http.post<ApiResponse<IvrsPathData>>(
       `${this.config.commonBaseURL}cti/getIVRSPathDetails`,
       this.agentPayload(),
+      { context: skipLoader() },
     );
   }
 
@@ -132,6 +137,7 @@ export class CzentrixHttpService extends CtiService {
     return this.http.post<ApiResponse<AgentCallStatsData>>(
       `${this.config.commonBaseURL}cti/getAgentCallStats`,
       this.agentPayload(),
+      { context: skipLoader() },
     );
   }
 
@@ -168,6 +174,7 @@ export class CzentrixHttpService extends CtiService {
     return this.http.post<ApiResponse>(
       `${this.config.commonBaseURL}cti/getAgentIPAddress`,
       this.agentPayload(),
+      { context: skipLoader() },
     );
   }
 
@@ -176,6 +183,7 @@ export class CzentrixHttpService extends CtiService {
     return this.http.post<ApiResponse>(
       `${this.config.commonBaseURL}cti/customerPreferredLanguage`,
       data,
+      { context: skipLoader() },
     );
   }
 
