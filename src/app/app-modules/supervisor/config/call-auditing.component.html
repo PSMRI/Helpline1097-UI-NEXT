@@ -43,8 +43,7 @@
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>{{ 'role' | t }}</span>
-        <z-select formControlName="role" [zPlaceholder]="'all' | t" (zValueChange)="onRoleChange($event)">
-          <z-select-item zValue="">{{ 'all' | t }}</z-select-item>
+        <z-select formControlName="role" [zPlaceholder]="'role' | t" (zValueChange)="onRoleChange($event)">
           @for (r of roles(); track r.roleID) {
             <z-select-item [zValue]="r.roleName + ''">{{ r.roleName }}</z-select-item>
           }
@@ -52,21 +51,17 @@
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>{{ 'inboundOrOutboundCall' | t }}</span>
-        <!-- z-select-item reads its label ONCE from the DOM (Common-UI `linkedSignal`, no
-             reactive dep), so the TRIGGER text for a selected option keeps the language that was
-             active when the list first rendered. The open list re-renders fine, and the "" option
-             is unselectable (selectItem rejects ''), so only inbound/outbound can go stale.
-             Needs the Common-UI fix, not a per-template workaround. -->
-        <z-select formControlName="inboundOutbound" [zPlaceholder]="'all' | t">
-          <z-select-item zValue="">{{ 'all' | t }}</z-select-item>
+        <!-- z-select-item reads its label ONCE from the DOM (Common-UI `linkedSignal`), so the
+             trigger text keeps the language active when the list first rendered. Needs the
+             Common-UI fix, not a per-template workaround. -->
+        <z-select formControlName="inboundOutbound" [zPlaceholder]="'inboundOrOutboundCall' | t">
           <z-select-item zValue="inbound">{{ 'inbound' | t }}</z-select-item>
           <z-select-item zValue="outbound">{{ 'outbound' | t }}</z-select-item>
         </z-select>
       </label>
       <label class="flex flex-col gap-1.5 text-sm">
         <span>{{ 'agent' | t }}</span>
-        <z-select formControlName="agent" [zPlaceholder]="'all' | t">
-          <z-select-item zValue="">{{ 'all' | t }}</z-select-item>
+        <z-select formControlName="agent" [zPlaceholder]="'agent' | t">
           @for (a of agents(); track a.agentID) {
             <z-select-item [zValue]="a.agentID + ''">{{ a.agentID }}</z-select-item>
           }
