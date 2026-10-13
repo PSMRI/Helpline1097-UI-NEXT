@@ -166,7 +166,9 @@ export class CampaignToggleComponent implements OnInit {
           const switchCall = inbound ? this.cti.switchToInbound() : this.cti.switchToOutbound();
           switchCall.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
             next: () => {
-              this.applied.set(value);
+              // A view-driven change never reaches the sibling radio's writeValue, so its
+              // dot stays lit; push the value through the control so both radios re-render.
+              this.setControl(value);
               this.callStore.setCurrentCampaign(inbound ? 'INBOUND' : 'OUTBOUND');
               this.callStore.isOutBoundSelected.set(!inbound);
             },

@@ -173,7 +173,9 @@ export class GenericWorklistComponent implements OnInit {
     if (serviceId == null) {
       return;
     }
-    this.callApi.getAgentOutboundWorklist(serviceId, this.sessionStore.userId()).subscribe({
+    // Old app sent the numeric login userID; the store keeps it as a string.
+    const userId = this.sessionStore.userId();
+    this.callApi.getAgentOutboundWorklist(serviceId, userId != null ? Number(userId) : null).subscribe({
       next: (res) => {
         const rows = Array.isArray(res?.data) ? (res.data as OutboundRow[]) : [];
         this.rows.set(rows);
